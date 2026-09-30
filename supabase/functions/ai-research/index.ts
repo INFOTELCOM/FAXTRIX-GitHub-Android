@@ -13,6 +13,7 @@ export default {
     const googleCx=Deno.env.get("GOOGLE_CX");
     const routerKey=Deno.env.get("OPENROUTER_API_KEY");
     const model=Deno.env.get("OPENROUTER_MODEL")||"openrouter/auto";
+    const costTier=Deno.env.get("OPENROUTER_COST_TIER")||"medium";
     const supabaseUrl=Deno.env.get("SUPABASE_URL");
     const supabaseKey=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
 
@@ -78,7 +79,8 @@ export default {
             {role:"system",content:"Tu es l'assistant IA polyvalent de FAXTRIX. Tu peux expliquer des concepts, analyser les données privées de l'entreprise autorisée par la session, et synthétiser des informations web. Respecte strictement la séparation entre entreprises. Ne révèle jamais de données privées d'une autre entreprise."},
             {role:"user",content:prompt}
           ],
-          temperature:0.2,max_tokens:1800
+          temperature:0.2,max_tokens:1800,
+          plugins:model==="openrouter/auto"||model==="openrouter/auto-beta"?[{id:"auto-router",cost_tier:costTier}]:undefined
         })
       });
       const aiData=await aiRes.json();
