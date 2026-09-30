@@ -306,6 +306,26 @@ $$('[data-go]').forEach(function (b) {
     if (b.hasAttribute('data-open-ticket')) setTimeout(function () { $('#tkAddBtn').click(); }, 250);
   });
 });
+$('[data-assistance-open]').forEach(function(el){el.addEventListener('click',function(){
+  var d=$('#assistanceDrawer'); if(d) d.classList.add('on');
+});});
+$('[data-assistance-close]').forEach(function(el){el.addEventListener('click',function(){
+  var d=$('#assistanceDrawer'); if(d) d.classList.remove('on');
+});});
+function buildSupportMessage(){
+  var type=$('#supportType') ? $('#supportType').value : 'Assistance';
+  var message=$('#supportMessage') ? $('#supportMessage').value.trim() : '';
+  var name=state.profile && (state.profile.full_name || state.profile.name || '');
+  var email=state.profile && state.profile.email ? state.profile.email : '';
+  return 'Bonjour INFOTELCOM,\n\nType de demande : '+type+'\nUtilisateur : '+(name||'Non renseigné')+'\nE-mail : '+(email||'Non renseigné')+'\n\nDemande :\n'+(message||'À préciser')+'\n\nMerci.';
+}
+if($('#supportEmailBtn')) $('#supportEmailBtn').addEventListener('click',function(){
+  var subject=$('#supportType') ? $('#supportType').value : 'Assistance FAXTRIX';
+  window.location.href='mailto:contact.infotelcom@gmail.com?subject='+encodeURIComponent('[FAXTRIX] '+subject)+'&body='+encodeURIComponent(buildSupportMessage());
+});
+if($('#supportWhatsappBtn')) $('#supportWhatsappBtn').addEventListener('click',function(){
+  window.open('https://wa.me/33652861159?text='+encodeURIComponent(buildSupportMessage()),'_blank','noopener');
+});
 var servicesTabBtn = $('#servicesTabBtn');
 if (servicesTabBtn) servicesTabBtn.addEventListener('click', function () { $('#servicesSheet').classList.add('on'); });
 $$('[data-services-close]').forEach(function (el) { el.addEventListener('click', function () { $('#servicesSheet').classList.remove('on'); }); });
