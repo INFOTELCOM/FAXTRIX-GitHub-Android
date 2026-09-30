@@ -637,7 +637,7 @@ async function deleteTk(id) {
 function renderTickets() {
   var list = $('#tkList');
   var rows = state.tickets.filter(function (t) {
-    var okFilter = tkFilter === 'Tous' || t.statut === tkFilter;
+    var okFilter = tkFilter === 'Tous' || t.statut === tkFilter || (tkFilter === 'Mes tickets' && t.opened_by === state.profile.id);
     var hay = ((t.numero || '') + ' ' + (t.titre || '') + ' ' + (t.client || '') + ' ' + (t.problem || '')).toLowerCase();
     var okQuery = !tkQuery || hay.indexOf(tkQuery) !== -1;
     return okFilter && okQuery;
@@ -645,7 +645,7 @@ function renderTickets() {
   list.innerHTML = rows.length ? rows.map(function (t) {
     var pClass = t.priorite === 'Haute' ? 'crit' : (t.priorite === 'Moyenne' ? 'mid' : 'ok');
     var opened = t.opened_at ? new Date(t.opened_at).toLocaleString('fr-FR') : timeAgo(t.created_at);
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(t.numero || 'Ticket') + ' · ' + escapeHtml(t.titre) + '</b><span>' + escapeHtml(t.client || '—') + ' · Ouvert le ' + escapeHtml(opened) + ' · ' + escapeHtml(t.assigned_to || 'Non assigné') + '</span></div>' +
+    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(t.numero || 'Ticket') + ' · ' + escapeHtml(t.titre) + '</b><span>' + escapeHtml(t.client || '—') + ' · Ouvert le ' + escapeHtml(opened) + ' · ' + escapeHtml(t.assigned_to || 'Non assigné') + '</span><small style="display:block;color:var(--slate-2);margin-top:4px;">' + (t.opened_by === state.profile.id ? '✎ Saisi par vous' : '') + (t.work_started_at ? ' · ▶ ' + escapeHtml(formatTicketDate(t.work_started_at)) : '') + (t.work_closed_at ? ' · ■ ' + escapeHtml(formatTicketDate(t.work_closed_at)) : '') + (t.work_duration_seconds ? ' · ⏱ ' + Math.floor(Number(t.work_duration_seconds)/3600) + 'h ' + Math.floor((Number(t.work_duration_seconds)%3600)/60) + 'min' : '') + '</small></div>' +
       '<span class="chip">' + escapeHtml(t.categorie || 'Général') + '</span><span class="chip ' + pClass + '">' + escapeHtml(t.priorite || '') + '</span><span class="chip">' + escapeHtml(t.statut || '') + '</span>' +
       '<div class="app-row-actions"><button class="row-btn" data-tk-edit="' + t.id + '" title="Modifier / corriger le ticket">✎</button><button class="row-btn" data-tk-del="' + t.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun ticket pour ce filtre.</div>';
@@ -654,6 +654,15 @@ function renderTickets() {
   $('#tkOuverts').textContent = state.tickets.filter(function (t) { return t.statut !== 'Résolu' && t.statut !== 'Fermé'; }).length;
   $('#tkHaute').textContent = state.tickets.filter(function (t) { return t.priorite === 'Haute'; }).length;
   $('#tkResolus').textContent = state.tickets.filter(function (t) { return t.statut === 'Résolu'; }).length;
+
+  var mine = state.tickets.filter(function(t){ return t.opened_by === state.profile.id; });
+  var totalSecs = mine.reduce(function(sum,t){ return sum + Number(t.work_duration_seconds || 0); },0);
+  var h=Math.floor(totalSecs/3600), m=Math.floor((totalSecs%3600)/60);
+  var summary=$('#tkMySummary'), summaryText=$('#tkMySummaryText');
+  if(summary && summaryText){
+    summary.style.display = tkFilter === 'Mes tickets' ? 'block' : 'none';
+    summaryText.textContent = mine.length + ' ticket(s) saisi(s) par vous · Temps de travail enregistré : ' + h + ' h ' + m + ' min.';
+  }
 }
 
 /* ---------------- 8. Terrain ---------------- */
