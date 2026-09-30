@@ -1323,17 +1323,17 @@ function aiSay(text, who) {
 async function aiWebSearch(q) {
   try {
     var session=(await sb.auth.getSession()).data.session;
-    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-research',{
+    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-assistant',{
       method:'POST',
       headers:{'Authorization':'Bearer '+(session?session.access_token:SUPABASE_ANON_KEY),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({q:q})
+      body:JSON.stringify({query:q})
     });
     var data=await res.json();
-    if(!res.ok) return null;
+    if(!res.ok) return data;
     return data;
   } catch(e) {
-    console.warn('FAXTRIX recherche Google:',e);
-    return null;
+    console.warn('FAXTRIX assistant IA:',e);
+    return {error:e.message||'Assistant IA indisponible'};
   }
 }
 function aiRenderAnswer(text) {
