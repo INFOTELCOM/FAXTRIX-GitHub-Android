@@ -4,3 +4,6 @@ project_id = "xtkcfhbsksoqbpnaciga"
 verify_jwt = true
 [functions.google-search]
 verify_jwt = true
+
+[functions.ai-research]
+verify_jwt = true
