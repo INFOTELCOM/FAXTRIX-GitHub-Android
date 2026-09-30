@@ -350,7 +350,7 @@ if (servicesTabBtn) servicesTabBtn.addEventListener('click', function () { $('#s
 $$('[data-services-close]').forEach(function (el) { el.addEventListener('click', function () { $('#servicesSheet').classList.remove('on'); }); });
 var moreTabBtn = $('#moreTabBtn');
 if (moreTabBtn) moreTabBtn.addEventListener('click', function () { $('#plusSheet').classList.add('on'); });
-$('[data-plus-open]').forEach(function (el) {
+$$('[data-plus-open]').forEach(function (el) {
   el.addEventListener('click', function (e) {
     e.preventDefault();
     $('#plusSheet').classList.add('on');
@@ -1010,7 +1010,7 @@ async function initPermissionsUI() {
   try {
     var p = await sb.rpc('my_permissions');
     var rights = (p.data || []).map(function(x){ return x.permission; });
-    var opts = $('#permissionRight option');
+    var opts = $$('#permissionRight option');
     opts.forEach(function(o){ o.disabled = rights.indexOf(o.value) !== -1; });
     var r = await sb.rpc('my_permission_requests');
     if (r.error) { list.innerHTML = '<div class="app-empty">Impossible de charger les demandes.</div>'; return; }
@@ -1289,7 +1289,7 @@ function renderSearch(q) {
     }).join('');
   });
   $('#searchResults').innerHTML = html || '<div class="app-empty">Aucun résultat.</div>';
-  $$('.sr-item', $('#searchResults')).forEach(function (el) { el.addEventListener('click', function () { closeSearch(); showPanel(el.getAttribute('data-go')); }); });
+  $$$('.sr-item', $('#searchResults')).forEach(function (el) { el.addEventListener('click', function () { closeSearch(); showPanel(el.getAttribute('data-go')); }); });
 }
 
 /* ---------------- 24. Connexion réseau ---------------- */
