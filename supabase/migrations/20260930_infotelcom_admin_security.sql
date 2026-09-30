@@ -266,3 +266,112 @@ drop policy if exists audit_admin_read on public.admin_audit_logs;
 create policy audit_admin_read on public.admin_audit_logs
 for select to authenticated
 using (public.is_infotelcom_admin());
+
+-- Contrôle centralisé des droits de modification.
+create or replace function public.has_faxtrix_permission(p_permission text)
+returns boolean
+language sql
+security definer
+stable
+set search_path=''
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id=(select auth.uid())
+      and (
+        p.role in ('owner','infotelcom_admin')
+        or exists (
+          select 1 from public.user_permissions up
+          where up.user_id=(select auth.uid())
+            and up.permission=p_permission
+            and (up.expires_at is null or up.expires_at > now())
+        )
+      )
+  );
+$$;
+
+revoke all on function public.has_faxtrix_permission(text) from public;
+grant execute on function public.has_faxtrix_permission(text) to authenticated;
+
+-- Ces politiques sont RESTRICTIVE : elles s'ajoutent aux politiques d'isolation
+-- existantes et empêchent un employé sans droit d'écrire/modifier.
+drop policy if exists faxtrix_clients_insert_permission on public.clients;
+create policy faxtrix_clients_insert_permission on public.clients
+as restrictive for insert to authenticated
+with check ((select public.has_faxtrix_permission('crm_edit')));
+
+drop policy if exists faxtrix_clients_update_permission on public.clients;
+create policy faxtrix_clients_update_permission on public.clients
+as restrictive for update to authenticated
+using ((select public.has_faxtrix_permission('crm_edit')))
+with check ((select public.has_faxtrix_permission('crm_edit')));
+
+drop policy if exists faxtrix_clients_delete_permission on public.clients;
+create policy faxtrix_clients_delete_permission on public.clients
+as restrictive for delete to authenticated
+using ((select public.has_faxtrix_permission('data_delete')));
+
+drop policy if exists faxtrix_tickets_insert_permission on public.tickets;
+create policy faxtrix_tickets_insert_permission on public.tickets
+as restrictive for insert to authenticated
+with check ((select public.has_faxtrix_permission('tickets_manage')));
+
+drop policy if exists faxtrix_tickets_update_permission on public.tickets;
+create policy faxtrix_tickets_update_permission on public.tickets
+as restrictive for update to authenticated
+using ((select public.has_faxtrix_permission('tickets_manage')))
+with check ((select public.has_faxtrix_permission('tickets_manage')));
+
+drop policy if exists faxtrix_tickets_delete_permission on public.tickets;
+create policy faxtrix_tickets_delete_permission on public.tickets
+as restrictive for delete to authenticated
+using ((select public.has_faxtrix_permission('data_delete')));
+
+drop policy if exists faxtrix_terrain_insert_permission on public.terrain_missions;
+create policy faxtrix_terrain_insert_permission on public.terrain_missions
+as restrictive for insert to authenticated
+with check ((select public.has_faxtrix_permission('terrain_manage')));
+
+drop policy if exists faxtrix_terrain_update_permission on public.terrain_missions;
+create policy faxtrix_terrain_update_permission on public.terrain_missions
+as restrictive for update to authenticated
+using ((select public.has_faxtrix_permission('terrain_manage')))
+with check ((select public.has_faxtrix_permission('terrain_manage')));
+
+drop policy if exists faxtrix_terrain_delete_permission on public.terrain_missions;
+create policy faxtrix_terrain_delete_permission on public.terrain_missions
+as restrictive for delete to authenticated
+using ((select public.has_faxtrix_permission('data_delete')));
+
+drop policy if exists faxtrix_team_insert_permission on public.team_members;
+create policy faxtrix_team_insert_permission on public.team_members
+as restrictive for insert to authenticated
+with check ((select public.has_faxtrix_permission('team_manage')));
+
+drop policy if exists faxtrix_team_update_permission on public.team_members;
+create policy faxtrix_team_update_permission on public.team_members
+as restrictive for update to authenticated
+using ((select public.has_faxtrix_permission('team_manage')))
+with check ((select public.has_faxtrix_permission('team_manage')));
+
+drop policy if exists faxtrix_team_delete_permission on public.team_members;
+create policy faxtrix_team_delete_permission on public.team_members
+as restrictive for delete to authenticated
+using ((select public.has_faxtrix_permission('data_delete')));
+
+drop policy if exists faxtrix_automation_insert_permission on public.automation_rules;
+create policy faxtrix_automation_insert_permission on public.automation_rules
+as restrictive for insert to authenticated
+with check ((select public.has_faxtrix_permission('automation_manage')));
+
+drop policy if exists faxtrix_automation_update_permission on public.automation_rules;
+create policy faxtrix_automation_update_permission on public.automation_rules
+as restrictive for update to authenticated
+using ((select public.has_faxtrix_permission('automation_manage')))
+with check ((select public.has_faxtrix_permission('automation_manage')));
+
+drop policy if exists faxtrix_automation_delete_permission on public.automation_rules;
+create policy faxtrix_automation_delete_permission on public.automation_rules
+as restrictive for delete to authenticated
+using ((select public.has_faxtrix_permission('automation_manage')));
+
