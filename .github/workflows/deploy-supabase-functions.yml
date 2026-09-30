@@ -1,11 +1,6 @@
 name: Deploy Supabase Edge Functions
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "supabase/functions/**"
-      - "supabase/config.toml"
   workflow_dispatch:
 
 jobs:
@@ -30,4 +25,4 @@ jobs:
         run: |
           echo "Supabase deploy secrets are not configured yet."
           echo "Required: SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF."
-          echo "Automatic deployment is waiting for the required secrets."
+          echo "Manual deployment is waiting for the required secrets."
