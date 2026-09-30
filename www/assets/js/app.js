@@ -1551,6 +1551,14 @@ async function createChatConversation(){
   if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable.','crit');return;}
   if(!chatState.profiles.length) await loadChatProfiles();
   var opts=chatState.profiles.filter(function(p){return p.id!==state.profile.id;});
+  if(!opts.length){
+    $('#recordDetailTitle').textContent='Nouvelle conversation';
+    $('#recordDetailSub').textContent='Aucun autre membre disponible';
+    $('#recordDetailBody').innerHTML='<div class="app-empty" style="padding:24px;">Aucun autre utilisateur de votre entreprise n’est actuellement disponible pour démarrer une conversation.</div><button type="button" class="btn btn-ghost" id="chatCreateClose">Fermer</button>';
+    $('#recordDetail').hidden=false;
+    $('#chatCreateClose').onclick=closeRecordDetail;
+    return;
+  }
   var html='<div class="chat-new-list">'+opts.map(function(p){return '<label class="chat-member-option"><input type="checkbox" value="'+p.id+'"> <div class="chat-avatar" style="width:30px;height:30px;min-width:30px;">'+chatAvatarHtml(p,30)+'</div><span>'+escapeHtml(p.full_name||'Utilisateur')+'</span></label>';}).join('')+'</div><label>Nom du groupe (facultatif)<input id="chatGroupName" type="text" placeholder="Ex. Équipe technique"></label><button type="button" class="btn btn-primary" id="chatCreateConfirm">Créer la conversation</button>';
   $('#recordDetailTitle').textContent='Nouvelle conversation'; $('#recordDetailSub').textContent='Choisissez les membres de votre entreprise'; $('#recordDetailBody').innerHTML=html; $('#recordDetail').hidden=false;
   $('#chatCreateConfirm').onclick=async function(){
