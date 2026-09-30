@@ -1575,6 +1575,13 @@ async function renderChatMessages(){
     }catch(e){}
   }
 }
+window.FAXTRIX = window.FAXTRIX || {};
+window.FAXTRIX.openNewConversation = function(){
+  return createChatConversation().catch(function(err){
+    console.error('FAXTRIX nouvelle conversation:', err);
+    if(typeof toast==='function') toast('Impossible d’ouvrir la nouvelle conversation : '+(err.message||err),'crit');
+  });
+};
 async function createChatConversation(){
   if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable.','crit');return;}
   if(!chatState.profiles.length) await loadChatProfiles();
@@ -1702,14 +1709,11 @@ function startCurrentCall(type){
   setupCall(type,peer.id,true).catch(function(e){toast('Appel impossible : '+(e.message||'autorisation micro/caméra requise'),'crit');endCall(false);});
 }
 /* La messagerie peut être initialisée après le rendu de l'application : délégation robuste du bouton. */
-document.addEventListener('click',function(e){
+document.addEventListener('pointerup',function(e){
   var btn=e.target.closest&&e.target.closest('#chatNewBtn');
   if(btn){
     e.preventDefault();
-    createChatConversation().catch(function(err){
-      console.error('FAXTRIX nouvelle conversation:',err);
-      toast('Impossible d’ouvrir la nouvelle conversation : '+(err.message||err),'crit');
-    });
+    window.FAXTRIX.openNewConversation();
   }
 });
 $('#chatSearch')&&$('#chatSearch').addEventListener('input',renderChatConversationList);
