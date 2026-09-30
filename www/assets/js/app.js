@@ -309,9 +309,24 @@ $$('[data-go]').forEach(function (b) {
 var servicesTabBtn = $('#servicesTabBtn');
 if (servicesTabBtn) servicesTabBtn.addEventListener('click', function () { $('#servicesSheet').classList.add('on'); });
 $$('[data-services-close]').forEach(function (el) { el.addEventListener('click', function () { $('#servicesSheet').classList.remove('on'); }); });
+$('[data-plus-open]').forEach(function (el) { el.addEventListener('click', function () {
+  var sheet=$('#plusSheet');
+  if(sheet) sheet.classList.add('on');
+  var name=state.profile && (state.profile.full_name || state.profile.name || state.profile.email);
+  var role=state.profile && (state.profile.role || state.profile.job_title || state.profile.fonction);
+  if($('#plusUserName')) $('#plusUserName').textContent=name || 'Votre espace FAXTRIX';
+  if($('#plusUserRole')) $('#plusUserRole').textContent=role ? 'Fonction : '+role : 'Accès et outils complémentaires';
+  if($('#plusRoleChip')) $('#plusRoleChip').textContent=role || 'Mon espace';
+}); });
 var moreTabBtn = $('#moreTabBtn');
 if (moreTabBtn) moreTabBtn.addEventListener('click', function () { $('#plusSheet').classList.add('on'); });
-$$('[data-plus-close]').forEach(function (el) { el.addEventListener('click', function () { $('#plusSheet').classList.remove('on'); }); });
+$('[data-plus-close]').forEach(function (el) { el.addEventListener('click', function () { $('#plusSheet').classList.remove('on'); }); });
+$('[data-plus-filter="mine"]').forEach(function (el) { el.addEventListener('click', function () {
+  $('#plusSheet').classList.remove('on');
+  showPanel('tickets');
+  var mine=$('[data-filter="Mes tickets"]');
+  if(mine) mine.click();
+}); });
 var plusLogoutBtn = $('#plusLogoutBtn');
 if (plusLogoutBtn) plusLogoutBtn.addEventListener('click', function () { doLogout(); });
 
