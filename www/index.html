@@ -521,7 +521,7 @@
         <div class="app-card">
           <div class="app-card-head">
             <div><h3>Messagerie FAXTRIX</h3><p style="font-size:12.5px;color:var(--text-2);margin-top:5px;">Échangez avec les membres de votre entreprise. Les conversations restent isolées par organisation.</p></div>
-            <button class="btn btn-primary" id="chatNewBtn"><span>+ Nouvelle conversation</span></button>
+            <button type="button" class="btn btn-primary" id="chatNewBtn" onclick="window.FAXTRIX&&window.FAXTRIX.openNewConversation&&window.FAXTRIX.openNewConversation()"><span>+ Nouvelle conversation</span></button>
           </div>
         </div>
         <div class="chat-layout">
@@ -968,7 +968,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/app.js?v=20260930-google-chat-admin-1" defer></script>
+<script src="assets/js/app.js?v=20260930-chat-direct-1" defer></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
 </body>
 </html>
