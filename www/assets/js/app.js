@@ -583,76 +583,92 @@ function renderTickets(){
   $('#tkResolus').textContent=state.tickets.filter(function(t){return t.statut==='Résolu'||t.statut==='Fermé';}).length;
 }
 /* ---------------- 8. Terrain ---------------- */
-$('#teAddBtn').addEventListener('click', function () {
-  $('#teForm').reset(); $('#teId').value = '';
-  openDrawer('te', 'Nouvelle mission');
+function fillTerrainForm(t){
+  $('#teId').value=t.id||'';
+  $('#teTech').value=t.tech||'';
+  $('#teClient').value=t.client||'';
+  $('#teAdresse').value=t.adresse||'';
+  $('#teStatut').value=t.statut||'Planifiée';
+  $('#teNotes').value=t.notes||'';
+  $('#teCompteRendu').value=t.compte_rendu||'';
+  $('#teStartedAt').textContent=fmtDateTime(t.started_at);
+  $('#teCompletedAt').textContent=fmtDateTime(t.completed_at);
+  $('#teDuration').textContent=fmtElapsed((t.elapsed_ms||0)+(t.statut==='En cours'&&t.started_at?(Date.now()-new Date(t.started_at).getTime()):0));
+  $('#teModifiedAt').textContent=fmtDateTime(t.updated_at);
+}
+$('#teAddBtn').addEventListener('click',function(){
+  $('#teForm').reset(); $('#teId').value='';
+  $('#teStartedAt').textContent='—'; $('#teCompletedAt').textContent='—'; $('#teDuration').textContent='00:00:00'; $('#teModifiedAt').textContent='—';
+  openDrawer('te','Nouvelle mission');
 });
-$('#teForm').addEventListener('submit', async function (e) {
+$('#teForm').addEventListener('submit',async function(e){
   e.preventDefault();
-  var id = $('#teId').value;
-  var data = { tech: $('#teTech').value.trim(), client: $('#teClient').value.trim(), statut: $('#teStatut').value };
-  if (id) {
-    var res = await sb.from('terrain_missions').update(data).eq('id', id).select().single();
-    if (!res.error) { var item = state.terrain.find(function (x) { return x.id === id; }); if (item) Object.assign(item, res.data); }
-  } else {
-    data.started_at = data.statut === 'En cours' ? new Date().toISOString() : null; data.elapsed_ms = 0;
-    var res2 = await sb.from('terrain_missions').insert(withCompany(data)).select().single();
-    if (!res2.error) { state.terrain.unshift(res2.data); notify('Nouvelle mission assignée à ' + data.tech, 'ok'); }
+  var id=$('#teId').value;
+  var data={tech:$('#teTech').value.trim(),client:$('#teClient').value.trim(),adresse:$('#teAdresse').value.trim(),statut:$('#teStatut').value,notes:$('#teNotes').value.trim(),compte_rendu:$('#teCompteRendu').value.trim()};
+  if(id){
+    var res=await sb.from('terrain_missions').update(data).eq('id',id).select().single();
+    if(res.error){toast('Impossible d’enregistrer la mission : '+res.error.message,'crit');return;}
+    var item=state.terrain.find(function(x){return x.id===id;}); if(item)Object.assign(item,res.data);
+  }else{
+    data.started_at=data.statut==='En cours'?new Date().toISOString():null;
+    data.elapsed_ms=0;
+    data.completed_at=data.statut==='Terminée'?new Date().toISOString():null;
+    var res2=await sb.from('terrain_missions').insert(withCompany(data)).select().single();
+    if(res2.error){toast('Création de la mission impossible : '+res2.error.message,'crit');return;}
+    state.terrain.unshift(res2.data); notify('Nouvelle mission assignée à '+data.tech,'ok');
   }
-  closeDrawer(); renderAll();
+  closeDrawer();renderAll();
 });
-function editTe(id) {
-  var t = state.terrain.find(function (x) { return x.id === id; }); if (!t) return;
-  $('#teId').value = t.id; $('#teTech').value = t.tech; $('#teClient').value = t.client; $('#teStatut').value = t.statut;
-  openDrawer('te', 'Modifier la mission');
+function editTe(id){
+  var t=state.terrain.find(function(x){return x.id===id;}); if(!t)return;
+  fillTerrainForm(t); openDrawer('te','Modifier la mission');
 }
-async function deleteTe(id) {
-  state.terrain = state.terrain.filter(function (x) { return x.id !== id; }); renderAll();
-  await sb.from('terrain_missions').delete().eq('id', id);
+async function deleteTe(id){
+  state.terrain=state.terrain.filter(function(x){return x.id!==id;});renderAll();
+  var res=await sb.from('terrain_missions').delete().eq('id',id);
+  if(res.error)toast('Suppression refusée : '+res.error.message,'crit');
 }
-async function startTe(id) {
-  var t = state.terrain.find(function (x) { return x.id === id; }); if (!t) return;
-  t.statut = 'En cours'; t.started_at = new Date().toISOString();
-  renderAll();
-  await sb.from('terrain_missions').update({ statut: t.statut, started_at: t.started_at }).eq('id', id);
+async function startTe(id){
+  var t=state.terrain.find(function(x){return x.id===id;});if(!t)return;
+  var now=new Date().toISOString();
+  var res=await sb.from('terrain_missions').update({statut:'En cours',started_at:now,completed_at:null}).eq('id',id).select().single();
+  if(res.error){toast('Démarrage impossible : '+res.error.message,'crit');return;}
+  Object.assign(t,res.data);renderAll();notify('Intervention démarrée à '+fmtDateTime(now),'ok');
 }
-async function stopTe(id) {
-  var t = state.terrain.find(function (x) { return x.id === id; }); if (!t) return;
-  if (t.started_at) { t.elapsed_ms = (t.elapsed_ms || 0) + (Date.now() - new Date(t.started_at).getTime()); }
-  t.statut = 'Terminée'; t.started_at = null;
-  renderAll();
-  await sb.from('terrain_missions').update({ statut: t.statut, started_at: null, elapsed_ms: t.elapsed_ms }).eq('id', id);
-  notify('Mission terminée — ' + t.tech + ' (' + fmtElapsed(t.elapsed_ms) + ')', 'ok');
+async function stopTe(id){
+  var t=state.terrain.find(function(x){return x.id===id;});if(!t)return;
+  var now=new Date().toISOString(), elapsed=t.elapsed_ms||0;
+  if(t.started_at)elapsed=Math.max(elapsed,Math.floor(new Date(now).getTime()-new Date(t.started_at).getTime()));
+  var res=await sb.from('terrain_missions').update({statut:'Terminée',completed_at:now,started_at:t.started_at,elapsed_ms:elapsed}).eq('id',id).select().single();
+  if(res.error){toast('Fermeture impossible : '+res.error.message,'crit');return;}
+  Object.assign(t,res.data);renderAll();notify('Intervention terminée à '+fmtDateTime(now)+' — durée '+fmtElapsed(elapsed),'ok');
 }
-function renderTerrain() {
-  var list = $('#teList');
-  list.innerHTML = state.terrain.length ? state.terrain.map(function (t) {
-    var live = t.statut === 'En cours' && t.started_at;
-    var elapsed = (t.elapsed_ms || 0) + (live ? (Date.now() - new Date(t.started_at).getTime()) : 0);
-    var chipClass = t.statut === 'En cours' ? 'mid' : (t.statut === 'Terminée' ? 'ok' : '');
-    var actions = '<div class="app-row-actions">';
-    if (t.statut !== 'En cours' && t.statut !== 'Terminée') actions += '<button class="row-btn" data-te-start="' + t.id + '">▶</button>';
-    if (t.statut === 'En cours') actions += '<button class="row-btn" data-te-stop="' + t.id + '">⏸</button>';
-    actions += '<button class="row-btn" data-te-edit="' + t.id + '">✎</button><button class="row-btn" data-te-del="' + t.id + '">🗑</button></div>';
-    return '<div class="app-row" data-te-row="' + t.id + '"><div class="r-main"><b>' + escapeHtml(t.tech) + '</b><span>' + escapeHtml(t.client || '—') + '</span></div>' +
-      '<span class="mono" data-te-timer="' + t.id + '" style="min-width:70px;text-align:right;">' + fmtElapsed(elapsed) + '</span>' +
-      '<span class="chip ' + chipClass + '">' + t.statut + '</span>' + actions + '</div>';
-  }).join('') : '<div class="app-empty">Aucune mission enregistrée.</div>';
-
-  $('#teTotal').textContent = state.terrain.length;
-  $('#teCours').textContent = state.terrain.filter(function (t) { return t.statut === 'En cours'; }).length;
-  $('#tePlanif').textContent = state.terrain.filter(function (t) { return t.statut === 'Planifiée'; }).length;
-  $('#teTerm').textContent = state.terrain.filter(function (t) { return t.statut === 'Terminée'; }).length;
+function renderTerrain(){
+  var list=$('#teList');
+  list.innerHTML=state.terrain.length?state.terrain.map(function(t){
+    var live=t.statut==='En cours'&&t.started_at;
+    var elapsed=(t.elapsed_ms||0)+(live?(Date.now()-new Date(t.started_at).getTime()):0);
+    var chipClass=t.statut==='En cours'?'mid':(t.statut==='Terminée'?'ok':'');
+    var actions='<div class="app-row-actions">';
+    if(t.statut!=='En cours'&&t.statut!=='Terminée')actions+='<button class="row-btn" data-te-start="'+t.id+'">▶</button>';
+    if(t.statut==='En cours')actions+='<button class="row-btn" data-te-stop="'+t.id+'">■</button>';
+    actions+='<button class="row-btn" data-te-edit="'+t.id+'">✎</button><button class="row-btn" data-te-del="'+t.id+'">🗑</button></div>';
+    return '<div class="app-row" data-te-row="'+t.id+'"><div class="r-main"><b>'+escapeHtml(t.tech)+'</b><span>'+escapeHtml(t.client||'—')+' · Début : '+escapeHtml(fmtDateTime(t.started_at))+' · Fin : '+escapeHtml(fmtDateTime(t.completed_at))+' · Durée : '+escapeHtml(fmtElapsed(elapsed))+'</span></div>'+
+      '<span class="mono" data-te-timer="'+t.id+'" style="min-width:70px;text-align:right;">'+fmtElapsed(elapsed)+'</span><span class="chip '+chipClass+'">'+escapeHtml(t.statut)+'</span>'+actions+'</div>';
+  }).join(''):'<div class="app-empty">Aucune mission enregistrée.</div>';
+  $('#teTotal').textContent=state.terrain.length;
+  $('#teCours').textContent=state.terrain.filter(function(t){return t.statut==='En cours';}).length;
+  $('#tePlanif').textContent=state.terrain.filter(function(t){return t.statut==='Planifiée';}).length;
+  $('#teTerm').textContent=state.terrain.filter(function(t){return t.statut==='Terminée';}).length;
 }
-setInterval(function () {
-  $$('[data-te-timer]').forEach(function (el) {
-    var id = el.getAttribute('data-te-timer');
-    var t = state.terrain.find(function (x) { return x.id === id; });
-    if (!t || t.statut !== 'En cours' || !t.started_at) return;
-    el.textContent = fmtElapsed((t.elapsed_ms || 0) + (Date.now() - new Date(t.started_at).getTime()));
+setInterval(function(){
+  $$('[data-te-timer]').forEach(function(el){
+    var id=el.getAttribute('data-te-timer'),t=state.terrain.find(function(x){return x.id===id;});
+    if(!t||t.statut!=='En cours'||!t.started_at)return;
+    var elapsed=(t.elapsed_ms||0)+(Date.now()-new Date(t.started_at).getTime());
+    el.textContent=fmtElapsed(elapsed);
   });
-}, 1000);
-
+},1000);
 /* ---------------- 9. Équipes ---------------- */
 $('#eqAddBtn').addEventListener('click', function () {
   $('#eqForm').reset(); $('#eqId').value = '';
