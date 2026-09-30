@@ -78,3 +78,33 @@ drop trigger if exists trg_sync_ticket_closed_at on public.tickets;
 create trigger trg_sync_ticket_closed_at
 before update on public.tickets
 for each row execute function public.sync_ticket_closed_at();
+
+
+-- Session de travail du technicien : début, fin et durée calculée automatiquement.
+alter table public.tickets
+  add column if not exists work_started_at timestamptz,
+  add column if not exists work_closed_at timestamptz,
+  add column if not exists work_duration_seconds bigint;
+
+create or replace function public.sync_ticket_work_session()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.work_closed_at is not null and new.work_started_at is not null then
+    new.work_duration_seconds := greatest(0, floor(extract(epoch from (new.work_closed_at - new.work_started_at)))::bigint);
+    new.closed_at := coalesce(new.closed_at, new.work_closed_at);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_sync_ticket_work_session on public.tickets;
+create trigger trg_sync_ticket_work_session
+before update on public.tickets
+for each row execute function public.sync_ticket_work_session();
+
+create index if not exists tickets_company_work_session_idx
+  on public.tickets(company_id, work_started_at desc, work_closed_at);
