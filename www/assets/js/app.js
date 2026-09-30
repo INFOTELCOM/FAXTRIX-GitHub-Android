@@ -276,7 +276,8 @@ var panelTitles = {
   rapports: ['Rapports & Analyses', 'Vos indicateurs en temps réel.'],
   assistant: ['Assistant IA', 'Posez une question sur vos données.'],
   securite: ['Sécurité & accès', 'Mot de passe et sessions.'],
-  parametres: ['Paramètres', 'Profil et session.']
+  parametres: ['Paramètres', 'Profil et session.'],
+  assistance: ['Assistance INFOTELCOM', 'Signalez un besoin ou demandez un accès.']
 };
 function showPanel(name) {
   $$('.app-nav button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-panel') === name); });
@@ -306,26 +307,40 @@ $$('[data-go]').forEach(function (b) {
     if (b.hasAttribute('data-open-ticket')) setTimeout(function () { $('#tkAddBtn').click(); }, 250);
   });
 });
-$('[data-assistance-open]').forEach(function(el){el.addEventListener('click',function(){
-  var d=$('#assistanceDrawer'); if(d) d.classList.add('on');
-});});
-$('[data-assistance-close]').forEach(function(el){el.addEventListener('click',function(){
-  var d=$('#assistanceDrawer'); if(d) d.classList.remove('on');
-});});
 function buildSupportMessage(){
   var type=$('#supportType') ? $('#supportType').value : 'Assistance';
+  var priority=$('#supportPriority') ? $('#supportPriority').value : 'Normale';
+  var subject=$('#supportSubject') ? $('#supportSubject').value.trim() : 'Demande FAXTRIX';
   var message=$('#supportMessage') ? $('#supportMessage').value.trim() : '';
   var name=state.profile && (state.profile.full_name || state.profile.name || '');
   var email=state.profile && state.profile.email ? state.profile.email : '';
-  return 'Bonjour INFOTELCOM,\n\nType de demande : '+type+'\nUtilisateur : '+(name||'Non renseigné')+'\nE-mail : '+(email||'Non renseigné')+'\n\nDemande :\n'+(message||'À préciser')+'\n\nMerci.';
+  return 'Bonjour INFOTELCOM,\n\nType : '+type+'\nPriorité : '+priority+'\nObjet : '+subject+
+    '\nUtilisateur : '+(name||'Non renseigné')+'\nE-mail : '+(email||'Non renseigné')+
+    '\n\nDemande :\n'+message+'\n\nMerci.';
 }
-if($('#supportEmailBtn')) $('#supportEmailBtn').addEventListener('click',function(){
-  var subject=$('#supportType') ? $('#supportType').value : 'Assistance FAXTRIX';
-  window.location.href='mailto:contact.infotelcom@gmail.com?subject='+encodeURIComponent('[FAXTRIX] '+subject)+'&body='+encodeURIComponent(buildSupportMessage());
+function refreshSupportIdentity(){
+  var el=$('#supportIdentity');
+  if(!el) return;
+  var name=state.profile && (state.profile.full_name || state.profile.name || '');
+  var email=state.profile && state.profile.email ? state.profile.email : '';
+  el.textContent=(name||'Utilisateur connecté')+' • '+(email||'E-mail non renseigné')+
+    ' • Les informations seront incluses dans le message.';
+}
+var assistanceForm=$('#assistanceForm');
+if(assistanceForm) assistanceForm.addEventListener('submit',function(e){
+  e.preventDefault();
+  var type=$('#supportType').value;
+  var subject=$('#supportSubject').value.trim();
+  var message=$('#supportMessage').value.trim();
+  if(!type || !subject || !message){ showToast('Veuillez compléter les champs obligatoires.','error'); return; }
+  var body=buildSupportMessage();
+  var gmail='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent('contact.infotelcom@gmail.com')+
+    '&su='+encodeURIComponent('[FAXTRIX] '+subject)+'&body='+encodeURIComponent(body);
+  window.open(gmail,'_blank','noopener');
+  showToast('Gmail a été ouvert avec votre demande prête à être envoyée.','success');
 });
-if($('#supportWhatsappBtn')) $('#supportWhatsappBtn').addEventListener('click',function(){
-  window.open('https://wa.me/33652861159?text='+encodeURIComponent(buildSupportMessage()),'_blank','noopener');
-});
+refreshSupportIdentity();
+
 var servicesTabBtn = $('#servicesTabBtn');
 if (servicesTabBtn) servicesTabBtn.addEventListener('click', function () { $('#servicesSheet').classList.add('on'); });
 $$('[data-services-close]').forEach(function (el) { el.addEventListener('click', function () { $('#servicesSheet').classList.remove('on'); }); });
