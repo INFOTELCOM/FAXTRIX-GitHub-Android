@@ -37,7 +37,7 @@ function authErrorFr(msg) {
 /* ---------------- 1. Client Supabase ---------------- */
 var SUPABASE_URL = 'https://xtkcfhbsksoqbpnaciga.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0a2NmaGJza3NvcWJwbmFjaWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNDY4ODEsImV4cCI6MjEwNTkyMjg4MX0.Drrgf-6Axsdf3u1tHXhn3UoIhTC0Tu291ER0NAQQhTQ';
-var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storageKey: 'faxtrix-client-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 
 var state = {
   profile: { id: null, company_id: null, full_name: '', company_name: '', role: 'owner' },
