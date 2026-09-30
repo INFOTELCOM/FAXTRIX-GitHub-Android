@@ -1,0 +1,33 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/**"
+      - "supabase/config.toml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy TURN function
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.SUPABASE_PROJECT_REF != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy turn-ice-servers --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Configuration check
+        if: ${{ secrets.SUPABASE_ACCESS_TOKEN == '' || secrets.SUPABASE_PROJECT_REF == '' }}
+        run: |
+          echo "Supabase deploy secrets are not configured yet."
+          echo "Required: SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF."
+          exit 1
