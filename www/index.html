@@ -194,6 +194,9 @@
       <button data-panel="simulation">
         <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>Simulation
       </button>
+      <button data-panel="suivi">
+        <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l3-4 3 2 5-7"/></svg>Suivi & statistiques
+      </button>
       <button data-panel="rapports">
         <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M4 20h16"/></svg>Rapports
       </button>
@@ -309,6 +312,9 @@
           <button class="service-card" data-go="assistant">
             <span class="service-icon violet">✦</span><span><b>Assistant FAXTRIX</b><small>Analysez vos données et vos opérations</small></span><strong>›</strong>
           </button>
+          <button class="service-card" data-go="suivi">
+            <span class="service-icon green">▥</span><span><b>Suivi & statistiques</b><small>Activité réelle de l'entreprise</small></span><strong>›</strong>
+          </button>
           <button class="service-card" data-go="rapports">
             <span class="service-icon green">▥</span><span><b>Rapports & Analyses</b><small>Indicateurs et activité de l'entreprise</small></span><strong>›</strong>
           </button>
@@ -422,6 +428,39 @@
             <div><b id="simCost">+0%</b><span>COÛTS</span></div>
             <div><b id="simRisk">0%</b><span>RISQUE</span></div>
           </div>
+        </div>
+      </section>
+
+      <!-- ---------- SUIVI & STATISTIQUES ---------- -->
+      <section class="app-panel" data-panel="suivi">
+        <div class="app-card">
+          <div class="app-card-head">
+            <div><h3>Suivi de l'activité</h3><p style="font-size:12.5px;color:var(--text-2);margin-top:5px;">Statistiques calculées automatiquement à partir de l'activité réelle de votre entreprise.</p></div>
+            <span class="chip ok">LECTURE SEULE</span>
+          </div>
+          <div class="app-stats">
+            <div class="app-stat"><b id="suiviClients">0</b><span>CLIENTS CRÉÉS</span></div>
+            <div class="app-stat"><b id="suiviTickets">0</b><span>TICKETS CRÉÉS</span></div>
+            <div class="app-stat"><b id="suiviMissions">0</b><span>MISSIONS CRÉÉES</span></div>
+            <div class="app-stat"><b id="suiviActions">0</b><span>ACTIONS ENREGISTRÉES</span></div>
+          </div>
+        </div>
+        <div class="app-grid2" style="margin-top:18px;">
+          <div class="app-card">
+            <div class="app-card-head"><h3>Vue opérationnelle</h3></div>
+            <div class="app-list" id="suiviKpis"></div>
+          </div>
+          <div class="app-card">
+            <div class="app-card-head"><h3>Activité récente</h3></div>
+            <div class="app-list" id="suiviActivity"></div>
+          </div>
+        </div>
+        <div class="app-card" style="margin-top:18px;">
+          <div class="app-card-head"><h3>Évolution des actions</h3><span class="chip">14 derniers jours</span></div>
+          <svg id="suiviChart" viewBox="0 0 600 170" style="width:100%;height:170px;overflow:visible;"></svg>
+        </div>
+        <div class="app-card" style="margin-top:18px;">
+          <p style="font-size:12.5px;color:var(--text-2);line-height:1.7;margin:0;"><b>Suivi protégé.</b> Ces statistiques sont générées par FAXTRIX et ne peuvent pas être modifiées ou supprimées depuis l'espace entreprise. Pour une correction ou une suppression, contactez directement INFOTELCOM.</p>
         </div>
       </section>
 
