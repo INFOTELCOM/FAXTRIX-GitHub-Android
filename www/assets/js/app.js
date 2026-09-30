@@ -416,7 +416,9 @@ function ticketFormData() {
     tasks: $('#tkTasks').value.trim(),
     recommendations: $('#tkRecommendations').value.trim(),
     resolution: $('#tkResolution').value.trim(),
-    description: $('#tkDescription').value.trim()
+    description: $('#tkDescription').value.trim(),
+    work_started_at: $('#tkWorkStartedAt').dataset.value || null,
+    work_closed_at: $('#tkWorkClosedAt').dataset.value || null
   };
 }
 
@@ -436,8 +438,55 @@ function setTicketForm(t) {
   $('#tkRecommendations').value = t.recommendations || '';
   $('#tkResolution').value = t.resolution || '';
   $('#tkDescription').value = t.description || '';
+  renderTicketWorkSession(t);
 }
 
+function formatTicketDate(value) {
+  return value ? new Date(value).toLocaleString('fr-FR') : '—';
+}
+function renderTicketWorkSession(t) {
+  var started = t && t.work_started_at ? t.work_started_at : null;
+  var closed = t && t.work_closed_at ? t.work_closed_at : null;
+  var s = $('#tkWorkStartedAt'), e = $('#tkWorkClosedAt'), label = $('#tkWorkSessionLabel'), dur = $('#tkWorkDuration');
+  if (s) { s.textContent = formatTicketDate(started); s.dataset.value = started || ''; }
+  if (e) { e.textContent = formatTicketDate(closed); e.dataset.value = closed || ''; }
+  var startBtn=$('#tkStartSessionBtn'), endBtn=$('#tkEndSessionBtn');
+  if (startBtn) startBtn.disabled = !!started && !closed;
+  if (endBtn) endBtn.disabled = !started || !!closed;
+  if (!started) { if(label) label.textContent='Session de travail non démarrée'; if(dur) dur.textContent='Le temps de travail sera calculé automatiquement.'; }
+  else if (!closed) { if(label) label.textContent='Session de travail en cours'; if(dur) dur.textContent='Travail démarré le '+formatTicketDate(started)+'.'; }
+  else {
+    var secs=Number(t.work_duration_seconds||0), h=Math.floor(secs/3600), m=Math.floor((secs%3600)/60), sec=secs%60;
+    if(label) label.textContent='Session de travail terminée';
+    if(dur) dur.textContent='Durée : '+h+' h '+m+' min '+sec+' s · Fermée le '+formatTicketDate(closed);
+  }
+}
+async function startTicketWorkSession() {
+  var id=$('#tkId').value;
+  if(!id) return;
+  var now=new Date().toISOString();
+  var res=await sb.from('tickets').update({work_started_at:now,work_closed_at:null,work_duration_seconds:null,statut:'En cours'}).eq('id',id).select().single();
+  if(res.error){toast('Impossible de démarrer la session : '+res.error.message,'crit');return;}
+  var item=state.tickets.find(function(t){return t.id===id;}); if(item) Object.assign(item,res.data);
+  setTicketForm(res.data); renderTicketWorkSession(res.data);
+  ticketAutosaveStatus('✓ Session de travail démarrée automatiquement à '+new Date(now).toLocaleTimeString('fr-FR'),true);
+}
+async function endTicketWorkSession() {
+  var id=$('#tkId').value;
+  if(!id) return;
+  var started=$('#tkWorkStartedAt').dataset.value;
+  if(!started){toast('Aucune session de travail n’est démarrée.','crit');return;}
+  var now=new Date().toISOString();
+  var data=ticketFormData();
+  data.work_started_at=started; data.work_closed_at=now; data.statut='Fermé';
+  var res=await sb.from('tickets').update(Object.assign({},data,{closed_at:now})).eq('id',id).select().single();
+  if(res.error){toast('Impossible de fermer la session : '+res.error.message,'crit');return;}
+  var item=state.tickets.find(function(t){return t.id===id;}); if(item) Object.assign(item,res.data);
+  setTicketForm(res.data); renderTicketWorkSession(res.data);
+  ticketAutosaveStatus('✓ Session de travail fermée automatiquement à '+new Date(now).toLocaleTimeString('fr-FR'),true);
+  notify('Session terminée pour '+(res.data.numero||'le ticket'),'ok');
+  renderAll();
+}
 function ticketAutosaveStatus(message, ok) {
   var el = $('#tkAutosaveStatus');
   if (!el) return;
@@ -507,6 +556,9 @@ async function createTicketDraft() {
   setTicketForm(res.data);
   ticketAutosaveStatus('✓ Ticket créé et sauvegarde automatique activée.', true);
 }
+
+$('#tkStartSessionBtn').addEventListener('click', startTicketWorkSession);
+$('#tkEndSessionBtn').addEventListener('click', endTicketWorkSession);
 
 $('#tkAddBtn').addEventListener('click', async function () {
   openDrawer('tk', 'Ouverture d’un ticket');
