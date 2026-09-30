@@ -253,23 +253,27 @@ async function loadAll() {
   state.profile.role = profRes.data.role;
   state.profile.company_name = (profRes.data.companies && profRes.data.companies.name) || '';
 
+  var companyId = state.profile.company_id;
   var results = await Promise.all([
-    sb.from('clients').select('*').order('created_at', { ascending: false }),
-    sb.from('tickets').select('*').order('created_at', { ascending: false }),
-    sb.from('terrain_missions').select('*').order('created_at', { ascending: false }),
-    sb.from('team_members').select('*').order('created_at', { ascending: false }),
-    sb.from('automation_rules').select('*').order('created_at', { ascending: false }),
-    sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(40),
+    sb.from('clients').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
+    sb.from('tickets').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
+    sb.from('terrain_missions').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
+    sb.from('team_members').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
+    sb.from('automation_rules').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
+    sb.from('notifications').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(40),
     state.profile.role === 'owner'
       ? sb.from('invitations').select('*').order('created_at', { ascending: false })
       : Promise.resolve({ data: [] })
   ]);
-  state.crm = results[0].data || [];
-  state.tickets = results[1].data || [];
-  state.terrain = results[2].data || [];
-  state.equipes = results[3].data || [];
-  state.automations = results[4].data || [];
-  state.notifications = results[5].data || [];
+  var labels = ['clients','tickets','missions terrain','équipe','automatisations','notifications'];
+  results.forEach(function(r,i){ if(r.error) console.error('FAXTRIX '+labels[i]+' :', r.error); });
+  state.crm = results[0].error ? [] : (results[0].data || []);
+  state.tickets = results[1].error ? [] : (results[1].data || []);
+  state.terrain = results[2].error ? [] : (results[2].data || []);
+  state.equipes = results[3].error ? [] : (results[3].data || []);
+  state.automations = results[4].error ? [] : (results[4].data || []);
+  state.notifications = results[5].error ? [] : (results[5].data || []);
+  if(results[1].error) toast('Les tickets ne peuvent pas être chargés : '+results[1].error.message,'crit');
   state.invitations = results[6].data || [];
   var statsRes = await sb.rpc('my_company_statistics');
   state.statistics = statsRes.error ? null : (statsRes.data || null);
@@ -555,6 +559,7 @@ $('#tkForm').addEventListener('submit', async function(e){
   } else {
     var payload=withCompany(data);
     payload.opened_at=new Date().toISOString();
+    payload.opened_by=state.profile.id;
     var res=await sb.from('tickets').insert(payload).select().single();
     if(res.error){ $('#tkAutosaveStatus').textContent='Erreur : '+res.error.message; toast('Création du ticket impossible.','crit'); return; }
     state.tickets.unshift(res.data);
