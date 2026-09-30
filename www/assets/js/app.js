@@ -1210,6 +1210,78 @@ function animateKpis() {
 }
 
 /* ---------------- 21. Assistant (règles sur vos vraies données) ---------------- */
+const FAXTRIX_GLOSSARY = {
+  "ia":"IA signifie Intelligence Artificielle : des techniques permettant à un logiciel d'analyser des informations, produire des réponses ou automatiser certaines tâches.",
+  "ai":"AI signifie Artificial Intelligence, l'équivalent anglais de l'IA.",
+  "api":"API signifie Application Programming Interface : une interface qui permet à des logiciels ou services de communiquer entre eux.",
+  "crm":"CRM signifie Customer Relationship Management : gestion de la relation client. Dans FAXTRIX, il concerne notamment les clients et leurs informations.",
+  "sql":"SQL signifie Structured Query Language : langage utilisé pour interroger et manipuler des bases de données relationnelles.",
+  "rls":"RLS signifie Row Level Security : mécanisme de sécurité de PostgreSQL/Supabase qui contrôle quelles lignes de données un utilisateur peut lire ou modifier.",
+  "rpc":"RPC signifie Remote Procedure Call : appel d'une fonction exécutée côté serveur, par exemple une fonction PostgreSQL appelée depuis FAXTRIX.",
+  "uuid":"UUID signifie Universally Unique Identifier : identifiant unique utilisé notamment pour identifier des utilisateurs, conversations et enregistrements.",
+  "jwt":"JWT signifie JSON Web Token : format de jeton utilisé notamment pour transmettre des informations d'authentification de manière signée.",
+  "url":"URL signifie Uniform Resource Locator : l'adresse d'une ressource sur Internet.",
+  "ui":"UI signifie User Interface : l'interface visible avec laquelle l'utilisateur interagit.",
+  "ux":"UX signifie User Experience : l'expérience globale vécue par l'utilisateur lorsqu'il utilise une application.",
+  "db":"DB signifie Database, c'est-à-dire base de données.",
+  "bdd":"BDD signifie Base De Données.",
+  "http":"HTTP signifie HyperText Transfer Protocol : protocole utilisé pour les échanges entre navigateur et serveur.",
+  "https":"HTTPS est la version sécurisée de HTTP, avec chiffrement TLS des communications.",
+  "html":"HTML signifie HyperText Markup Language : langage de structure des pages web.",
+  "css":"CSS signifie Cascading Style Sheets : langage utilisé pour mettre en forme l'interface web.",
+  "js":"JS signifie JavaScript : langage qui fait fonctionner la logique et les interactions de l'application web.",
+  "javascript":"JavaScript est le langage utilisé par FAXTRIX côté interface web pour gérer les formulaires, données, interactions et appels aux services.",
+  "json":"JSON signifie JavaScript Object Notation : format texte couramment utilisé pour échanger des données entre applications.",
+  "cdn":"CDN signifie Content Delivery Network : réseau de serveurs permettant de distribuer rapidement des ressources comme des bibliothèques JavaScript.",
+  "rest":"REST désigne un style d'architecture très utilisé pour les API web, notamment avec des requêtes HTTP.",
+  "crud":"CRUD regroupe Create, Read, Update, Delete : les quatre opérations classiques de gestion des données.",
+  "auth":"Auth signifie Authentication : mécanisme permettant de vérifier l'identité d'un utilisateur.",
+  "rbac":"RBAC signifie Role-Based Access Control : contrôle des accès en fonction du rôle de l'utilisateur.",
+  "realtime":"Realtime signifie temps réel : les changements peuvent être transmis aux utilisateurs sans recharger manuellement la page.",
+  "webrtc":"WebRTC signifie Web Real-Time Communication : technologies web permettant notamment les appels audio et vidéo entre navigateurs.",
+  "turn":"TURN signifie Traversal Using Relays around NAT : serveur relais utilisé lorsqu'une connexion WebRTC directe entre deux appareils ne fonctionne pas.",
+  "stun":"STUN signifie Session Traversal Utilities for NAT : service permettant à un appareil de découvrir son adresse réseau publique pour faciliter une connexion WebRTC.",
+  "nat":"NAT signifie Network Address Translation : mécanisme qui traduit des adresses réseau privées et publiques.",
+  "tcp":"TCP signifie Transmission Control Protocol : protocole réseau orienté connexion et fiable.",
+  "udp":"UDP signifie User Datagram Protocol : protocole réseau plus léger, souvent utilisé lorsqu'une faible latence est importante.",
+  "tls":"TLS signifie Transport Layer Security : protocole de chiffrement utilisé notamment par HTTPS.",
+  "smtp":"SMTP signifie Simple Mail Transfer Protocol : protocole utilisé pour l'envoi des e-mails.",
+  "git":"Git est un système de gestion de versions qui permet de suivre les modifications du code.",
+  "github":"GitHub est une plateforme permettant notamment d'héberger des dépôts Git et de collaborer sur du code.",
+  "supabase":"Supabase est la plateforme utilisée par FAXTRIX pour plusieurs services backend, notamment PostgreSQL, authentification, stockage et temps réel.",
+  "postgresql":"PostgreSQL est le système de gestion de base de données relationnelle utilisé par Supabase.",
+  "storage":"Storage désigne le stockage de fichiers. FAXTRIX l'utilise notamment pour les pièces jointes et certaines photos.",
+  "sw":"SW signifie Service Worker : script web pouvant notamment gérer le cache et certaines fonctions en arrière-plan.",
+  "pwa":"PWA signifie Progressive Web App : application web pouvant offrir une expérience proche d'une application installée.",
+  "apk":"APK signifie Android Package Kit : format de paquet utilisé pour installer une application Android.",
+  "android":"Android est le système d'exploitation mobile utilisé pour la version Android de FAXTRIX.",
+  "frontend":"Frontend désigne la partie de l'application exécutée et visible côté utilisateur.",
+  "backend":"Backend désigne la partie serveur qui traite les données, la logique et les accès sécurisés.",
+  "web":"Web désigne l'ensemble des technologies et services permettant de consulter et utiliser des applications via Internet.",
+  "email":"E-mail signifie courrier électronique.",
+  "csv":"CSV signifie Comma-Separated Values : format de fichier tabulaire utilisé notamment pour exporter des données.",
+  "kpi":"KPI signifie Key Performance Indicator : indicateur clé utilisé pour suivre une activité ou une performance.",
+  "soc":"SOC signifie Security Operations Center : centre chargé de surveiller et traiter les événements de cybersécurité.",
+  "rgpd":"RGPD signifie Règlement Général sur la Protection des Données.",
+  "qa":"QA signifie Quality Assurance : ensemble des pratiques de vérification de la qualité d'un logiciel."
+};
+function aiGlossaryAnswer(q) {
+  var s=String(q||'').toLowerCase().trim();
+  var m=s.match(/(?:c[’']est quoi|c'est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(?:le|la|les|un|une|l[’'])?\s*([a-z0-9._-]+)/i);
+  if(!m) return null;
+  var key=m[1].toLowerCase().replace(/[’']/g,'');
+  if(FAXTRIX_GLOSSARY[key]) return '<strong>'+key.toUpperCase()+'</strong> — '+FAXTRIX_GLOSSARY[key];
+  var normalized=s.replace(/[’']/g,'');
+  for(var k in FAXTRIX_GLOSSARY){
+    if(normalized.indexOf(k)>=0) return '<strong>'+k.toUpperCase()+'</strong> — '+FAXTRIX_GLOSSARY[k];
+  }
+  return null;
+}
+function aiProgramTermsAnswer(q) {
+  var s=String(q||'').toLowerCase();
+  if(!/(mot.?cl[eé]|terme|acronyme|abr[eé]viation|vocabulaire|technolog|code|programme|dans faxtrix|dans le programme)/i.test(s)) return null;
+  return '<strong>Je peux expliquer le vocabulaire technique de FAXTRIX.</strong><br><br>Exemples : IA, API, CRM, SQL, RLS, RPC, UUID, JWT, URL, UI, UX, HTML, CSS, JavaScript, JSON, CRUD, WebRTC, TURN, STUN, Git, GitHub, Supabase, PostgreSQL, Realtime, PWA, APK, CSV, KPI, RGPD et QA.<br><br>Demandez par exemple : « Que signifie RLS ? », « C’est quoi WebRTC ? », « Explique-moi CRUD » ou « Quels sont les acronymes du programme ? »';
+}
 function aiAnswer(q) {
   q = q.toLowerCase();
   var open = state.tickets.filter(function (t) { return t.statut !== 'Résolu' && t.statut !== 'Fermé'; });
@@ -1242,7 +1314,7 @@ function aiAnswer(q) {
 }
 function aiSay(text, who) {
   var log = $('#aiLog'), m = document.createElement('div');
-  m.className = 'ai-msg ' + who; m.textContent = text; log.appendChild(m); log.scrollTop = log.scrollHeight; return m;
+  m.className = 'ai-msg ' + who; if (who === 'bot' && /<strong>|<br>|<a /i.test(text)) m.innerHTML = text; else m.textContent = text; log.appendChild(m); log.scrollTop = log.scrollHeight; return m;
 }
 function aiAsk(q) {
   if (!q.trim()) return;
