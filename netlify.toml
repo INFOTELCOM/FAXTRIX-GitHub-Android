@@ -1,0 +1,14 @@
+[build]
+  publish = "www"
+  command = ""
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# FAXTRIX is a static web application.
+# Publish the contents of www/ so index.html is at the site root.
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
