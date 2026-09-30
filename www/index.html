@@ -264,7 +264,7 @@
             <button data-go="rapports"><i>📊</i>Rapports</button>
             <button data-go="automatisation"><i>⚡</i>Autom.</button>
             <button data-go="parametres"><i>⚙️</i>Réglages</button>
-            <button data-go="plus-sheet"><i>➕</i>Plus</button>
+            <button data-plus-open><i>➕</i>Plus</button>
           </div>
         </div>
         <div class="app-card assist-cta">
@@ -634,8 +634,17 @@
   <div class="app-drawer-bg" data-plus-close></div>
   <div class="app-drawer-panel sheet-panel">
     <button class="app-drawer-close" data-plus-close>&times;</button>
-    <h3>Plus</h3>
+    <div class="app-card-head" style="margin-bottom:14px;">
+      <div><span class="eyebrow">ESPACE PERSONNEL</span><h3 style="margin:4px 0 0;">Plus</h3></div>
+      <span class="chip" id="plusRoleChip">Mon espace</span>
+    </div>
+    <div class="app-card" style="margin-bottom:14px;padding:14px;">
+      <b id="plusUserName">Votre espace FAXTRIX</b>
+      <span id="plusUserRole" style="display:block;color:var(--text-2);font-size:12px;margin-top:4px;">Accès et outils complémentaires</span>
+    </div>
     <div class="quick-grid">
+      <button data-go="tickets" data-plus-filter="mine"><i>🧾</i>Mes enregistrements</button>
+      <button data-go="equipes"><i>👥</i>Mon équipe</button>
       <button data-go="terrain"><i>📍</i>Terrain</button>
       <button data-go="automatisation"><i>⚡</i>Automatisation</button>
       <button data-go="intelligence"><i>🧠</i>Intelligence</button>
