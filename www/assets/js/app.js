@@ -401,22 +401,10 @@ function renderCrm() {
 }
 
 /* ---------------- 7. Tickets ---------------- */
-var tkFilter = 'Tous', tkQuery = '';
-$('#tkAddBtn').addEventListener('click', function () {
-  $('#tkForm').reset(); $('#tkId').value = '';
-  openDrawer('tk', 'Nouveau ticket');
-});
-$$('#tkTabs button').forEach(function (b) {
-  b.addEventListener('click', function () {
-    $$('#tkTabs button').forEach(function (x) { x.classList.remove('active'); });
-    b.classList.add('active'); tkFilter = b.getAttribute('data-filter'); renderTickets();
-  });
-});
-$('#tkSearch').addEventListener('input', function (e) { tkQuery = e.target.value.trim().toLowerCase(); renderTickets(); });
-$('#tkForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  var id = $('#tkId').value;
-  var data = {
+var tkFilter = 'Tous', tkQuery = '', tkAutosaveTimer = null, tkAutosaveBusy = false;
+
+function ticketFormData() {
+  return {
     titre: $('#tkTitre').value.trim(),
     client: $('#tkClient').value.trim(),
     categorie: $('#tkCategorie').value,
@@ -424,28 +412,18 @@ $('#tkForm').addEventListener('submit', async function (e) {
     statut: $('#tkStatut').value,
     assigned_to: $('#tkAssigned').value.trim(),
     due_at: $('#tkDue').value ? new Date($('#tkDue').value).toISOString() : null,
+    problem: $('#tkProblem').value.trim(),
+    tasks: $('#tkTasks').value.trim(),
+    recommendations: $('#tkRecommendations').value.trim(),
+    resolution: $('#tkResolution').value.trim(),
     description: $('#tkDescription').value.trim()
   };
-  if (id) {
-    var res = await sb.from('tickets').update(data).eq('id', id).select().single();
-    if (!res.error) { var item = state.tickets.find(function (t) { return t.id === id; }); if (item) Object.assign(item, res.data); }
-  } else {
-    var res2 = await sb.from('tickets').insert(withCompany(data)).select().single();
-    if (!res2.error) {
-      state.tickets.unshift(res2.data);
-      if (data.priorite === 'Haute') {
-        var rule = state.automations.find(function (a) { return a.live; });
-        notify('Automatisation : ticket « ' + data.titre + '» en priorité haute — ' + (rule ? rule.action_text.toLowerCase() : 'équipe notifiée') + '.', 'crit');
-      } else {
-        notify('Nouveau ticket : ' + data.titre, 'ok');
-      }
-    }
-  }
-  closeDrawer(); renderAll();
-});
-function editTk(id) {
-  var t = state.tickets.find(function (x) { return x.id === id; }); if (!t) return;
-  $('#tkId').value = t.id;
+}
+
+function setTicketForm(t) {
+  $('#tkId').value = t.id || '';
+  $('#tkNumero').textContent = t.numero || 'Attribution automatique';
+  $('#tkOpenedAt').textContent = t.opened_at ? new Date(t.opened_at).toLocaleString('fr-FR') : '—';
   $('#tkTitre').value = t.titre || '';
   $('#tkClient').value = t.client || '';
   $('#tkCategorie').value = t.categorie || 'Général';
@@ -453,8 +431,147 @@ function editTk(id) {
   $('#tkStatut').value = t.statut || 'Nouveau';
   $('#tkAssigned').value = t.assigned_to || '';
   $('#tkDue').value = t.due_at ? new Date(t.due_at).toISOString().slice(0,16) : '';
+  $('#tkProblem').value = t.problem || '';
+  $('#tkTasks').value = t.tasks || '';
+  $('#tkRecommendations').value = t.recommendations || '';
+  $('#tkResolution').value = t.resolution || '';
   $('#tkDescription').value = t.description || '';
-  openDrawer('tk', 'Modifier le ticket');
+}
+
+function ticketAutosaveStatus(message, ok) {
+  var el = $('#tkAutosaveStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = ok ? 'var(--success, #45d483)' : 'var(--slate-2)';
+}
+
+async function autosaveTicket() {
+  var id = $('#tkId').value;
+  if (!id || tkAutosaveBusy) return;
+  var data = ticketFormData();
+  if (!data.titre) data.titre = 'Nouveau ticket (brouillon)';
+  tkAutosaveBusy = true;
+  var res = await sb.from('tickets').update(Object.assign({}, data, { last_autosaved_at: new Date().toISOString() })).eq('id', id).select().single();
+  tkAutosaveBusy = false;
+  if (!res.error && res.data) {
+    var item = state.tickets.find(function(t){ return t.id === id; });
+    if (item) Object.assign(item, res.data);
+    setTicketForm(res.data);
+    ticketAutosaveStatus('✓ Sauvegardé automatiquement à ' + new Date().toLocaleTimeString('fr-FR'), true);
+  } else if (res.error) {
+    ticketAutosaveStatus('Sauvegarde automatique en attente de connexion…', false);
+  }
+}
+
+function scheduleTicketAutosave() {
+  clearTimeout(tkAutosaveTimer);
+  ticketAutosaveStatus('Modification détectée — sauvegarde…', false);
+  try {
+    localStorage.setItem('faxtrix-ticket-draft', JSON.stringify(ticketFormData()));
+  } catch(e) {}
+  tkAutosaveTimer = setTimeout(autosaveTicket, 900);
+}
+
+async function createTicketDraft() {
+  $('#tkForm').reset();
+  $('#tkId').value = '';
+  $('#tkNumero').textContent = 'Création…';
+  $('#tkOpenedAt').textContent = new Date().toLocaleString('fr-FR');
+  $('#tkStatut').value = 'Brouillon';
+  $('#tkTitre').value = 'Nouveau ticket (brouillon)';
+  ticketAutosaveStatus('Création automatique du ticket…', false);
+
+  var draft = {
+    titre: 'Nouveau ticket (brouillon)',
+    client: '',
+    categorie: 'Général',
+    priorite: 'Moyenne',
+    statut: 'Brouillon',
+    assigned_to: '',
+    due_at: null,
+    problem: '',
+    tasks: '',
+    recommendations: '',
+    resolution: '',
+    description: '',
+    opened_at: new Date().toISOString(),
+    last_autosaved_at: new Date().toISOString()
+  };
+  var res = await sb.from('tickets').insert(withCompany(draft)).select().single();
+  if (res.error) {
+    ticketAutosaveStatus('Le brouillon sera conservé localement puis synchronisé dès que possible.', false);
+    try { localStorage.setItem('faxtrix-ticket-draft', JSON.stringify(draft)); } catch(e) {}
+    return;
+  }
+  state.tickets.unshift(res.data);
+  setTicketForm(res.data);
+  ticketAutosaveStatus('✓ Ticket créé et sauvegarde automatique activée.', true);
+}
+
+$('#tkAddBtn').addEventListener('click', async function () {
+  openDrawer('tk', 'Ouverture d’un ticket');
+  await createTicketDraft();
+});
+
+$$('#tkTabs button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    $$('#tkTabs button').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active'); tkFilter = b.getAttribute('data-filter'); renderTickets();
+  });
+});
+$('#tkSearch').addEventListener('input', function (e) { tkQuery = e.target.value.trim().toLowerCase(); renderTickets(); });
+
+['tkTitre','tkClient','tkCategorie','tkPriorite','tkStatut','tkAssigned','tkDue','tkProblem','tkTasks','tkRecommendations','tkResolution','tkDescription'].forEach(function(id){
+  var el = $('#'+id);
+  if (el) el.addEventListener('input', scheduleTicketAutosave);
+  if (el) el.addEventListener('change', scheduleTicketAutosave);
+});
+
+$('#tkForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  clearTimeout(tkAutosaveTimer);
+  var id = $('#tkId').value;
+  var data = ticketFormData();
+  if (!data.titre || data.titre === 'Nouveau ticket (brouillon)') {
+    toast('Donnez un titre au ticket avant de l’enregistrer.', 'crit');
+    $('#tkTitre').focus();
+    return;
+  }
+  if (!id) {
+    var resNew = await sb.from('tickets').insert(withCompany(data)).select().single();
+    if (!resNew.error) {
+      state.tickets.unshift(resNew.data);
+      id = resNew.data.id;
+      setTicketForm(resNew.data);
+    } else { toast('Impossible de créer le ticket : ' + resNew.error.message, 'crit'); return; }
+  } else {
+    var res = await sb.from('tickets').update(data).eq('id', id).select().single();
+    if (res.error) { toast('Impossible d’enregistrer le ticket : ' + res.error.message, 'crit'); return; }
+    var item = state.tickets.find(function (t) { return t.id === id; });
+    if (item) Object.assign(item, res.data);
+    setTicketForm(res.data);
+  }
+  try { localStorage.removeItem('faxtrix-ticket-draft'); } catch(e) {}
+  if (data.statut === 'Résolu' || data.statut === 'Fermé') notify('Ticket ' + (data.statut === 'Fermé' ? 'fermé' : 'résolu') + ' : ' + data.titre, 'ok');
+  else if (data.priorite === 'Haute') {
+    var rule = state.automations.find(function (a) { return a.live; });
+    notify('Ticket « ' + data.titre + '» en priorité haute — ' + (rule ? rule.action_text.toLowerCase() : 'équipe notifiée') + '.', 'crit');
+  } else notify('Ticket enregistré : ' + data.titre, 'ok');
+  closeDrawer(); renderAll();
+});
+
+$('#tkCloseBtn').addEventListener('click', async function () {
+  if (!$('#tkId').value) return;
+  $('#tkStatut').value = 'Fermé';
+  await autosaveTicket();
+  $('#tkForm').requestSubmit();
+});
+
+function editTk(id) {
+  var t = state.tickets.find(function (x) { return x.id === id; }); if (!t) return;
+  setTicketForm(t);
+  openDrawer('tk', 'Ticket ' + (t.numero || ''));
+  ticketAutosaveStatus(t.last_autosaved_at ? 'Dernière sauvegarde : ' + new Date(t.last_autosaved_at).toLocaleString('fr-FR') : 'Sauvegarde automatique activée.', true);
 }
 async function deleteTk(id) {
   state.tickets = state.tickets.filter(function (x) { return x.id !== id; }); renderAll();
@@ -464,12 +581,14 @@ function renderTickets() {
   var list = $('#tkList');
   var rows = state.tickets.filter(function (t) {
     var okFilter = tkFilter === 'Tous' || t.statut === tkFilter;
-    var okQuery = !tkQuery || t.titre.toLowerCase().indexOf(tkQuery) !== -1;
+    var hay = ((t.numero || '') + ' ' + (t.titre || '') + ' ' + (t.client || '') + ' ' + (t.problem || '')).toLowerCase();
+    var okQuery = !tkQuery || hay.indexOf(tkQuery) !== -1;
     return okFilter && okQuery;
   });
   list.innerHTML = rows.length ? rows.map(function (t) {
     var pClass = t.priorite === 'Haute' ? 'crit' : (t.priorite === 'Moyenne' ? 'mid' : 'ok');
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(t.titre) + '</b><span>' + escapeHtml(t.client || '—') + ' · ' + escapeHtml(t.assigned_to || 'Non assigné') + ' · ' + timeAgo(t.created_at) + '</span></div>' +
+    var opened = t.opened_at ? new Date(t.opened_at).toLocaleString('fr-FR') : timeAgo(t.created_at);
+    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(t.numero || 'Ticket') + ' · ' + escapeHtml(t.titre) + '</b><span>' + escapeHtml(t.client || '—') + ' · Ouvert le ' + escapeHtml(opened) + ' · ' + escapeHtml(t.assigned_to || 'Non assigné') + '</span></div>' +
       '<span class="chip">' + escapeHtml(t.categorie || 'Général') + '</span><span class="chip ' + pClass + '">' + escapeHtml(t.priorite || '') + '</span><span class="chip">' + escapeHtml(t.statut || '') + '</span>' +
       '<div class="app-row-actions"><button class="row-btn" data-tk-edit="' + t.id + '">✎</button><button class="row-btn" data-tk-del="' + t.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun ticket pour ce filtre.</div>';
