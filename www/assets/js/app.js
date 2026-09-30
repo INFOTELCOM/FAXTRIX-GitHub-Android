@@ -614,6 +614,10 @@ $('#tkForm').addEventListener('submit', async function (e) {
 
 $('#tkCloseBtn').addEventListener('click', async function () {
   if (!$('#tkId').value) return;
+  if ($('#tkWorkStartedAt').dataset.value && !$('#tkWorkClosedAt').dataset.value) {
+    await endTicketWorkSession();
+    return;
+  }
   $('#tkStatut').value = 'Fermé';
   await autosaveTicket();
   $('#tkForm').requestSubmit();
