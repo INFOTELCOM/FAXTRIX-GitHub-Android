@@ -7,3 +7,6 @@ verify_jwt = true
 
 [functions.ai-research]
 verify_jwt = true
+
+[functions.ai-assistant]
+verify_jwt = true
