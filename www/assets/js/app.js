@@ -438,6 +438,7 @@ function setTicketForm(t) {
   $('#tkRecommendations').value = t.recommendations || '';
   $('#tkResolution').value = t.resolution || '';
   $('#tkDescription').value = t.description || '';
+  $('#tkLastModifiedAt').textContent = t.last_modified_at ? new Date(t.last_modified_at).toLocaleString('fr-FR') : '—';
   renderTicketWorkSession(t);
 }
 
@@ -646,7 +647,7 @@ function renderTickets() {
     var opened = t.opened_at ? new Date(t.opened_at).toLocaleString('fr-FR') : timeAgo(t.created_at);
     return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(t.numero || 'Ticket') + ' · ' + escapeHtml(t.titre) + '</b><span>' + escapeHtml(t.client || '—') + ' · Ouvert le ' + escapeHtml(opened) + ' · ' + escapeHtml(t.assigned_to || 'Non assigné') + '</span></div>' +
       '<span class="chip">' + escapeHtml(t.categorie || 'Général') + '</span><span class="chip ' + pClass + '">' + escapeHtml(t.priorite || '') + '</span><span class="chip">' + escapeHtml(t.statut || '') + '</span>' +
-      '<div class="app-row-actions"><button class="row-btn" data-tk-edit="' + t.id + '">✎</button><button class="row-btn" data-tk-del="' + t.id + '">🗑</button></div></div>';
+      '<div class="app-row-actions"><button class="row-btn" data-tk-edit="' + t.id + '" title="Modifier / corriger le ticket">✎</button><button class="row-btn" data-tk-del="' + t.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun ticket pour ce filtre.</div>';
 
   $('#tkTotal').textContent = state.tickets.length;
