@@ -1,0 +1,39 @@
+name: Publier une version FAXTRIX
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculer la version
+        id: v
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Enregistrer la version dans Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NOTES: ${{ github.event.release.body }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          FORCE: ${{ contains(github.event.release.body, '[force-update]') }}
+          URL: ${{ github.event.release.html_url }}
+        run: |
+          if [ "$PRERELEASE" = "true" ]; then echo "Pré-release ignorée."; exit 0; fi
+          for P in web android desktop; do
+            BODY=$(jq -n --arg p "$P" --arg v "${{ steps.v.outputs.version }}" --arg n "$NOTES" \
+                     --arg u "$URL" --argjson f "$FORCE" \
+              '{platform:$p, latest_version:$v, release_notes:$n, download_url:(if $p=="web" then null else $u end), force_update:$f, updated_at:(now|todate)}
+               + (if $f then {minimum_version:$v} else {} end)')
+            curl -sS --fail -X POST "$SUPABASE_URL/rest/v1/app_versions?on_conflict=platform" \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: resolution=merge-duplicates" \
+              -d "$BODY"
+            echo "→ $P mis à jour"
+          done

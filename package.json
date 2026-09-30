@@ -1,0 +1,20 @@
+{
+  "name": "faxtrix-android",
+  "version": "1.0.0",
+  "description": "FAXTRIX — application Android (CRM, tickets, terrain, équipes).",
+  "author": "INFOTELCOM",
+  "license": "UNLICENSED",
+  "scripts": {
+    "add:android": "cap add android",
+    "sync": "cap sync android",
+    "open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/android": "^6.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/assets": "^3.0.5"
+  }
+}

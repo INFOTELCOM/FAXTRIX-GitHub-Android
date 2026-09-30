@@ -1,0 +1,11 @@
+{
+  "appId": "com.infotelcom.faxtrix",
+  "appName": "FAXTRIX",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

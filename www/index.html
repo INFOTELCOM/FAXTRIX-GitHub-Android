@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAXTRIX — Application</title>
+<link rel="icon" href="assets/img/faxtrix-mark.webp">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#071A2F">
+<link rel="apple-touch-icon" href="assets/img/pwa/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FAXTRIX">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Martian+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<script>
+  (function(){
+    try {
+      if (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'android') {
+        document.documentElement.classList.add('faxtrix-native');
+      }
+    } catch(e) {}
+  })();
+</script>
+</head>
+<body class="app-body">
+<script>(function(){try{var m=localStorage.getItem('faxtrix-theme')||'auto';var dark=m==='dark'||(m==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(dark)document.body.setAttribute('data-theme','dark');}catch(e){}})();</script>
+
+<!-- ============ ÉCRAN DE CONNEXION ============ -->
+<div class="gate" id="gate">
+  <div class="gate-frame">
+
+    <div class="gate-brand">
+      <div class="gate-brand-inner">
+        <div class="gate-logo">
+          <img src="assets/img/faxtrix-mark.webp" alt="FAXTRIX">
+          <div><b>FAXTRIX</b><span>ESPACE CLIENT</span></div>
+        </div>
+        <div class="gate-orb-wrap"><div class="gate-orb"></div></div>
+        <h2 class="gate-brand-title">Votre entreprise.<br>Un système vivant.</h2>
+        <p class="gate-brand-lead">CRM, tickets, terrain, équipes et automatisation dans un seul espace — sécurisé, isolé par entreprise, accessible partout.</p>
+        <ul class="gate-brand-list">
+          <li><i>✓</i>Données isolées par organisation</li>
+          <li><i>✓</i>Une seule application, web, bureau et mobile</li>
+          <li><i>✓</i>Intelligence opérationnelle intégrée</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="gate-form-side">
+      <div class="gate-card">
+        <div class="gate-logo gate-logo-mobile">
+          <img src="assets/img/faxtrix-mark.webp" alt="FAXTRIX">
+          <div><b>FAXTRIX</b><span>ESPACE CLIENT</span></div>
+        </div>
+        <h1 id="gateTitle">Connexion</h1>
+        <p id="gateSub">Accédez à votre espace FAXTRIX.</p>
+
+        <div class="gate-tabs" id="gateTabs">
+          <button type="button" class="active" data-gate-tab="login">Se connecter</button>
+          <button type="button" data-gate-tab="signup">Créer une entreprise</button>
+        </div>
+
+        <form class="contact-form" id="gateForm">
+          <label>E-mail professionnel<input type="email" id="gateEmail" required placeholder="vous@entreprise.com" autocomplete="email"></label>
+          <label>Mot de passe<input type="password" id="gatePass" required minlength="6" placeholder="••••••••" autocomplete="current-password"></label>
+          <button type="submit" class="btn btn-primary" style="width:100%"><span>Se connecter</span></button>
+          <p class="modal-status" data-status></p>
+          <p class="gate-note" style="margin-top:10px;"><a href="#" id="forgotLink" style="color:var(--ion)">Mot de passe oublié ?</a></p>
+        </form>
+
+        <form class="contact-form" id="resetForm" hidden>
+          <label>E-mail professionnel<input type="email" id="resetEmail" required placeholder="vous@entreprise.com" autocomplete="email"></label>
+          <button type="submit" class="btn btn-primary" style="width:100%"><span>Recevoir le lien de réinitialisation</span></button>
+          <p class="modal-status" data-status></p>
+          <p class="gate-note" style="margin-top:10px;"><a href="#" id="backToLoginLink" style="color:var(--ion)">Retour à la connexion</a></p>
+        </form>
+
+        <form class="contact-form" id="newPassForm" hidden>
+          <p style="font-size:12.5px;color:var(--slate-2);margin-bottom:10px;">Choisissez votre nouveau mot de passe.</p>
+          <label>Nouveau mot de passe<input type="password" id="newPass" required minlength="6" placeholder="6 caractères minimum" autocomplete="new-password"></label>
+          <button type="submit" class="btn btn-primary" style="width:100%"><span>Valider</span></button>
+          <p class="modal-status" data-status></p>
+        </form>
+
+        <!-- ---------- INSCRIPTION EN 3 ÉTAPES ---------- -->
+        <form class="contact-form" id="signupForm" hidden novalidate>
+          <div class="gate-steps" id="gateSteps">
+            <div class="gate-step active" data-step-dot="1"><i>1</i><span>Vous</span></div>
+            <div class="gate-step-line"></div>
+            <div class="gate-step" data-step-dot="2"><i>2</i><span>Entreprise</span></div>
+            <div class="gate-step-line"></div>
+            <div class="gate-step" data-step-dot="3"><i>3</i><span>Sécurité</span></div>
+          </div>
+
+          <div class="gate-step-panel active" data-step="1">
+            <label>Nom complet<input type="text" id="suName" required placeholder="Albert Mayele" autocomplete="name"></label>
+            <label>E-mail professionnel<input type="email" id="suEmail" required placeholder="vous@entreprise.com" autocomplete="email"></label>
+            <label>Téléphone<input type="tel" id="suPhone" placeholder="+242 06 000 00 00" autocomplete="tel"></label>
+          </div>
+
+          <div class="gate-step-panel" data-step="2">
+            <label>Nom de l'entreprise<input type="text" id="suCompany" required placeholder="ABC Réseaux"></label>
+            <label>Secteur d'activité
+              <select id="suSector">
+                <option value="">Sélectionner…</option>
+                <option>IT & Télécoms</option>
+                <option>Cybersécurité</option>
+                <option>BTP & Construction</option>
+                <option>Commerce & Distribution</option>
+                <option>Finance & Assurance</option>
+                <option>Santé</option>
+                <option>Éducation & Formation</option>
+                <option>Industrie</option>
+                <option>Autre</option>
+              </select>
+            </label>
+            <label>Taille de l'équipe
+              <select id="suSize">
+                <option value="">Sélectionner…</option>
+                <option>1 – 5 personnes</option>
+                <option>6 – 20 personnes</option>
+                <option>21 – 50 personnes</option>
+                <option>51 – 200 personnes</option>
+                <option>200+ personnes</option>
+              </select>
+            </label>
+            <div class="gate-row2">
+              <label>Pays<input type="text" id="suCountry" placeholder="Congo-Brazzaville" value="Congo-Brazzaville"></label>
+              <label>Ville<input type="text" id="suCity" placeholder="Brazzaville"></label>
+            </div>
+          </div>
+
+          <div class="gate-step-panel" data-step="3">
+            <label>Mot de passe
+              <input type="password" id="suPass" required minlength="6" placeholder="6 caractères minimum" autocomplete="new-password">
+            </label>
+            <div class="pwd-meter" id="pwdMeter"><i></i><i></i><i></i><i></i></div>
+            <span class="pwd-meter-label" id="pwdMeterLabel">&nbsp;</span>
+            <label>Confirmer le mot de passe<input type="password" id="suPass2" required minlength="6" placeholder="Ressaisissez le mot de passe" autocomplete="new-password"></label>
+            <label class="gate-check"><input type="checkbox" id="suTerms" required><span>J'accepte les <a href="index.html#faq" target="_blank">conditions d'utilisation</a> et la politique de confidentialité de FAXTRIX.</span></label>
+          </div>
+
+          <div class="gate-step-actions">
+            <button type="button" class="btn btn-ghost" id="stepPrev" hidden><span>← Précédent</span></button>
+            <button type="button" class="btn btn-primary" id="stepNext" style="margin-left:auto"><span>Suivant →</span></button>
+            <button type="submit" class="btn btn-primary" id="stepSubmit" hidden style="margin-left:auto"><span>Créer mon espace FAXTRIX</span></button>
+          </div>
+          <p class="modal-status" data-status></p>
+        </form>
+
+        <div class="gate-banner" id="gateBanner">Vos identifiants sont vérifiés par un vrai service d'authentification (Supabase). Chaque entreprise a son propre espace : vos données ne sont visibles que par les membres de votre entreprise.</div>
+        <p class="inapp-banner" hidden style="font-size:11px;line-height:1.5;color:var(--slate-2);margin-top:12px;padding:9px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line-soft);"></p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ COQUILLE DE L'APPLICATION ============ -->
+<div class="app-shell app-hidden" id="appShell">
+
+  <aside class="app-side" id="appSide">
+    <div class="app-side-logo"><img src="assets/img/faxtrix-mark.webp" alt=""><b>FAXTRIX</b></div>
+    <a href="site.html" class="app-site-link" style="display:flex;align-items:center;gap:8px;padding:9px 12px;margin:0 12px 10px;border-radius:8px;font-size:12px;color:var(--slate);text-decoration:none;border:1px solid var(--line-soft);">🌐 Voir le site</a>
+    <button id="installBtn" hidden style="display:flex;align-items:center;gap:8px;padding:9px 12px;margin:0 12px 10px;border-radius:8px;font-size:12px;color:#fff;background:linear-gradient(90deg,var(--ion),var(--electric));border:0;cursor:pointer;font-weight:600;">⬇ Installer l'application</button>
+    <p id="inappBanner" hidden class="inapp-banner" style="font-size:11px;line-height:1.5;color:var(--slate-2);margin:0 12px 10px;padding:9px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line-soft);"></p>
+    <nav class="app-nav" id="appNav">
+      <button data-panel="accueil" class="active">
+        <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>Accueil
+      </button>
+      <button data-panel="crm">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="7" r="2.2"/><path d="M15 12.4c2.3.5 4 2.4 4 4.8"/></svg>CRM
+      </button>
+      <button data-panel="tickets">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16v3a2 2 0 000 4v3H4v-3a2 2 0 000-4V7z"/></svg>Tickets
+      </button>
+      <button data-panel="terrain">
+        <svg viewBox="0 0 24 24"><path d="M12 22s7-7.5 7-13a7 7 0 10-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.4"/></svg>Terrain
+      </button>
+      <button data-panel="equipes">
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="8" r="2.3"/><path d="M15 13.3c2.5.4 4.5 2.4 4.5 5.7"/></svg>Équipes
+      </button>
+      <button data-panel="automatisation">
+        <svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>Automatisation
+      </button>
+      <button data-panel="intelligence">
+        <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 6V3M15 6V3M9 21v-3M15 21v-3M6 9H3M6 15H3M21 9h-3M21 15h-3"/></svg>Intelligence
+      </button>
+      <button data-panel="simulation">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>Simulation
+      </button>
+      <button data-panel="rapports">
+        <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M4 20h16"/></svg>Rapports
+      </button>
+      <button data-panel="assistant">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Assistant IA
+      </button>
+      <button data-panel="securite">
+        <svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3z"/></svg>Sécurité
+      </button>
+      <button data-panel="parametres">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Paramètres
+      </button>
+    </nav>
+    <div class="app-side-foot">
+
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="app-top">
+      <div>
+        <h2 id="topTitle">Bonjour</h2>
+        <p class="sub" id="topSub">Voici un aperçu de votre espace FAXTRIX.</p>
+      </div>
+      <div class="app-top-actions">
+        <button class="app-icon-btn" id="searchBtn" aria-label="Recherche">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        </button>
+        <button class="app-icon-btn" id="notifBtn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 2 8 2 8H4s2-1 2-8"/><path d="M9 18a3 3 0 006 0"/></svg>
+          <span class="app-badge app-hidden" id="notifBadge">0</span>
+        </button>
+        <div class="app-user" id="userMenuBtn">
+          <div class="app-user-av" id="userAv">A</div>
+          <span id="userName">Albert</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-body-area">
+      <div class="demo-banner" id="companyBanner">
+        <span>●</span>
+        <div><b id="companyBannerName">—</b> — données réelles, synchronisées et visibles uniquement par votre entreprise.</div>
+      </div>
+
+      <!-- ---------- ACCUEIL ---------- -->
+      <section class="app-panel active" data-panel="accueil">
+        <div class="app-stats">
+          <div class="app-stat"><b id="statClients">0</b><span>CLIENTS CRM</span></div>
+          <div class="app-stat"><b id="statTickets">0</b><span>TICKETS OUVERTS</span></div>
+          <div class="app-stat"><b id="statEquipes">0</b><span>MEMBRES D'ÉQUIPE</span></div>
+          <div class="app-stat"><b id="statMissions">0</b><span>MISSIONS EN COURS</span></div>
+        </div>
+        <div class="app-card" style="margin-top:20px;">
+          <div class="app-card-head"><h3>Performance globale</h3><span class="chip ok">+12%</span></div>
+          <svg id="perfChart" viewBox="0 0 600 120" style="width:100%; height:110px; overflow:visible;"></svg>
+        </div>
+        <div class="app-card" style="margin-top:20px;">
+          <h3>Accès rapide</h3>
+          <div class="quick-grid">
+            <button data-go="crm"><i>👤</i>Clients</button>
+            <button data-go="tickets"><i>🎫</i>Tickets</button>
+            <button data-go="equipes"><i>🛠️</i>Équipes</button>
+            <button data-go="terrain"><i>📍</i>Terrain</button>
+            <button data-go="rapports"><i>📊</i>Rapports</button>
+            <button data-go="automatisation"><i>⚡</i>Autom.</button>
+            <button data-go="parametres"><i>⚙️</i>Réglages</button>
+            <button data-go="plus-sheet"><i>➕</i>Plus</button>
+          </div>
+        </div>
+        <div class="app-card assist-cta">
+          <div>
+            <h3 style="margin-bottom:4px;">Besoin d'assistance ?</h3>
+            <p style="font-size:12.5px; color:var(--text-2);">Notre équipe est disponible 24/7.</p>
+          </div>
+          <button class="btn btn-primary" data-go="tickets" data-open-ticket><span>Ouvrir un ticket →</span></button>
+        </div>
+        <div class="app-grid2" style="margin-top:20px;">
+          <div class="app-card">
+            <div class="app-card-head"><h3>Activité récente</h3></div>
+            <div class="app-list" id="activityList"></div>
+          </div>
+          <div class="app-card">
+            <div class="app-card-head"><h3>Répartition CRM</h3></div>
+            <div id="pipelineMini"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- SERVICES MOBILE ---------- -->
+      <section class="app-panel mobile-services-panel" data-panel="services">
+        <div class="mobile-service-hero">
+          <div>
+            <span class="eyebrow">FAXTRIX SERVICES</span>
+            <h3>Tout votre support, au même endroit.</h3>
+            <p>Choisissez un service pour retrouver vos demandes, interventions et équipes. Les informations sont synchronisées avec votre espace web.</p>
+          </div>
+          <div class="mobile-service-orb" aria-hidden="true"></div>
+        </div>
+        <div class="service-cards">
+          <button class="service-card" data-go="tickets">
+            <span class="service-icon orange">⌁</span><span><b>Support IT & Maintenance</b><small>Incidents, assistance et suivi des demandes</small></span><strong>›</strong>
+          </button>
+          <button class="service-card" data-go="terrain">
+            <span class="service-icon aqua">⌖</span><span><b>Interventions terrain</b><small>Missions, techniciens et comptes rendus</small></span><strong>›</strong>
+          </button>
+          <button class="service-card" data-go="crm">
+            <span class="service-icon blue">◈</span><span><b>Clients & CRM</b><small>Prospects, clients actifs et pipeline</small></span><strong>›</strong>
+          </button>
+          <button class="service-card" data-go="securite">
+            <span class="service-icon red">◉</span><span><b>Cybersécurité</b><small>Accès, sessions et protection du compte</small></span><strong>›</strong>
+          </button>
+          <button class="service-card" data-go="assistant">
+            <span class="service-icon violet">✦</span><span><b>Assistant FAXTRIX</b><small>Analysez vos données et vos opérations</small></span><strong>›</strong>
+          </button>
+          <button class="service-card" data-go="rapports">
+            <span class="service-icon green">▥</span><span><b>Rapports & Analyses</b><small>Indicateurs et activité de l'entreprise</small></span><strong>›</strong>
+          </button>
+        </div>
+        <div class="app-card mobile-service-footer">
+          <div><b>Besoin d'aide ?</b><span>Créez directement un ticket auprès de votre équipe.</span></div>
+          <button class="btn btn-primary" data-go="tickets" data-open-ticket><span>Créer un ticket</span></button>
+        </div>
+      </section>
+
+      <!-- ---------- CRM ---------- -->
+      <section class="app-panel" data-panel="crm">
+        <div class="app-stats">
+          <div class="app-stat"><b id="crmTotal">0</b><span>TOTAL CLIENTS</span></div>
+          <div class="app-stat"><b id="crmValeur">0 €</b><span>VALEUR PIPELINE</span></div>
+          <div class="app-stat"><b id="crmActifs">0</b><span>CLIENTS ACTIFS</span></div>
+          <div class="app-stat"><b id="crmNego">0</b><span>EN NÉGOCIATION</span></div>
+        </div>
+        <div class="app-toolbar">
+          <div class="app-tabs" id="crmTabs">
+            <button data-filter="Tous" class="active">Tous</button>
+            <button data-filter="Prospect">Prospects</button>
+            <button data-filter="Négociation">Négociation</button>
+            <button data-filter="Actif">Actifs</button>
+            <button data-filter="Attente">En attente</button>
+          </div>
+          <div class="app-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="crmSearch" placeholder="Rechercher un client…"></div>
+          <button class="btn btn-primary" id="crmAddBtn"><span>+ Nouveau client</span></button>
+        </div>
+        <div class="app-list" id="crmList"></div>
+      </section>
+
+      <!-- ---------- TICKETS ---------- -->
+      <section class="app-panel" data-panel="tickets">
+        <div class="app-stats">
+          <div class="app-stat"><b id="tkTotal">0</b><span>TICKETS TOTAL</span></div>
+          <div class="app-stat"><b id="tkOuverts">0</b><span>OUVERTS</span></div>
+          <div class="app-stat"><b id="tkHaute">0</b><span>PRIORITÉ HAUTE</span></div>
+          <div class="app-stat"><b id="tkResolus">0</b><span>RÉSOLUS</span></div>
+        </div>
+        <div class="app-toolbar">
+          <div class="app-tabs" id="tkTabs">
+            <button data-filter="Tous" class="active">Tous</button>
+            <button data-filter="Nouveau">Nouveaux</button>
+            <button data-filter="En cours">En cours</button>
+            <button data-filter="Résolu">Résolus</button>
+          </div>
+          <div class="app-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="tkSearch" placeholder="Rechercher un ticket…"></div>
+          <button class="btn btn-primary" id="tkAddBtn"><span>+ Nouveau ticket</span></button>
+        </div>
+        <div class="app-list" id="tkList"></div>
+      </section>
+
+      <!-- ---------- TERRAIN ---------- -->
+      <section class="app-panel" data-panel="terrain">
+        <div class="app-stats">
+          <div class="app-stat"><b id="teTotal">0</b><span>MISSIONS</span></div>
+          <div class="app-stat"><b id="teCours">0</b><span>EN COURS</span></div>
+          <div class="app-stat"><b id="tePlanif">0</b><span>PLANIFIÉES</span></div>
+          <div class="app-stat"><b id="teTerm">0</b><span>TERMINÉES</span></div>
+        </div>
+        <div class="app-toolbar">
+          <div style="flex:1"></div>
+          <button class="btn btn-primary" id="teAddBtn"><span>+ Nouvelle mission</span></button>
+        </div>
+        <div class="app-list" id="teList"></div>
+      </section>
+
+      <!-- ---------- ÉQUIPES ---------- -->
+      <section class="app-panel" data-panel="equipes">
+        <div class="app-toolbar">
+          <div style="flex:1"></div>
+          <button class="btn btn-primary" id="eqAddBtn"><span>+ Membre</span></button>
+        </div>
+        <div class="app-list" id="eqList"></div>
+      </section>
+
+      <!-- ---------- AUTOMATISATION ---------- -->
+      <section class="app-panel" data-panel="automatisation">
+        <div class="app-card" style="margin-bottom:22px;">
+          <p style="font-size:13px; color:var(--slate); line-height:1.7;">Une règle active se déclenche réellement dans cette démonstration : un ticket créé en priorité <b class="crit">Haute</b> ajoute automatiquement une notification et alerte l'équipe. Les autres règles sont illustratives — dans l'application finale, chacune déclencherait une vraie action côté serveur.</p>
+        </div>
+        <div class="app-toolbar"><div style="flex:1"></div><button class="btn btn-primary" id="autoAddBtn"><span>+ Créer une règle</span></button></div>
+        <div id="autoList"></div>
+      </section>
+
+      <!-- ---------- INTELLIGENCE (Business Brain) ---------- -->
+      <section class="app-panel" data-panel="intelligence">
+        <div class="app-card" style="margin-bottom:22px;">
+          <div class="app-card-head"><h3>Business Brain</h3><span class="chip mid">Calculé en direct</span></div>
+          <p style="font-size:13px; color:var(--slate); margin-bottom:16px;">Ces indicateurs sont recalculés à partir de vos données réelles de démonstration (CRM, tickets, terrain, équipes) — pas d'aléatoire, pas de modèle d'IA distant.</p>
+          <div class="app-list" id="brainList"></div>
+        </div>
+      </section>
+
+      <!-- ---------- SIMULATION (Decision Simulator) ---------- -->
+      <section class="app-panel" data-panel="simulation">
+        <div class="app-card">
+          <div class="app-card-head"><h3>Decision Simulator</h3><span class="chip mid">Formule simplifiée</span></div>
+          <p style="font-size:13px; color:var(--slate); margin-bottom:24px;">Déplacez les curseurs pour estimer l'effet de deux décisions courantes. Calcul linéaire simple à but illustratif — pas un modèle prédictif réel.</p>
+          <div class="sim-slider">
+            <div class="sl-head"><span>Techniciens supplémentaires</span><b id="simTechVal">0</b></div>
+            <input type="range" id="simTech" min="0" max="6" value="0">
+          </div>
+          <div class="sim-slider">
+            <div class="sl-head"><span>Réduction du délai d'intervention</span><b id="simDelayVal">0%</b></div>
+            <input type="range" id="simDelay" min="0" max="50" value="0">
+          </div>
+          <div class="sim-result">
+            <div><b id="simProd">+0%</b><span>PRODUCTIVITÉ</span></div>
+            <div><b id="simCost">+0%</b><span>COÛTS</span></div>
+            <div><b id="simRisk">0%</b><span>RISQUE</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- RAPPORTS ---------- -->
+      <section class="app-panel" data-panel="rapports">
+        <div class="app-toolbar">
+          <div class="app-tabs" id="rapportsRange">
+            <button class="active" data-range="7">7 jours</button>
+            <button data-range="30">30 jours</button>
+            <button data-range="90">90 jours</button>
+          </div>
+        </div>
+        <div class="app-stats">
+          <div class="app-stat"><b id="repTickets">0</b><span>TICKETS TRAITÉS</span></div>
+          <div class="app-stat"><b id="repClients">0</b><span>CLIENTS</span></div>
+          <div class="app-stat"><b id="repValeur">0 €</b><span>PIPELINE CRM</span></div>
+          <div class="app-stat"><b id="repMissions">0</b><span>MISSIONS TERRAIN</span></div>
+        </div>
+        <div class="app-card">
+          <div class="app-card-head"><h3>Tickets créés par jour</h3></div>
+          <svg id="repChart" viewBox="0 0 600 160" style="width:100%; height:160px; overflow:visible;"></svg>
+        </div>
+      </section>
+
+      <!-- ---------- ASSISTANT IA ---------- -->
+      <section class="app-panel" data-panel="assistant">
+        <div class="app-card" style="max-width:640px; margin:0 auto;">
+          <div style="display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:22px;">
+            <div class="ai-orb"></div>
+            <h3 style="margin-top:16px;">Assistant FAXTRIX</h3>
+            <p style="font-size:12.5px; color:var(--text-2); max-width:38ch;">Répond à partir de vos données réelles (tickets, clients, équipe) — pas un modèle de langage général.</p>
+          </div>
+          <div id="aiLog" style="display:flex; flex-direction:column; gap:10px; max-height:280px; overflow-y:auto; margin-bottom:16px;"></div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;" id="aiSuggestions">
+            <button type="button" class="app-tabs" style="padding:7px 14px; border-radius:100px; font-size:12px; cursor:pointer; border:1px solid var(--hairline); background:var(--glass-1); color:var(--text-2);" data-ai-suggest="Résume mes tickets ouverts">Résume mes tickets ouverts</button>
+            <button type="button" class="app-tabs" style="padding:7px 14px; border-radius:100px; font-size:12px; cursor:pointer; border:1px solid var(--hairline); background:var(--glass-1); color:var(--text-2);" data-ai-suggest="Quel technicien est disponible ?">Quel technicien est disponible ?</button>
+            <button type="button" class="app-tabs" style="padding:7px 14px; border-radius:100px; font-size:12px; cursor:pointer; border:1px solid var(--hairline); background:var(--glass-1); color:var(--text-2);" data-ai-suggest="Montre-moi le pipeline CRM">Montre-moi le pipeline CRM</button>
+          </div>
+          <form class="contact-form" id="aiForm" style="display:flex; flex-direction:row; gap:8px; background:none; border:0; padding:0;">
+            <input type="text" id="aiInput" placeholder="Décrivez votre problème..." style="flex:1;">
+            <button type="submit" class="btn btn-primary" style="padding:0 22px;"><span>Envoyer</span></button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ---------- SÉCURITÉ ---------- -->
+      <section class="app-panel" data-panel="securite">
+        <div class="app-card" style="max-width:480px;">
+          <h3>Sécurité & accès</h3>
+          <form class="contact-form" id="pwdForm">
+            <label>Nouveau mot de passe<input type="password" id="pwdNew" minlength="6" placeholder="6 caractères minimum" required></label>
+            <button type="submit" class="btn btn-ghost"><span>Changer le mot de passe</span></button>
+            <p class="modal-status" data-status></p>
+          </form>
+          <div class="profile-row"><span>Authentification à deux facteurs</span><span class="chip">Bientôt disponible</span></div>
+          <div class="profile-row"><span>Biométrie</span><span class="chip">Bientôt disponible</span></div>
+          <div class="profile-row"><span>Sessions actives</span><button class="btn btn-ghost" id="logoutAllBtn"><span>Déconnecter tous les appareils</span></button></div>
+        </div>
+      </section>
+
+      <!-- ---------- PARAMÈTRES ---------- -->
+      <section class="app-panel" data-panel="parametres">
+        <div class="app-card" style="max-width:480px;">
+          <h3>Profil</h3>
+          <form class="contact-form" id="profileForm">
+            <label>Nom affiché<input type="text" id="profName" placeholder="Albert"></label>
+            <button type="submit" class="btn btn-ghost"><span>Enregistrer</span></button>
+          </form>
+          <div class="profile-row"><span>Entreprise</span><span id="profCompanyName">—</span></div>
+          <div class="profile-row" style="align-items:flex-start;">
+            <span>Thème</span>
+            <div class="theme-switch" id="themeSwitch">
+              <button type="button" data-theme-choice="light">☀️ Clair</button>
+              <button type="button" data-theme-choice="dark">🌙 Sombre</button>
+              <button type="button" data-theme-choice="auto">⚙️ Auto</button>
+            </div>
+          </div>
+          <div class="profile-row"><span>Session</span><button class="btn btn-ghost" id="logoutBtn"><span>Se déconnecter</span></button></div>
+        </div>
+
+        <div class="app-card" style="max-width:480px; margin-top:20px;" id="teamCard" hidden>
+          <h3>Équipe</h3>
+          <p style="font-size:12.5px; color:var(--slate-2); margin-bottom:14px;">Invitez un collègue par e-mail : à son inscription avec cette adresse, il rejoint automatiquement votre entreprise.</p>
+          <form class="contact-form" id="inviteForm">
+            <label>E-mail à inviter<input type="email" id="inviteEmail" required placeholder="collegue@entreprise.com"></label>
+            <button type="submit" class="btn btn-ghost"><span>Envoyer l'invitation</span></button>
+            <p class="modal-status" data-status></p>
+          </form>
+          <div id="inviteList" style="margin-top:14px;"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ NAVIGATION MOBILE (barre basse) ============ -->
+<nav class="mobile-tabbar mobile-tabbar-native" id="mobileTabbarNative" aria-hidden="true">
+  <button data-panel="accueil" class="active">
+    <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span>Accueil</span>
+  </button>
+  <button data-panel="services">
+    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg><span>Services</span>
+  </button>
+  <button data-panel="tickets">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16v3a2 2 0 000 4v3H4v-3a2 2 0 000-4V7z"/></svg><span>Tickets</span>
+  </button>
+  <button data-panel="equipes">
+    <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="8" r="2.3"/><path d="M15 13.3c2.5.4 4.5 2.4 4.5 5.7"/></svg><span>Équipe</span>
+  </button>
+  <button data-panel="parametres">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>Profil</span>
+  </button>
+</nav>
+
+<!-- ============ NAVIGATION MOBILE WEB (inchangée) ============ -->
+<nav class="mobile-tabbar mobile-tabbar-web" id="mobileTabbar" aria-hidden="true">
+  <button data-panel="accueil" class="active">
+    <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span>Accueil</span>
+  </button>
+  <button data-panel="crm">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="7" r="2.2"/><path d="M15 12.4c2.3.5 4 2.4 4 4.8"/></svg><span>Clients</span>
+  </button>
+  <button data-panel="tickets">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16v3a2 2 0 000 4v3H4v-3a2 2 0 000-4V7z"/></svg><span>Tickets</span>
+  </button>
+  <button data-panel="equipes">
+    <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="8" r="2.3"/><path d="M15 13.3c2.5.4 4.5 2.4 4.5 5.7"/></svg><span>Équipe</span>
+  </button>
+  <button id="moreTabBtn" data-plus-open>
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Plus</span>
+  </button>
+</nav>
+
+<!-- ============ TIROIR PLUS WEB (inchangé) ============ -->
+<div class="app-drawer" id="plusSheet">
+  <div class="app-drawer-bg" data-plus-close></div>
+  <div class="app-drawer-panel sheet-panel">
+    <button class="app-drawer-close" data-plus-close>&times;</button>
+    <h3>Plus</h3>
+    <div class="quick-grid">
+      <button data-go="terrain"><i>📍</i>Terrain</button>
+      <button data-go="automatisation"><i>⚡</i>Automatisation</button>
+      <button data-go="intelligence"><i>🧠</i>Intelligence</button>
+      <button data-go="simulation"><i>🎛️</i>Simulation</button>
+      <button data-go="rapports"><i>📊</i>Rapports</button>
+      <button data-go="assistant"><i>🟠</i>Assistant IA</button>
+      <button data-go="securite"><i>🛡️</i>Sécurité</button>
+      <button data-go="parametres"><i>⚙️</i>Paramètres</button>
+    </div>
+    <button class="btn btn-ghost" id="plusLogoutBtn" style="width:100%; margin-top:18px;"><span>Se déconnecter</span></button>
+  </div>
+</div>
+
+<!-- ============ SERVICES MOBILE ============ -->
+<div class="app-drawer" id="servicesSheet">
+  <div class="app-drawer-bg" data-services-close></div>
+  <div class="app-drawer-panel sheet-panel">
+    <button class="app-drawer-close" data-services-close>&times;</button>
+    <h3>Services FAXTRIX</h3>
+    <p class="mobile-sheet-sub">Accédez rapidement aux modules de votre espace. Les données restent les mêmes que sur le web.</p>
+    <div class="quick-grid service-grid">
+      <button data-go="crm"><i>👥</i>Clients</button>
+      <button data-go="tickets"><i>🎫</i>Support IT</button>
+      <button data-go="terrain"><i>📍</i>Interventions</button>
+      <button data-go="automatisation"><i>⚡</i>Automatisation</button>
+      <button data-go="intelligence"><i>🧠</i>Intelligence</button>
+      <button data-go="rapports"><i>📊</i>Rapports</button>
+      <button data-go="assistant"><i>✦</i>Assistant IA</button>
+      <button data-go="securite"><i>🛡️</i>Cybersécurité</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TIROIR (ajout / édition) ============ -->
+<div class="app-drawer" id="drawer">
+  <div class="app-drawer-bg" data-drawer-close></div>
+  <div class="app-drawer-panel">
+    <button class="app-drawer-close" data-drawer-close>&times;</button>
+    <h3 id="drawerTitle">Nouveau</h3>
+
+    <form class="contact-form" id="crmForm" data-kind="crm">
+      <input type="hidden" id="crmId">
+      <label>Nom du client<input type="text" id="crmNom" required placeholder="ABC Réseaux"></label>
+      <label>Statut
+        <select id="crmStatut"><option>Prospect</option><option>Négociation</option><option>Actif</option><option>Attente</option></select>
+      </label>
+      <label>Valeur estimée (€)<input type="number" id="crmValeurInput" min="0" step="100" placeholder="12000"></label>
+      <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
+    </form>
+
+    <form class="contact-form" id="tkForm" data-kind="tk" hidden>
+      <input type="hidden" id="tkId">
+      <label>Titre du ticket<input type="text" id="tkTitre" required placeholder="Problème réseau"></label>
+      <label>Client concerné<input type="text" id="tkClient" placeholder="ABC Réseaux"></label>
+      <label>Priorité<select id="tkPriorite"><option>Basse</option><option selected>Moyenne</option><option>Haute</option></select></label>
+      <label>Statut<select id="tkStatut"><option>Nouveau</option><option>En cours</option><option>Résolu</option><option>Fermé</option></select></label>
+      <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
+    </form>
+
+    <form class="contact-form" id="teForm" data-kind="te" hidden>
+      <input type="hidden" id="teId">
+      <label>Technicien<input type="text" id="teTech" required placeholder="Sarah K."></label>
+      <label>Client / site<input type="text" id="teClient" placeholder="ABC Réseaux — Agence centre-ville"></label>
+      <label>Statut<select id="teStatut"><option>Planifiée</option><option>En cours</option><option>Terminée</option></select></label>
+      <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
+    </form>
+
+    <form class="contact-form" id="eqForm" data-kind="eq" hidden>
+      <input type="hidden" id="eqId">
+      <label>Nom<input type="text" id="eqNom" required placeholder="Sarah K."></label>
+      <label>Rôle<input type="text" id="eqRole" placeholder="Technicienne terrain"></label>
+      <label>Statut<select id="eqStatut"><option>Disponible</option><option>En ligne</option><option>En mission</option></select></label>
+      <label>Charge actuelle (%)<input type="number" id="eqCharge" min="0" max="100" value="50"></label>
+      <label>E-mail<input type="email" id="eqEmail" placeholder="nom@entreprise.com"></label>
+      <label>Téléphone<input type="tel" id="eqTel" placeholder="+242 …"></label>
+      <label>Spécialités<input type="text" id="eqSpec" placeholder="Réseaux, Serveurs, Wi-Fi"></label>
+      <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
+    </form>
+
+    <form class="contact-form" id="autoForm" data-kind="auto" hidden>
+      <label>Déclencheur (SI)<input type="text" id="autoTrigger" required placeholder="Nouveau ticket priorité haute"></label>
+      <label>Action (ALORS)<input type="text" id="autoAction" required placeholder="Notifier le manager"></label>
+      <button type="submit" class="btn btn-primary"><span>Ajouter la règle</span></button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MENU NOTIFICATIONS / PROFIL ============ -->
+<div class="app-drawer" id="notifDrawer">
+  <div class="app-drawer-bg" data-drawer-close-notif></div>
+  <div class="app-drawer-panel" style="width:min(360px,92vw)">
+    <button class="app-drawer-close" data-drawer-close-notif>&times;</button>
+    <h3>Notifications</h3>
+    <div class="app-list" id="notifList"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ============ RECHERCHE GLOBALE ============ -->
+<div class="app-drawer" id="searchModal">
+  <div class="app-drawer-bg" data-search-close></div>
+  <div class="app-drawer-panel" style="width:min(480px,92vw)">
+    <button class="app-drawer-close" data-search-close>&times;</button>
+    <h3>Recherche globale</h3>
+    <div class="app-search" style="margin-bottom:16px;">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input type="text" id="searchInput" placeholder="Tickets, clients, équipe…" autocomplete="off">
+    </div>
+    <div id="searchResults"></div>
+  </div>
+</div>
+
+<!-- ============ MISE À JOUR DISPONIBLE ============ -->
+<div class="app-drawer" id="updateModal">
+  <div class="app-drawer-bg"></div>
+  <div class="app-drawer-panel" style="width:min(380px,92vw); text-align:center;">
+    <div class="ai-orb" style="width:56px; height:56px; margin:0 auto 18px;"></div>
+    <h3 id="updateTitle">Une nouvelle version est prête</h3>
+    <p id="updateBody" style="font-size:13px; color:var(--text-2); margin-bottom:20px; line-height:1.6;"></p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn btn-ghost" id="updateLaterBtn"><span>Plus tard</span></button>
+      <a class="btn btn-primary" id="updateNowBtn" target="_blank" rel="noopener"><span>Mettre à jour →</span></a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="assets/js/app.js" defer></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
+</body>
+</html>

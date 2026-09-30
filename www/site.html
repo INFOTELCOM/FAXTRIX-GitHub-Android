@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAXTRIX — Votre entreprise. Un système vivant.</title>
+<meta name="description" content="FAXTRIX réunit le CRM, le terrain, les équipes et les automatisations d'une entreprise dans une seule plateforme, augmentée par une couche d'intelligence opérationnelle. Le 3ᵉ produit d'INFOTELCOM.">
+<meta name="theme-color" content="#04060F">
+<link rel="icon" href="assets/img/faxtrix-mark.webp">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/pwa/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FAXTRIX">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Martian+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<script>(function(){try{var m=localStorage.getItem('faxtrix-theme')||'auto';var dark=m==='dark'||(m==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',dark?'dark':'light');}catch(e){}})();</script>
+
+<!-- ============ LOADER ============ -->
+<div class="loader" id="loader">
+  <div class="loader-inner">
+    <img src="assets/img/faxtrix-mark.webp" alt="" class="loader-mark">
+    <div class="loader-bar"><i id="loaderFill"></i></div>
+    <div class="loader-meta"><span>Initialisation du système</span><span id="loaderPct">0%</span></div>
+  </div>
+</div>
+
+<div class="cursor" id="cursor"><span></span></div>
+<canvas id="bg-canvas"></canvas>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<!-- ============ HEADER ============ -->
+<header id="header">
+  <div class="nav-inner">
+    <a href="#hero" class="brand" data-magnet>
+      <span class="brand-mark"><img src="assets/img/faxtrix-mark.webp" alt="FAXTRIX"></span>
+      <span class="brand-text">
+        <b>FAXTRIX</b>
+        <i>par INFOTELCOM</i>
+      </span>
+    </a>
+    <nav class="navlinks" id="navlinks">
+      <div class="nav-item">
+        <button class="nav-trigger" id="megaBtn" aria-expanded="false">Plateforme
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <a href="#parcours" data-nav>Parcours</a>
+      <a href="#galerie" data-nav>Galerie</a>
+      <a href="#demo" data-nav>Démo</a>
+      <a href="#tarifs" data-nav>Tarifs</a>
+      <a href="#faq" data-nav>FAQ</a>
+      <a href="index.html" class="nav-login" data-magnet>Se connecter</a>
+      <a href="#" class="nav-signup" data-modal-open="signup" data-magnet>S'inscrire</a>
+    </nav>
+    <button class="nav-search" id="cmdkBtn" aria-label="Rechercher">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <kbd>⌘K</kbd>
+    </button>
+    <button class="nav-search" id="siteThemeBtn" aria-label="Changer de thème" title="Changer de thème">
+      <span id="siteThemeIcon">☀️</span>
+    </button>
+    <a href="#cta" class="nav-cta" data-magnet>Demander une démo</a>
+    <button class="burger" id="burger" aria-label="Ouvrir le menu"><i></i><i></i></button>
+  </div>
+  <div class="scroll-progress"><i id="scrollProgress"></i></div>
+</header>
+
+
+<!-- ============ MÉGA-MENU ============ -->
+<div class="mega" id="mega" aria-hidden="true">
+  <div class="mega-inner">
+    <div class="mega-col">
+      <h6>Gestion</h6>
+      <a href="#plateforme"><b>Organisation</b><span>Départements, agences, rôles, permissions</span></a>
+      <a href="#plateforme"><b>Tickets &amp; SLA</b><span>Priorité, escalade, historique</span></a>
+      <a href="#plateforme"><b>Projets &amp; planning</b><span>Kanban, calendrier, Gantt</span></a>
+      <a href="#plateforme"><b>Documents</b><span>Contrats, factures, procédures</span></a>
+    </div>
+    <div class="mega-col">
+      <h6>Opérations</h6>
+      <a href="#terrain"><b>Field service</b><span>Mission, rapport, signature client</span></a>
+      <a href="#parcours"><b>Automatisations</b><span>Règles, déclencheurs, escalades</span></a>
+      <a href="#galerie"><b>Communication</b><span>Canaux d'équipe et mentions</span></a>
+      <a href="#securite"><b>Sécurité</b><span>Cloisonnement et journal d'accès</span></a>
+    </div>
+    <div class="mega-col">
+      <h6>Intelligence</h6>
+      <a href="#intelligence"><b>Business Brain</b><span>L'état réel de l'entreprise</span></a>
+      <a href="#intelligence"><b>Early Warning</b><span>Les signaux faibles, tôt</span></a>
+      <a href="#intelligence"><b>Process Mining</b><span>Le processus réel contre le théorique</span></a>
+      <a href="#intelligence"><b>Decision Simulator</b><span>Tester avant de trancher</span></a>
+    </div>
+    <a class="mega-feature" href="#demo">
+      <img src="assets/img/atmos-helix.webp" alt="">
+      <span class="mf-body">
+        <b>Essayez la démo interactive</b>
+        <i>Quatre modules, données simulées en direct, sans inscription.</i>
+      </span>
+    </a>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-halo"></div>
+  <div class="wrap hero-wrap">
+    <div class="hero-content">
+      <p class="hero-kicker" data-boot="1"><span class="pulse-dot"></span>Le 3<sup>e</sup>&nbsp;produit d'INFOTELCOM</p>
+      <h1 class="hero-title">
+        <span class="line"><span class="w">Votre</span> <span class="w">entreprise.</span></span>
+        <span class="line"><span class="w chrome">Un</span> <span class="w chrome">système</span> <span class="w chrome">vivant.</span></span>
+      </h1>
+      <p class="hero-lead" data-boot="2">FAXTRIX réunit le CRM, le terrain, les équipes et les automatisations d'une entreprise dans une seule plateforme — puis y ajoute une couche d'intelligence qui observe, alerte et aide à décider.</p>
+      <div class="hero-cta" data-boot="3">
+        <a href="index.html" class="btn btn-primary" data-magnet><span>Entrer dans FAXTRIX</span></a>
+        <a href="#plateforme" class="btn btn-ghost" data-magnet><span>Voir la plateforme</span></a>
+      </div>
+      <div class="hero-stats" data-boot="4">
+        <div><b>Multi-entreprises</b><span>Données isolées par organisation</span></div>
+        <div><b>Terrain + bureau</b><span>Une seule application</span></div>
+        <div><b>Niveau 3</b><span>Intelligence opérationnelle intégrée</span></div>
+      </div>
+    </div>
+    <div class="hero-visual" data-boot="3">
+      <div class="hero-mark" id="heroMark">
+        <img src="assets/img/faxtrix-mark.webp" alt="">
+      </div>
+      <div class="hero-card hero-card-a">
+        <span class="hc-label">Intervention active</span>
+        <span class="hc-value mono" id="heroTimer">01:42:08</span>
+        <div class="hc-bar"><i></i></div>
+        <span class="hc-sub">Équipe A — ABC Réseaux</span>
+      </div>
+      <div class="hero-card hero-card-b">
+        <span class="hc-label">Business Brain</span>
+        <div class="hc-rows">
+          <span>Critiques<b class="crit">3</b></span>
+          <span>Risques<b class="amber">11</b></span>
+          <span>Opportunités<b class="ion">27</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>CRM</span><em></em><span>Field service management</span><em></em><span>Tickets &amp; SLA</span><em></em>
+      <span>Projets &amp; Gantt</span><em></em><span>Automatisations</span><em></em><span>Business Brain</span><em></em>
+      <span>Early warning</span><em></em><span>Process mining</span><em></em><span>Decision simulator</span><em></em>
+      <span>CRM</span><em></em><span>Field service management</span><em></em><span>Tickets &amp; SLA</span><em></em>
+      <span>Projets &amp; Gantt</span><em></em><span>Automatisations</span><em></em><span>Business Brain</span><em></em>
+      <span>Early warning</span><em></em><span>Process mining</span><em></em><span>Decision simulator</span><em></em>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MARQUEE GALERIE ============ -->
+<section class="strip" aria-label="Univers FAXTRIX">
+  <div class="strip-row">
+    <div class="strip-track">
+      <figure class="shot"><img src="assets/img/atmos-core.webp" alt="Noyau de données FAXTRIX"><figcaption>Noyau</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-mesh.webp" alt="Réseau de nœuds connectés"><figcaption>Réseau</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-topo.webp" alt="Cartographie du terrain"><figcaption>Terrain</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-signal.webp" alt="Signal d'activité"><figcaption>Signal</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-radar.webp" alt="Détection des signaux faibles"><figcaption>Détection</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-grid.webp" alt="Plan de données"><figcaption>Plan de données</figcaption></figure>
+    </div>
+  </div>
+  <div class="strip-row reverse">
+    <div class="strip-track">
+      <figure class="shot"><img src="assets/img/atmos-flow.webp" alt="Flux de données"><figcaption>Flux</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-lattice.webp" alt="Structure de l'entreprise"><figcaption>Structure</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-orbit.webp" alt="Orbite"><figcaption>Orbite</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-wave.webp" alt="Chrome liquide"><figcaption>Chrome</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-shards.webp" alt="Prismes"><figcaption>Prismes</figcaption></figure>
+      <figure class="shot"><img src="assets/img/atmos-aurora.webp" alt="Aurore de données"><figcaption>Aurore</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ CONFIANCE / CHIFFRES ============ -->
+<section class="trust count-band">
+  <img class="sec-bg" src="assets/img/atmos-nebula.webp" alt="">
+  <div class="wrap">
+    <div class="trust-nums">
+      <div><b data-count="6">0</b><span>modules d'intelligence</span></div>
+      <div><b data-count="4">0</b><span>rôles couverts, du terrain à la direction</span></div>
+      <div><b data-count="100" data-suffix="%">0</b><span>des données cloisonnées par entreprise</span></div>
+      <div><b data-count="1">0</b><span>seule application, bureau et mobile</span></div>
+    </div>
+    <p class="trust-label">Pensé pour les métiers qu'INFOTELCOM pratique au quotidien</p>
+    <div class="trust-logos">
+      <span>Réseaux &amp; télécoms</span>
+      <span>Maintenance informatique</span>
+      <span>Vidéosurveillance</span>
+      <span>Cybersécurité PME</span>
+      <span>Monétique</span>
+      <span>Formation</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BENTO PLATEFORME ============ -->
+<section class="section" id="plateforme">
+  <div class="wrap">
+    <div class="head reveal">
+      <h2>Tout ce qu'une entreprise gère au quotidien, dans un seul espace.</h2>
+      <p>Organisation, tickets, communication, documents, projets et automatisations — chaque brique partage la même donnée, par entreprise, avec un cloisonnement total entre organisations.</p>
+    </div>
+
+    <div class="bento">
+      <article class="b-cell b-hero reveal">
+        <img class="b-bg" src="assets/img/atmos-lattice.webp" alt="">
+        <div class="b-body">
+          <h3>Organisation multi-entreprises</h3>
+          <p>Départements, sites, équipes terrain et rôles se configurent une fois. Les données d'une entreprise restent totalement isolées de celles des autres.</p>
+          <div class="org-tree">
+            <div class="org-node root">INFOTELCOM</div>
+            <div class="org-branch">
+              <div class="org-node">Direction</div>
+              <div class="org-node">Agence Centre</div>
+              <div class="org-node">Agence Nord</div>
+            </div>
+            <div class="org-branch small">
+              <div class="org-node">Équipe A</div>
+              <div class="org-node">Équipe B</div>
+              <div class="org-node">Équipe C</div>
+              <div class="org-node">Support</div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="b-cell reveal">
+        <div class="b-body">
+          <h3>Tickets &amp; SLA</h3>
+          <p>De la création à la clôture : priorité, assignation, escalade et historique complet.</p>
+          <div class="ticket-rows">
+            <div><span>#4821 Panne réseau</span><i class="chip crit">Critique</i></div>
+            <div><span>#4818 Configuration VPN</span><i class="chip mid">En cours</i></div>
+            <div><span>#4812 Mise à jour serveur</span><i class="chip ok">Résolu</i></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="b-cell reveal">
+        <div class="b-body">
+          <h3>Communication interne</h3>
+          <p>Canaux par équipe, messages privés, mentions et fichiers — sans quitter FAXTRIX.</p>
+          <div class="chat-mock">
+            <div class="msg"><b>M. Haddad</b><span>Switch remplacé, je clôture le ticket.</span></div>
+            <div class="msg me"><b>Superviseur</b><span>Reçu. Rapport envoyé au client.</span></div>
+            <div class="typing"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="b-cell b-wide reveal">
+        <img class="b-bg" src="assets/img/atmos-signal.webp" alt="">
+        <div class="b-body">
+          <h3>Projets, tâches et planning</h3>
+          <p>Kanban, calendrier et Gantt pilotent le même jeu de données, avec jalons, budget et dépendances.</p>
+          <div class="gantt">
+            <div class="g-row"><span>Audit réseau</span><i style="--s:0;--w:34"></i></div>
+            <div class="g-row"><span>Déploiement fibre</span><i style="--s:22;--w:48"></i></div>
+            <div class="g-row"><span>Formation client</span><i style="--s:54;--w:26"></i></div>
+            <div class="g-row"><span>Recette &amp; PV</span><i style="--s:72;--w:24"></i></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="b-cell reveal">
+        <div class="b-body">
+          <h3>Documents &amp; connaissances</h3>
+          <p>Contrats, factures et procédures classés par entreprise, avec une base consultable par tous.</p>
+          <div class="doc-stack">
+            <span>Contrat_ABC_2026.pdf</span>
+            <span>Procédure_intervention.md</span>
+            <span>Facture_4821.pdf</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="b-cell b-auto reveal">
+        <img class="b-bg" src="assets/img/atmos-mesh.webp" alt="">
+        <div class="b-body">
+          <h3>Automatisations sans code</h3>
+          <p>Un ticket critique notifie le manager et crée une tâche urgente. Un nouveau client déclenche son dossier et son onboarding.</p>
+          <div class="flowchain">
+            <div class="fnode">Priorité = Critique</div>
+            <div class="farrow"></div>
+            <div class="fnode">Notifier le manager</div>
+            <div class="farrow"></div>
+            <div class="fnode">Assigner un technicien</div>
+            <div class="farrow"></div>
+            <div class="fnode alt">Escalade après 30 min</div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PARCOURS HORIZONTAL ============ -->
+<section class="rail" id="parcours">
+  <div class="rail-sticky">
+    <div class="rail-head wrap">
+      <h2>Du prospect à l'intervention terminée.</h2>
+      <div class="rail-progress"><i id="railFill"></i></div>
+    </div>
+    <div class="rail-track" id="railTrack">
+
+      <article class="rail-card">
+        <span class="rc-step">Étape 1</span>
+        <h3>Le client entre dans le CRM.</h3>
+        <p>Prospects, opportunités, devis, contrats et factures avancent dans un pipeline visuel, avec l'historique complet de chaque relation.</p>
+        <div class="rc-visual">
+          <div class="pipeline">
+            <div><b>Prospect</b><i style="--h:38"></i></div>
+            <div><b>Qualifié</b><i style="--h:60"></i></div>
+            <div><b>Proposition</b><i style="--h:44"></i></div>
+            <div><b>Négociation</b><i style="--h:76"></i></div>
+            <div><b>Gagné</b><i style="--h:92"></i></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="rail-card">
+        <span class="rc-step">Étape 2</span>
+        <h3>La mission part sur le terrain.</h3>
+        <p>Ouverture et clôture de ticket, heures de début et de fin, rapport d'intervention et signature client : tout se passe depuis le mobile.</p>
+        <div class="rc-visual">
+          <div class="kv"><span>Technicien</span><b>M. Haddad</b></div>
+          <div class="kv"><span>Client</span><b>ABC Réseaux</b></div>
+          <div class="kv"><span>Statut</span><b class="ion">En intervention</b></div>
+          <div class="kv"><span>Durée</span><b class="mono">01:42:08</b></div>
+        </div>
+      </article>
+
+      <article class="rail-card">
+        <span class="rc-step">Étape 3</span>
+        <h3>Le travail s'organise en projets.</h3>
+        <p>Tâches, échéances, checklists et dépendances s'organisent par équipe ou par projet, avec la progression visible en un coup d'œil.</p>
+        <div class="rc-visual">
+          <div class="kv"><span>À faire</span><b>12</b></div>
+          <div class="kv"><span>En cours</span><b>7</b></div>
+          <div class="kv"><span>En retard</span><b class="amber">2</b></div>
+          <div class="kv"><span>Terminées cette semaine</span><b>19</b></div>
+        </div>
+      </article>
+
+      <article class="rail-card">
+        <span class="rc-step">Étape 4</span>
+        <h3>Les équipes gardent leur charge visible.</h3>
+        <p>Départements, agences, équipes terrain et permissions se configurent une fois — FAXTRIX garde ensuite la structure de l'entreprise à jour.</p>
+        <div class="rc-visual">
+          <div class="load"><span>Technicien A<b>92%</b></span><i style="--w:92"></i></div>
+          <div class="load"><span>Technicien B<b>54%</b></span><i style="--w:54"></i></div>
+          <div class="load"><span>Technicien C<b>71%</b></span><i style="--w:71"></i></div>
+        </div>
+      </article>
+
+      <article class="rail-card">
+        <span class="rc-step">Étape 5</span>
+        <h3>Le répétitif s'exécute seul.</h3>
+        <p>Les règles d'automatisation prennent le relais sur les notifications, les affectations et les escalades, sans intervention manuelle.</p>
+        <div class="rc-visual">
+          <div class="kv"><span>Déclencheur</span><b>Priorité = Critique</b></div>
+          <div class="kv"><span>Action 1</span><b>Notifier le manager</b></div>
+          <div class="kv"><span>Action 2</span><b>Assigner un technicien</b></div>
+          <div class="kv"><span>Escalade</span><b class="amber">Après 30 min</b></div>
+        </div>
+      </article>
+
+      <article class="rail-card">
+        <span class="rc-step">Étape 6</span>
+        <h3>L'intelligence signale ce qui compte.</h3>
+        <p>Risques, retards de SLA, surcharge d'équipe : le Business Brain condense l'état réel de l'entreprise en une lecture de trente secondes.</p>
+        <div class="rc-visual">
+          <div class="kv"><span>Problèmes critiques</span><b class="crit">3</b></div>
+          <div class="kv"><span>Risques détectés</span><b class="amber">11</b></div>
+          <div class="kv"><span>Opportunités</span><b class="ion">27</b></div>
+        </div>
+      </article>
+
+      <article class="rail-card last">
+        <span class="rc-step">Étape 7</span>
+        <h3>La décision se teste avant d'être prise.</h3>
+        <p>« Que se passe-t-il si on ajoute deux techniciens ? » FAXTRIX compare des scénarios à partir des données réelles de l'entreprise.</p>
+        <div class="rc-visual">
+          <div class="spark"><i style="--h:30"></i><i style="--h:45"></i><i style="--h:38"></i><i style="--h:60"></i><i style="--h:52"></i><i style="--h:75"></i><i style="--h:68"></i><i style="--h:95"></i></div>
+          <div class="kv"><span>Scénario +2 techniciens</span><b class="ion">SLA 91% → 97%</b></div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ FIELD SERVICE ============ -->
+<section class="section" id="terrain">
+  <img class="sec-bg" src="assets/img/atmos-topo.webp" alt="">
+  <div class="wrap fsm">
+    <div class="reveal">
+      <h2>La signature terrain de FAXTRIX.</h2>
+      <p class="lead">Le technicien démarre, travaille et clôture sa mission depuis son mobile. Chaque étape alimente automatiquement un rapport d'intervention prêt à signer.</p>
+      <ul class="fsm-list">
+        <li><b>Démarrage</b><span>Heure, ticket, technicien, client et mission enregistrés en un tap.</span></li>
+        <li><b>Pendant</b><span>Notes, photos, matériel utilisé et statut mis à jour en direct.</span></li>
+        <li><b>Clôture</b><span>Rapport généré automatiquement, signature client incluse.</span></li>
+        <li><b>Supervision</b><span>L'entreprise suit l'avancement de toutes les équipes en temps réel.</span></li>
+      </ul>
+      <div class="fsm-controls" id="fsmDots">
+        <button class="on" data-step="0">Démarrage</button>
+        <button data-step="1">En cours</button>
+        <button data-step="2">Rapport</button>
+        <button data-step="3">Clôturé</button>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="phone" id="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="pstate on" data-state="0">
+            <div class="pline">FAXTRIX · Terrain</div>
+            <h4>Nouvelle mission</h4>
+            <p>ABC Réseaux — intervention réseau</p>
+            <div class="pfield">Site : Agence Centre-Ville</div>
+            <div class="pfield">Ticket #4821 — priorité haute</div>
+            <div class="pbtn">Démarrer la prestation</div>
+          </div>
+          <div class="pstate" data-state="1">
+            <div class="pline">En cours</div>
+            <h4>Intervention active</h4>
+            <div class="ptimer mono">01:42:08</div>
+            <div class="pfield">Matériel : switch 24 ports</div>
+            <div class="pfield">Note : câblage à reprendre</div>
+            <div class="pbtn stop">Terminer la prestation</div>
+          </div>
+          <div class="pstate" data-state="2">
+            <div class="pline">Rapport d'intervention</div>
+            <h4>Résumé de mission</h4>
+            <div class="kv"><span>Début</span><b>08:32</b></div>
+            <div class="kv"><span>Fin</span><b>11:47</b></div>
+            <div class="kv"><span>Durée</span><b>3 h 15</b></div>
+            <div class="sig"><svg viewBox="0 0 220 60"><path d="M8 44c18-28 28 10 44-8s22 16 38-4 26 14 44-10 30 12 44 2"/></svg><span>Signature client</span></div>
+            <div class="pbtn">Clôturer le ticket</div>
+          </div>
+          <div class="pstate" data-state="3">
+            <div class="pline">Clôturé</div>
+            <h4>Mission terminée</h4>
+            <p>Rapport envoyé au client et archivé dans le dossier ABC Réseaux.</p>
+            <div class="pfield">Rapport #4821-R généré</div>
+            <div class="pfield ok">SLA respecté</div>
+            <div class="pcheck"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21"/><path d="M14 25l7 7 14-15"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GALERIE / CARROUSEL ============ -->
+<section class="section gallery-sec" id="galerie">
+  <div class="wrap">
+    <div class="head row reveal">
+      <h2>La plateforme, écran par écran.</h2>
+      <div class="gal-nav">
+        <button id="galPrev" aria-label="Précédent"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button id="galNext" aria-label="Suivant"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="carousel" id="carousel">
+    <div class="carousel-track" id="carTrack">
+
+      <figure class="slide" data-img="assets/img/atmos-wave.webp" data-title="Pipeline commercial">
+        <img src="assets/img/atmos-wave.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>Pipeline commercial</b><span class="live"><i></i>en direct</span></div>
+          <div class="ui-bars"><i style="--h:38"></i><i style="--h:60"></i><i style="--h:44"></i><i style="--h:76"></i><i style="--h:92"></i><i style="--h:58"></i></div>
+          <div class="ui-rows"><span>ABC Réseaux — contrat annuel<b>Négociation</b></span><span>Nova Industrie — fibre<b>Proposition</b></span></div>
+        </div>
+        <figcaption><b>CRM</b>Opportunités, devis et contrats dans un pipeline visuel.</figcaption>
+      </figure>
+
+      <figure class="slide" data-img="assets/img/atmos-signal.webp" data-title="File de tickets">
+        <img src="assets/img/atmos-signal.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>File de tickets</b><span class="live"><i></i>63 ouverts</span></div>
+          <div class="ui-rows tall">
+            <span>#4821 Panne réseau<b class="crit">Critique</b></span>
+            <span>#4818 Configuration VPN<b>En cours</b></span>
+            <span>#4812 Mise à jour serveur<b class="ok">Résolu</b></span>
+            <span>#4809 Accès bloqué<b>Assigné</b></span>
+          </div>
+        </div>
+        <figcaption><b>Support</b>Priorité, SLA, escalade et historique complet.</figcaption>
+      </figure>
+
+      <figure class="slide" data-img="assets/img/atmos-topo.webp" data-title="Carte des interventions">
+        <img src="assets/img/atmos-topo.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>Carte des interventions</b><span class="live"><i></i>4 équipes</span></div>
+          <div class="ui-map">
+            <span class="pin" style="--x:22;--y:38">A</span>
+            <span class="pin" style="--x:58;--y:24">B</span>
+            <span class="pin crit" style="--x:70;--y:62">C</span>
+            <span class="pin" style="--x:38;--y:72">D</span>
+          </div>
+        </div>
+        <figcaption><b>Terrain</b>Position d'équipe, mission active et charge du jour.</figcaption>
+      </figure>
+
+      <figure class="slide" data-img="assets/img/atmos-lattice.webp" data-title="Planning des équipes">
+        <img src="assets/img/atmos-lattice.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>Planning des équipes</b><span class="live"><i></i>semaine 38</span></div>
+          <div class="ui-gantt">
+            <i style="--s:4;--w:30"></i><i style="--s:26;--w:44"></i><i style="--s:50;--w:22"></i><i style="--s:62;--w:34"></i>
+          </div>
+          <div class="ui-rows"><span>Équipe A<b>5 missions</b></span><span>Équipe C<b class="crit">surchargée</b></span></div>
+        </div>
+        <figcaption><b>Équipes</b>Organigramme, rôles et charge de travail réels.</figcaption>
+      </figure>
+
+      <figure class="slide" data-img="assets/img/atmos-mesh.webp" data-title="Studio d'automatisation">
+        <img src="assets/img/atmos-mesh.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>Studio d'automatisation</b><span class="live"><i></i>14 règles actives</span></div>
+          <div class="ui-flow"><span>Déclencheur</span><em></em><span>Condition</span><em></em><span>Actions</span></div>
+          <div class="ui-rows"><span>Ticket critique → manager<b class="ok">Active</b></span><span>Nouveau client → onboarding<b class="ok">Active</b></span></div>
+        </div>
+        <figcaption><b>Automatisation</b>Des règles simples, sans écrire une ligne de code.</figcaption>
+      </figure>
+
+      <figure class="slide" data-img="assets/img/atmos-core.webp" data-title="Business Brain">
+        <img src="assets/img/atmos-core.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>Business Brain</b><span class="live"><i></i>analyse continue</span></div>
+          <div class="ui-stats"><span><b>3</b>critiques</span><span><b>11</b>risques</span><span><b>27</b>opportunités</span></div>
+          <div class="ui-rows"><span>Réaffecter 4 interventions<b class="ok">Recommandé</b></span></div>
+        </div>
+        <figcaption><b>Intelligence</b>L'état réel de l'entreprise en une lecture.</figcaption>
+      </figure>
+
+      <figure class="slide" data-img="assets/img/atmos-radar.webp" data-title="Early Warning">
+        <img src="assets/img/atmos-radar.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>Early Warning</b><span class="live"><i></i>veille active</span></div>
+          <div class="ui-rows tall">
+            <span>Client ABC — interactions en baisse<b class="crit">Signal</b></span>
+            <span>Tickets répétés sur le même site<b class="crit">Signal</b></span>
+            <span>Délais de résolution en hausse<b>À surveiller</b></span>
+          </div>
+        </div>
+        <figcaption><b>Prévention</b>Les signaux faibles, avant qu'ils deviennent critiques.</figcaption>
+      </figure>
+
+      <figure class="slide" data-img="assets/img/atmos-flow.webp" data-title="Decision Simulator">
+        <img src="assets/img/atmos-flow.webp" alt="">
+        <div class="slide-ui">
+          <div class="ui-top"><b>Decision Simulator</b><span class="live"><i></i>scénario 2 / 4</span></div>
+          <div class="ui-bars"><i style="--h:30"></i><i style="--h:45"></i><i style="--h:38"></i><i style="--h:62"></i><i style="--h:74"></i><i style="--h:95"></i></div>
+          <div class="ui-rows"><span>+2 techniciens<b class="ok">SLA 91% → 97%</b></span><span>Coût mensuel<b>+8%</b></span></div>
+        </div>
+        <figcaption><b>Simulation</b>Comparer des scénarios avant de trancher.</figcaption>
+      </figure>
+
+    </div>
+    <div class="carousel-hint"><span>Glissez</span><i></i></div>
+  </div>
+  <div class="wrap"><div class="gal-dots" id="galDots"></div></div>
+</section>
+
+<!-- ============ DÉMO INTERACTIVE ============ -->
+<section class="section" id="demo">
+  <div class="wrap">
+    <div class="head reveal">
+      <h2>Entrez dans FAXTRIX.</h2>
+      <p>Choisissez un module — le tableau de bord se met à jour comme dans l'application réelle.</p>
+    </div>
+
+    <div class="demo reveal">
+      <div class="demo-chrome">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url mono">app.faxtrix.com / <b id="demoCrumb">crm</b></span>
+        <span class="clock mono" id="demoClock">--:--:--</span>
+      </div>
+      <div class="demo-tabs" id="demoTabs">
+        <button class="on" data-tab="crm">CRM</button>
+        <button data-tab="tickets">Tickets</button>
+        <button data-tab="terrain">Terrain</button>
+        <button data-tab="ia">Intelligence</button>
+        <i class="tab-ink" id="tabInk"></i>
+      </div>
+      <div class="demo-body">
+
+        <div class="panel on" data-panel="crm">
+          <div class="panel-top"><div><h4>Pipeline commercial</h4><p>Vue d'ensemble des opportunités en cours, tous commerciaux confondus.</p></div><span class="live"><i></i>mis à jour à l'instant</span></div>
+          <div class="stats">
+            <div><b data-count="184">0</b><span>opportunités ouvertes</span></div>
+            <div class="up"><b data-count="32" data-suffix="%">0</b><span>taux de conversion</span></div>
+            <div><b data-count="46">0</b><span>devis en attente</span></div>
+            <div class="warn"><b data-count="12">0</b><span>relances dues</span></div>
+          </div>
+          <div class="panel-grid">
+            <div class="list">
+              <div><span>ABC Réseaux — contrat annuel</span><i class="chip ok">Négociation</i></div>
+              <div><span>Nova Industrie — déploiement fibre</span><i class="chip mid">Proposition</i></div>
+              <div><span>GroupeLevant — support niveau 2</span><i class="chip ok">Gagné</i></div>
+              <div><span>Cedar Corp — audit sécurité</span><i class="chip mid">Qualification</i></div>
+              <div><span>Atlas Distribution — renouvellement</span><i class="chip crit">Relance urgente</i></div>
+            </div>
+            <div class="feed" data-feed="crm"></div>
+          </div>
+        </div>
+
+        <div class="panel" data-panel="tickets">
+          <div class="panel-top"><div><h4>File de tickets</h4><p>Statut, priorité et respect des SLA sur l'ensemble des demandes ouvertes.</p></div><span class="live"><i></i>flux en direct</span></div>
+          <div class="stats">
+            <div><b data-count="63">0</b><span>tickets ouverts</span></div>
+            <div class="warn"><b data-count="14">0</b><span>SLA dépassé</span></div>
+            <div class="up"><b data-count="91" data-suffix="%">0</b><span>résolus sous SLA</span></div>
+            <div><b data-count="7">0</b><span>escaladés</span></div>
+          </div>
+          <div class="panel-grid">
+            <div class="list">
+              <div><span>#4821 — panne réseau, ABC Réseaux</span><i class="chip crit">Critique</i></div>
+              <div><span>#4818 — configuration VPN</span><i class="chip mid">En cours</i></div>
+              <div><span>#4812 — mise à jour serveur</span><i class="chip ok">Résolu</i></div>
+              <div><span>#4809 — accès utilisateur bloqué</span><i class="chip mid">Assigné</i></div>
+              <div><span>#4801 — maintenance préventive</span><i class="chip ok">Fermé</i></div>
+            </div>
+            <div class="feed" data-feed="tickets"></div>
+          </div>
+        </div>
+
+        <div class="panel" data-panel="terrain">
+          <div class="panel-top"><div><h4>Équipes sur le terrain</h4><p>Position d'équipe, mission active et charge de travail du jour.</p></div><span class="live"><i></i>4 équipes actives</span></div>
+          <div class="stats">
+            <div><b data-count="9">0</b><span>missions en cours</span></div>
+            <div><b data-count="21">0</b><span>terminées aujourd'hui</span></div>
+            <div class="warn"><b data-count="3">0</b><span>équipes surchargées</span></div>
+            <div class="up"><b data-count="97" data-suffix="%">0</b><span>rapports à jour</span></div>
+          </div>
+          <div class="panel-grid">
+            <div class="list">
+              <div><span>Équipe A — intervention réseau, ABC</span><i class="chip ok">En mission</i></div>
+              <div><span>Équipe B — maintenance, Nova Industrie</span><i class="chip mid">En route</i></div>
+              <div><span>Équipe C — 5 missions programmées</span><i class="chip crit">Surchargée</i></div>
+              <div><span>Équipe D — pause déjeuner</span><i class="chip">Disponible</i></div>
+            </div>
+            <div class="feed" data-feed="terrain"></div>
+          </div>
+        </div>
+
+        <div class="panel" data-panel="ia">
+          <div class="panel-top"><div><h4>FAXTRIX Business Brain</h4><p>Ce que l'intelligence opérationnelle observe en ce moment.</p></div><span class="live"><i></i>analyse continue</span></div>
+          <div class="stats">
+            <div class="warn"><b data-count="3">0</b><span>problèmes critiques</span></div>
+            <div class="warn"><b data-count="11">0</b><span>risques détectés</span></div>
+            <div class="up"><b data-count="27">0</b><span>opportunités</span></div>
+            <div><b data-count="4">0</b><span>actions suggérées</span></div>
+          </div>
+          <div class="panel-grid">
+            <div class="list">
+              <div><span>Client ABC — signaux de dégradation</span><i class="chip crit">Risque</i></div>
+              <div><span>Conversion en baisse de 12% ce mois</span><i class="chip mid">À surveiller</i></div>
+              <div><span>14 tickets dépassent le SLA</span><i class="chip crit">Critique</i></div>
+              <div><span>Réaffecter 4 interventions de l'équipe C</span><i class="chip ok">Recommandé</i></div>
+            </div>
+            <div class="feed" data-feed="ia"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INTELLIGENCE ============ -->
+<section class="section" id="intelligence">
+  <img class="sec-bg" src="assets/img/atmos-aurora.webp" alt="">
+  <div class="wrap">
+    <div class="head reveal">
+      <h2>Au-dessus de la gestion, une couche qui pense.</h2>
+      <p>Six modules d'intelligence observent l'entreprise en continu, détectent les signaux faibles et proposent la décision suivante. C'est la vraie signature technologique de FAXTRIX.</p>
+    </div>
+
+    <div class="intel">
+      <article class="i-card reveal" data-tilt>
+        <img src="assets/img/atmos-core.webp" alt="">
+        <div class="i-body">
+          <h3>Business Brain</h3>
+          <p>Condense l'état de l'entreprise en une lecture unique : problèmes critiques, risques, opportunités et action prioritaire.</p>
+        </div>
+      </article>
+      <article class="i-card reveal" data-tilt>
+        <img src="assets/img/atmos-radar.webp" alt="">
+        <div class="i-body">
+          <h3>Early Warning</h3>
+          <p>Détecte les signaux faibles avant qu'un problème devienne critique — baisse d'interactions, tickets répétés, délais en hausse.</p>
+        </div>
+      </article>
+      <article class="i-card reveal" data-tilt>
+        <img src="assets/img/atmos-flow.webp" alt="">
+        <div class="i-body">
+          <h3>Process Mining</h3>
+          <p>Compare le processus imaginé et le processus réel de l'entreprise, et révèle les étapes cachées qui coûtent du temps.</p>
+        </div>
+      </article>
+      <article class="i-card reveal" data-tilt>
+        <img src="assets/img/atmos-shards.webp" alt="">
+        <div class="i-body">
+          <h3>Security Guardian</h3>
+          <p>Repère les comportements inhabituels — exports massifs, pics d'activité, accès atypiques — et alerte l'administrateur.</p>
+        </div>
+      </article>
+      <article class="i-card reveal" data-tilt>
+        <img src="assets/img/atmos-lattice.webp" alt="">
+        <div class="i-body">
+          <h3>Team Load AI</h3>
+          <p>Mesure la charge réelle de chaque équipe et propose une redistribution avant la surcharge ou le conflit de planning.</p>
+        </div>
+      </article>
+      <article class="i-card reveal" data-tilt>
+        <img src="assets/img/atmos-grid.webp" alt="">
+        <div class="i-body">
+          <h3>Decision Simulator</h3>
+          <p>« Et si on ajoutait deux techniciens ? » Compare des scénarios à partir des données réelles avant de décider.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ SÉCURITÉ ============ -->
+<section class="section split" id="securite">
+  <img class="sec-bg" src="assets/img/atmos-vault.webp" alt="">
+  <div class="wrap split-grid">
+    <div class="reveal">
+      <h2>Chaque entreprise dans son propre coffre.</h2>
+      <p class="lead">Le multi-entreprises n'a de valeur que si le cloisonnement est réel. Dans FAXTRIX, une organisation ne voit jamais les données d'une autre — ni par l'interface, ni par l'export, ni par l'API.</p>
+      <ul class="check-list">
+        <li>Isolation des données au niveau de chaque organisation</li>
+        <li>Rôles et permissions par département, agence et équipe</li>
+        <li>Journal d'accès consultable par l'administrateur</li>
+        <li>Alerte automatique sur les comportements inhabituels</li>
+        <li>Sauvegardes et historique complet des modifications</li>
+      </ul>
+    </div>
+    <div class="reveal">
+      <div class="scan-card">
+        <div class="scan-head"><span class="live"><i></i>Security Guardian</span><span class="mono" id="scanCode">SG-0-4821</span></div>
+        <div class="scan-rows">
+          <div><span>Exports du jour</span><b>14</b></div>
+          <div><span>Accès hors horaires</span><b class="amber">2</b></div>
+          <div><span>Sessions actives</span><b>37</b></div>
+          <div><span>Anomalies confirmées</span><b class="ok">0</b></div>
+        </div>
+        <div class="scan-beam"></div>
+        <p class="scan-note">Analyse continue du comportement des comptes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section class="section arch">
+  <div class="wrap">
+    <div class="head center reveal">
+      <h2>Un noyau. Des données qui circulent en continu.</h2>
+    </div>
+    <div class="diagram reveal" id="diagram">
+      <svg viewBox="0 0 840 480" xmlns="http://www.w3.org/2000/svg" aria-label="Architecture FAXTRIX">
+        <defs>
+          <linearGradient id="dg" x1="0" y1="0" x2="840" y2="480">
+            <stop offset="0%" stop-color="#38E8FF"/><stop offset="100%" stop-color="#8A5CFF"/>
+          </linearGradient>
+          <radialGradient id="cg"><stop offset="0%" stop-color="#38E8FF"/><stop offset="100%" stop-color="#2B6BFF"/></radialGradient>
+        </defs>
+        <g id="diagLines" stroke="url(#dg)" stroke-width="1.3" opacity=".5" fill="none">
+          <path d="M420 240 L420 70"/><path d="M420 240 L238 108"/><path d="M420 240 L602 108"/>
+          <path d="M420 240 L420 410"/><path d="M420 240 L218 372"/><path d="M420 240 L622 372"/>
+        </g>
+        <g id="diagPulses"></g>
+        <circle class="core-ring" cx="420" cy="240" r="70" fill="none" stroke="url(#cg)" stroke-width="1" opacity=".35"/>
+        <circle cx="420" cy="240" r="50" fill="#060A16" stroke="url(#cg)" stroke-width="1.5"/>
+        <text x="420" y="236" text-anchor="middle" class="d-node">FAXTRIX</text>
+        <text x="420" y="256" text-anchor="middle" class="d-sub">noyau</text>
+        <g class="d-sat"><circle cx="420" cy="56" r="32"/><text x="420" y="60" text-anchor="middle">Données</text></g>
+        <g class="d-sat"><circle cx="230" cy="96" r="32"/><text x="230" y="100" text-anchor="middle">CRM</text></g>
+        <g class="d-sat"><circle cx="610" cy="96" r="32"/><text x="610" y="100" text-anchor="middle">IA</text></g>
+        <g class="d-sat"><circle cx="420" cy="424" r="32"/><text x="420" y="428" text-anchor="middle">Workflows</text></g>
+        <g class="d-sat"><circle cx="206" cy="384" r="32"/><text x="206" y="388" text-anchor="middle">Terrain</text></g>
+        <g class="d-sat"><circle cx="634" cy="384" r="32"/><text x="634" y="388" text-anchor="middle">Équipes</text></g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ TARIFS ============ -->
+<section class="section" id="tarifs">
+  <img class="sec-bg" src="assets/img/atmos-bloom.webp" alt="">
+  <div class="wrap">
+    <div class="head center reveal">
+      <h2>Un tarif par taille d'entreprise, pas par surprise.</h2>
+      <p>Toutes les formules incluent le multi-entreprises, le mobile terrain et les mises à jour. Vous ne payez que le périmètre dont vous vous servez.</p>
+    </div>
+
+    <div class="billing reveal">
+      <button class="on" data-cycle="m">Mensuel</button>
+      <button data-cycle="y">Annuel <em>−20%</em></button>
+      <i class="billing-ink" id="billingInk"></i>
+    </div>
+
+    <!-- Tarifs à remplacer par vos vrais montants avant mise en ligne -->
+    <div class="plans">
+      <article class="plan reveal">
+        <h3>Essentiel</h3>
+        <p class="plan-for">Pour une équipe qui structure enfin son organisation.</p>
+        <div class="price"><b data-m="150 000" data-y="120 000">150 000</b><span>FCFA / mois</span></div>
+        <ul>
+          <li>Jusqu'à 10 utilisateurs</li>
+          <li>CRM, tickets et documents</li>
+          <li>Projets, tâches et calendrier</li>
+          <li>Application mobile terrain</li>
+          <li>Support par e-mail</li>
+        </ul>
+        <a href="index.html" class="btn btn-ghost"><span>Commencer</span></a>
+      </article>
+
+      <article class="plan featured reveal">
+        <span class="plan-flag">Le plus choisi</span>
+        <h3>Opérations</h3>
+        <p class="plan-for">Pour une entreprise qui pilote des équipes sur le terrain.</p>
+        <div class="price"><b data-m="320 000" data-y="256 000">320 000</b><span>FCFA / mois</span></div>
+        <ul>
+          <li>Jusqu'à 40 utilisateurs</li>
+          <li>Tout Essentiel, plus :</li>
+          <li>Field service complet et rapports signés</li>
+          <li>Automatisations sans code</li>
+          <li>Gantt, jalons et budgets</li>
+          <li>Support prioritaire</li>
+        </ul>
+        <a href="#cta" class="btn btn-primary"><span>Demander une démo</span></a>
+      </article>
+
+      <article class="plan reveal">
+        <h3>Intelligence</h3>
+        <p class="plan-for">Pour une direction qui veut décider sur des faits.</p>
+        <div class="price"><b class="on-ask">Sur devis</b><span>selon le périmètre</span></div>
+        <ul>
+          <li>Utilisateurs illimités</li>
+          <li>Tout Opérations, plus :</li>
+          <li>Les six modules d'intelligence</li>
+          <li>Decision Simulator et Process Mining</li>
+          <li>Accompagnement au déploiement</li>
+          <li>Interlocuteur dédié INFOTELCOM</li>
+        </ul>
+        <a href="#cta" class="btn btn-ghost"><span>Parler à l'équipe</span></a>
+      </article>
+    </div>
+    <p class="plans-note">Migration de vos données existantes et formation des équipes incluses dans chaque déploiement.</p>
+  </div>
+</section>
+
+<!-- ============ TÉMOIGNAGES ============ -->
+<section class="section" id="temoignages">
+  <div class="wrap">
+    <div class="head row reveal">
+      <h2>Ce que change une seule plateforme.</h2>
+      <div class="gal-nav">
+        <button id="quotePrev" aria-label="Témoignage précédent"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button id="quoteNext" aria-label="Témoignage suivant"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+
+    <div class="quotes-wrap reveal">
+    <div class="quotes" id="quotes">
+      <figure class="quote on">
+        <blockquote>Avant, un technicien terminait sa mission et le rapport arrivait deux jours plus tard, quand il arrivait. Maintenant le client signe sur place et le dossier est clos avant que l'équipe ne reprenne la route.</blockquote>
+        <figcaption><span class="av" data-i="RM"></span><b>Responsable maintenance</b><i>Entreprise de réseaux, 34 personnes</i></figcaption>
+      </figure>
+      <figure class="quote">
+        <blockquote>Le cloisonnement entre nos deux agences était notre condition d'entrée. Chacune travaille chez elle, la direction voit l'ensemble, et personne ne voit ce qui ne le regarde pas.</blockquote>
+        <figcaption><span class="av" data-i="DG"></span><b>Direction générale</b><i>Groupe multi-agences</i></figcaption>
+      </figure>
+      <figure class="quote">
+        <blockquote>Ce qui m'a convaincu, ce n'est pas le tableau de bord. C'est l'alerte qui m'a dit qu'un client ne nous écrivait plus depuis trois semaines, avant que je m'en aperçoive moi-même.</blockquote>
+        <figcaption><span class="av" data-i="RC"></span><b>Responsable commercial</b><i>Prestataire IT et monétique</i></figcaption>
+      </figure>
+      <figure class="quote">
+        <blockquote>On a arrêté trois outils le même mois. Le gain n'est pas dans l'abonnement économisé, il est dans le fait que plus personne ne recopie une information d'un endroit à un autre.</blockquote>
+        <figcaption><span class="av" data-i="CO"></span><b>Coordination des opérations</b><i>Société de vidéosurveillance</i></figcaption>
+      </figure>
+      <div class="quote-dots" id="quoteDots"></div>
+    </div>
+      <div class="quotes-visual">
+        <img src="assets/img/atmos-bloom.webp" alt="">
+        <div class="qv-card">
+          <span class="live"><i></i>Effet mesuré côté client</span>
+          <div class="qv-rows">
+            <span>Rapport d'intervention<b class="ion">le jour même</b></span>
+            <span>Outils remplacés<b>3</b></span>
+            <span>Ressaisie de données<b class="ok">supprimée</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="quotes-note">Témoignages illustratifs représentant les usages visés par la plateforme.</p>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="section" id="faq">
+  <img class="sec-bg" src="assets/img/atmos-tunnel.webp" alt="">
+  <div class="wrap faq-grid">
+    <div class="reveal">
+      <h2>Les questions qu'on nous pose avant de signer.</h2>
+      <p class="lead">Et si la vôtre n'y est pas, l'équipe INFOTELCOM répond directement.</p>
+      <a href="#cta" class="btn btn-ghost faq-cta"><span>Poser votre question</span></a>
+    </div>
+    <div class="acc reveal" id="acc">
+      <details>
+        <summary>Faut-il installer quelque chose ?<i></i></summary>
+        <div><p>Non. FAXTRIX s'utilise depuis un navigateur pour le bureau et depuis l'application mobile pour le terrain. Aucun serveur à maintenir chez vous, aucun poste à préparer.</p></div>
+      </details>
+      <details>
+        <summary>Nos données sont-elles vraiment séparées des autres entreprises ?<i></i></summary>
+        <div><p>Oui. Chaque organisation possède son propre espace : l'isolation est appliquée côté données, pas seulement côté affichage. Un utilisateur d'une entreprise ne peut atteindre les enregistrements d'une autre, ni par l'interface, ni par un export.</p></div>
+      </details>
+      <details>
+        <summary>Le technicien peut-il travailler sans réseau ?<i></i></summary>
+        <div><p>L'application terrain est conçue pour les conditions réelles : la mission, les notes et le rapport se remplissent sur le mobile, puis se synchronisent dès que la connexion revient. Le technicien n'attend pas le réseau pour commencer.</p></div>
+      </details>
+      <details>
+        <summary>Combien de temps prend le déploiement ?<i></i></summary>
+        <div><p>Cela dépend de ce que vous reprenez. Une structure d'entreprise, des utilisateurs et un premier module se mettent en place en quelques jours. Une migration de l'historique client et la mise en route des automatisations demandent davantage d'accompagnement.</p></div>
+      </details>
+      <details>
+        <summary>Peut-on récupérer ses données si on arrête ?<i></i></summary>
+        <div><p>Oui. Vos données vous appartiennent et restent exportables dans des formats ouverts, à tout moment, sans passer par une demande commerciale.</p></div>
+      </details>
+      <details>
+        <summary>Que fait exactement la couche d'intelligence ?<i></i></summary>
+        <div><p>Elle observe l'activité déjà présente dans la plateforme et en tire trois choses : ce qui est critique maintenant, ce qui risque de le devenir, et ce qu'il serait utile de faire ensuite. Elle ne décide pas à votre place — elle vous évite de découvrir un problème trop tard.</p></div>
+      </details>
+      <details>
+        <summary>FAXTRIX se connecte-t-il à nos outils actuels ?<i></i></summary>
+        <div><p>La plateforme est prévue pour recevoir et envoyer des données vers des systèmes externes. Les connexions se définissent au cas par cas pendant le déploiement, selon ce que vos outils exposent.</p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA / CONTACT ============ -->
+<section class="cta-sec" id="cta">
+  <img class="sec-bg strong" src="assets/img/atmos-orbit.webp" alt="">
+  <div class="wrap">
+    <div class="cta reveal">
+      <h2>Donnez à votre entreprise son propre système vivant.</h2>
+      <p>Une démo personnalisée avec vos propres flux : CRM, terrain, équipes et intelligence, configurés pour votre activité.</p>
+    </div>
+
+    <div class="contact-grid reveal">
+      <div class="contact-info">
+        <span class="modal-eyebrow">NOUS CONTACTER</span>
+        <h3>Parlons de votre activité.</h3>
+        <p>Une question, un projet, une demande de démo — l'équipe INFOTELCOM répond directement, sans passerelle commerciale.</p>
+        <div class="contact-rows">
+          <a href="mailto:contact.infotelcom@gmail.com" class="contact-row"><b>E-mail</b><span>contact.infotelcom@gmail.com</span></a>
+          <div class="contact-row"><b>Délai</b><span>Réponse sous 24h ouvrées</span></div>
+          <div class="contact-row"><b>Couverture</b><span>Toute entreprise multi-sites ou terrain</span></div>
+        </div>
+      </div>
+
+      <form class="contact-form" id="contactForm" data-subject="Nouveau message depuis le site FAXTRIX">
+        <input type="hidden" name="access_key" value="">
+        <input type="hidden" name="subject" value="Nouveau message depuis le site FAXTRIX">
+        <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">
+        <div class="cf-row">
+          <label>Nom complet<input type="text" name="nom" required placeholder="Votre nom"></label>
+          <label>E-mail<input type="email" name="email" required placeholder="vous@entreprise.com"></label>
+        </div>
+        <div class="cf-row">
+          <label>Entreprise<input type="text" name="entreprise" placeholder="Nom de l'entreprise"></label>
+          <label>Sujet
+            <select name="sujet">
+              <option>Demander une démo</option>
+              <option>Question sur les tarifs</option>
+              <option>Support / partenariat</option>
+              <option>Autre demande</option>
+            </select>
+          </label>
+        </div>
+        <label>Message<textarea name="message" rows="4" required placeholder="Décrivez votre besoin en quelques lignes"></textarea></label>
+        <button type="submit" class="btn btn-primary"><span>Envoyer le message</span></button>
+        <p class="modal-status" data-status></p>
+      </form>
+    </div>
+    <p class="powered">Propulsé par INFOTELCOM — ensemble vers le digital</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <div class="brand">
+          <span class="brand-mark"><img src="assets/img/faxtrix-mark.webp" alt="FAXTRIX"></span>
+          <span class="brand-text"><b>FAXTRIX</b></span>
+        </div>
+        <p>Le 3<sup>e</sup>&nbsp;produit d'INFOTELCOM. Une plateforme SaaS multi-entreprises pour gérer la relation client, les équipes terrain et les opérations — augmentée par l'intelligence INFOTELCOM.</p>
+      </div>
+      <div class="foot-news">
+        <h5>Suivre le produit</h5>
+        <p>Les nouveautés de FAXTRIX, sans fréquence imposée.</p>
+        <form class="news-form" id="newsForm">
+          <input type="hidden" name="access_key" value="">
+          <input type="hidden" name="subject" value="Nouvelle inscription à la newsletter FAXTRIX">
+          <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">
+          <input type="email" id="newsMail" name="email" placeholder="votre@entreprise.com" aria-label="Votre e-mail" required>
+          <button type="submit">S'inscrire</button>
+        </form>
+        <span class="news-msg" id="newsMsg"></span>
+      </div>
+      <div class="foot-cols">
+        <div><h5>Plateforme</h5><a href="#plateforme">CRM</a><a href="#terrain">Terrain</a><a href="#plateforme">Projets &amp; tâches</a><a href="#intelligence">Intelligence</a><a href="#securite">Sécurité</a></div>
+        <div><h5>Produit</h5><a href="#galerie">Galerie</a><a href="#demo">Démonstration</a><a href="#tarifs">Tarifs</a><a href="#faq">FAQ</a></div>
+        <div><h5>INFOTELCOM</h5><a href="#">À propos</a><a href="#">Nos produits</a><a href="#cta">Contact</a></div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 INFOTELCOM. Tous droits réservés.</span>
+      <span>Ensemble vers le digital</span>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ============ PALETTE DE COMMANDES ============ -->
+<div class="cmdk" id="cmdk" aria-hidden="true">
+  <div class="cmdk-box" role="dialog" aria-label="Recherche">
+    <div class="cmdk-input">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="cmdkInput" type="text" placeholder="Aller à une section, un module, une réponse…" autocomplete="off">
+      <kbd>Esc</kbd>
+    </div>
+    <div class="cmdk-list" id="cmdkList"></div>
+    <div class="cmdk-foot"><span>↑ ↓ naviguer</span><span>⏎ ouvrir</span><span>Esc fermer</span></div>
+  </div>
+</div>
+
+<nav class="dock" id="dock" aria-label="Navigation rapide"></nav>
+<button class="totop" id="toTop" aria-label="Revenir en haut"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <button class="lb-close" id="lbClose" aria-label="Fermer">&times;</button>
+  <figure><img id="lbImg" src="" alt=""><figcaption id="lbCap"></figcaption></figure>
+</div>
+
+<!-- ============ MODALE DEMANDE DE DÉMO ============ -->
+<div class="modal" id="authModal" aria-hidden="true">
+  <div class="modal-backdrop" data-modal-close></div>
+  <div class="modal-panel" role="dialog" aria-modal="true">
+    <button class="modal-close" data-modal-close aria-label="Fermer">&times;</button>
+
+    <div class="modal-view" data-view="signup">
+      <span class="modal-eyebrow">DÉMARRER</span>
+      <h3>Demander une démo FAXTRIX</h3>
+      <p class="modal-lead">Une présentation de 30 minutes avec vos propres cas d'usage — CRM, terrain, équipes ou intelligence.</p>
+      <form class="modal-form" id="signupForm" data-subject="Nouvelle demande de démo FAXTRIX">
+        <input type="hidden" name="access_key" value="">
+        <input type="hidden" name="subject" value="Nouvelle demande de démo FAXTRIX">
+        <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">
+        <label>Nom complet<input type="text" name="nom" required placeholder="Votre nom"></label>
+        <label>E-mail professionnel<input type="email" name="email" required placeholder="vous@entreprise.com"></label>
+        <label>Entreprise<input type="text" name="entreprise" required placeholder="Nom de l'entreprise"></label>
+        <label>Taille de l'équipe
+          <select name="taille">
+            <option>1 à 10 personnes</option>
+            <option>11 à 40 personnes</option>
+            <option>Plus de 40 personnes</option>
+          </select>
+        </label>
+        <button type="submit" class="btn btn-primary"><span>Envoyer la demande</span></button>
+        <p class="modal-status" data-status></p>
+      </form>
+      <p class="modal-switch">Vous voulez explorer tout de suite ? <a href="index.html">Essayer la démo instantanément</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="assets/js/main.js" defer></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
+</body>
+</html>
