@@ -1493,15 +1493,22 @@ function chatAvatarHtml(profile,size){
   return escapeHtml(chatInitial(profile&&profile.full_name));
 }
 async function loadChatProfiles(){
-  if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable pour la messagerie.','crit');return;}
-  var r=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path').eq('company_id',state.profile.company_id).order('full_name');
+  if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable pour la messagerie.','crit');return false;}
+  var r=await sb.rpc('my_company_chat_profiles');
   if(r.error){
     console.error('FAXTRIX profils messagerie:',r.error);
-    toast('Impossible de charger les membres : '+r.error.message,'crit');
-    chatState.profiles=[];
-    return;
+    var fallback=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path').eq('company_id',state.profile.company_id).order('full_name');
+    if(fallback.error){
+      console.error('FAXTRIX profils fallback:',fallback.error);
+      chatState.profiles=[];
+      toast('Impossible de charger les membres de votre entreprise : '+(r.error.message||fallback.error.message),'crit');
+      return false;
+    }
+    chatState.profiles=fallback.data||[];
+    return true;
   }
   chatState.profiles=r.data||[];
+  return true;
 }
 async function loadChatConversations(){
   var r=await sb.from('chat_conversations').select('*').eq('company_id',state.profile.company_id).order('updated_at',{ascending:false});
@@ -1576,50 +1583,64 @@ async function renderChatMessages(){
   }
 }
 window.FAXTRIX = window.FAXTRIX || {};
-window.FAXTRIX.openNewConversation = function(){
-  return createChatConversation().catch(function(err){
-    console.error('FAXTRIX nouvelle conversation:', err);
-    if(typeof toast==='function') toast('Impossible d’ouvrir la nouvelle conversation : '+(err.message||err),'crit');
-  });
-};
-async function createChatConversation(){
-  if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable.','crit');return;}
-  if(!chatState.profiles.length) await loadChatProfiles();
-  var opts=chatState.profiles.filter(function(p){return p.id!==state.profile.id;});
-  if(!opts.length){
-    $('#recordDetailTitle').textContent='Nouvelle conversation';
-    $('#recordDetailSub').textContent='Aucun autre membre disponible';
-    $('#recordDetailBody').innerHTML='<div class="app-empty" style="padding:24px;">Aucun autre utilisateur de votre entreprise n’est actuellement disponible pour démarrer une conversation.</div><button type="button" class="btn btn-ghost" id="chatCreateClose">Fermer</button>';
-    $('#recordDetail').hidden=false;
-    $('#chatCreateClose').onclick=closeRecordDetail;
-    return;
-  }
-  var html='<div class="chat-new-list">'+opts.map(function(p){return '<label class="chat-member-option"><input type="checkbox" value="'+p.id+'"> <div class="chat-avatar" style="width:30px;height:30px;min-width:30px;">'+chatAvatarHtml(p,30)+'</div><span>'+escapeHtml(p.full_name||'Utilisateur')+'</span></label>';}).join('')+'</div><label>Nom du groupe (facultatif)<input id="chatGroupName" type="text" placeholder="Ex. Équipe technique"></label><button type="button" class="btn btn-primary" id="chatCreateConfirm">Créer la conversation</button>';
-  $('#recordDetailTitle').textContent='Nouvelle conversation'; $('#recordDetailSub').textContent='Choisissez les membres de votre entreprise'; $('#recordDetailBody').innerHTML=html; $('#recordDetail').hidden=false;
-  $('#chatCreateConfirm').onclick=async function(){
-    var ids=$$('.chat-member-option input:checked').map(function(x){return x.value;});
-    if(!ids.length){toast('Sélectionnez au moins une personne.','crit');return;}
-    var selected=ids.map(function(id){return chatState.profiles.find(function(p){return p.id===id;});}).filter(Boolean);
-    var group=ids.length>1, name=$('#chatGroupName').value.trim();
-    var conversationId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(ch){var r=Math.random()*16|0,v=ch==='x'?r:(r&3|8);return v.toString(16);}));
-    var conversation={
-      id:conversationId,
-      company_id:state.profile.company_id,
-      created_by:state.profile.id,
-      title:group?(name||selected.map(function(p){return p.full_name;}).join(', ')):null,
-      is_group:group,
-      created_at:new Date().toISOString(),
-      updated_at:new Date().toISOString()
-    };
-    var cr=await sb.from('chat_conversations').insert(conversation);
-    if(cr.error){toast('Création impossible : '+cr.error.message,'crit');return;}
-    var members=[{conversation_id:conversationId,user_id:state.profile.id,company_id:state.profile.company_id,role:'admin'}].concat(ids.map(function(id){return {conversation_id:conversationId,user_id:id,company_id:state.profile.company_id,role:'member'};}));
-    var mr=await sb.from('chat_members').insert(members);
-    if(mr.error){await sb.from('chat_conversations').delete().eq('id',conversationId);toast('Impossible d’ajouter les membres : '+mr.error.message,'crit');return;}
-    chatState.conversations.unshift(conversation);
-    chatState.members[conversationId]=members;
-    closeRecordDetail(); renderChatConversationList(); await openChatConversation(conversationId); toast('Conversation créée.','ok');
+window.FAXTRIX = window.FAXTRIX || {};
+window.FAXTRIX.openNewConversation = async function(){
+  var existing=document.getElementById('faxtrixNewChatOverlay');
+  if(existing) existing.remove();
+  var overlay=document.createElement('div');
+  overlay.id='faxtrixNewChatOverlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(3,10,20,.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML='<div style="width:min(520px,100%);max-height:80vh;overflow:auto;background:var(--panel,#0b1b2d);border:1px solid var(--line-soft,#234);border-radius:18px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.45);"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;"><div><div style="font-size:11px;color:var(--ion);letter-spacing:.12em;font-weight:700;">MESSAGERIE INTERNE</div><h3 style="margin:5px 0;">Démarrer une conversation</h3><p style="margin:0;color:var(--text-2);font-size:12px;">Recherchez uniquement les personnes de votre entreprise.</p></div><button type="button" id="faxtrixChatClose" class="row-btn">×</button></div><input id="faxtrixChatPersonSearch" type="search" placeholder="Rechercher une personne…" autocomplete="off" style="width:100%;margin:18px 0 10px;padding:12px 14px;border-radius:10px;border:1px solid var(--line-soft);background:rgba(255,255,255,.04);color:var(--text);"><div id="faxtrixChatPeople" style="display:grid;gap:8px;"></div><div id="faxtrixChatStatus" style="font-size:12px;color:var(--text-2);margin-top:12px;"></div></div>';
+  document.body.appendChild(overlay);
+  var close=function(){overlay.remove();};
+  $('#faxtrixChatClose').onclick=close;
+  overlay.addEventListener('click',function(e){if(e.target===overlay)close();});
+  var status=$('#faxtrixChatStatus'), list=$('#faxtrixChatPeople'), search=$('#faxtrixChatPersonSearch');
+  status.textContent='Chargement des membres de votre entreprise…';
+  var ok=await loadChatProfiles();
+  if(!ok){status.textContent='Impossible de charger les membres. Vérifiez la configuration de la messagerie.';return;}
+  var renderPeople=function(){
+    var q=(search.value||'').trim().toLowerCase();
+    var people=chatState.profiles.filter(function(p){return p.id!==state.profile.id && (!q || (p.full_name||'').toLowerCase().indexOf(q)!==-1 || (p.role||'').toLowerCase().indexOf(q)!==-1);});
+    list.innerHTML=people.length?people.map(function(p){
+      return '<button type="button" data-chat-person="'+p.id+'" style="display:flex;align-items:center;gap:12px;text-align:left;padding:11px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(255,255,255,.025);color:var(--text);cursor:pointer;"><span class="chat-avatar" style="width:38px;height:38px;min-width:38px;">'+chatAvatarHtml(p,38)+'</span><span style="display:grid;gap:3px;"><b>'+escapeHtml(p.full_name||'Utilisateur')+'</b><small style="color:var(--text-2);">'+escapeHtml(p.role||'Membre de l’entreprise')+'</small></span></button>';
+    }).join(''):'<div style="padding:18px;text-align:center;color:var(--text-2);">Aucune personne de votre entreprise ne correspond.</div>';
+    status.textContent=people.length+' personne(s) trouvée(s).';
+    $$('#faxtrixChatPeople [data-chat-person]').forEach(function(btn){btn.onclick=function(){startChatWithPerson(btn.getAttribute('data-chat-person'),close);};});
   };
+  search.oninput=renderPeople;
+  renderPeople();
+};
+async function startChatWithPerson(userId,close){
+  var existing=chatState.conversations.find(function(c){
+    if(c.is_group)return false;
+    var ids=(chatState.members[c.id]||[]).map(function(m){return m.user_id;});
+    return ids.length===2&&ids.indexOf(state.profile.id)!==-1&&ids.indexOf(userId)!==-1;
+  });
+  if(existing){close();await openChatConversation(existing.id);return;}
+  var conversationId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(ch){var rr=Math.random()*16|0,v=ch==='x'?rr:(rr&3|8);return v.toString(16);}));
+  var now=new Date().toISOString();
+  var conversation={id:conversationId,company_id:state.profile.company_id,created_by:state.profile.id,title:null,is_group:false,created_at:now,updated_at:now};
+  var cr=await sb.from('chat_conversations').insert(conversation);
+  if(cr.error){toast('Création impossible : '+cr.error.message,'crit');return;}
+  var members=[
+    {conversation_id:conversationId,user_id:state.profile.id,company_id:state.profile.company_id,role:'admin'},
+    {conversation_id:conversationId,user_id:userId,company_id:state.profile.company_id,role:'member'}
+  ];
+  var mr=await sb.from('chat_members').insert(members);
+  if(mr.error){
+    await sb.from('chat_conversations').delete().eq('id',conversationId);
+    toast('Impossible d’ajouter cette personne : '+mr.error.message,'crit');return;
+  }
+  chatState.conversations.unshift(conversation);
+  chatState.members[conversationId]=members;
+  close();
+  renderChatConversationList();
+  await openChatConversation(conversationId);
+  toast('Conversation démarrée.','ok');
+}
+async function createChatConversation(){
+  return window.FAXTRIX.openNewConversation();
 }
 async function sendChatMessage(e){
   e.preventDefault(); if(!chatState.current)return;
@@ -1709,10 +1730,11 @@ function startCurrentCall(type){
   setupCall(type,peer.id,true).catch(function(e){toast('Appel impossible : '+(e.message||'autorisation micro/caméra requise'),'crit');endCall(false);});
 }
 /* La messagerie peut être initialisée après le rendu de l'application : délégation robuste du bouton. */
-document.addEventListener('pointerup',function(e){
+document.addEventListener('click',function(e){
   var btn=e.target.closest&&e.target.closest('#chatNewBtn');
   if(btn){
     e.preventDefault();
+    e.stopPropagation();
     window.FAXTRIX.openNewConversation();
   }
 });
