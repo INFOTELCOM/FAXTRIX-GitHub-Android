@@ -24,6 +24,23 @@ $$;
 revoke all on function public.is_chat_member(uuid, uuid) from public;
 grant execute on function public.is_chat_member(uuid, uuid) to authenticated;
 
+-- Permet à un utilisateur authentifié de rechercher les membres de sa propre entreprise
+-- sans exposer les profils des autres organisations.
+create or replace function public.my_company_chat_profiles()
+returns table(id uuid, full_name text, role text, avatar_url text, avatar_path text)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $
+  select p.id, p.full_name, p.role, p.avatar_url, p.avatar_path
+  from public.profiles p
+  where p.company_id = (select company_id from public.profiles where id = auth.uid())
+  order by p.full_name;
+$;
+revoke all on function public.my_company_chat_profiles() from public;
+grant execute on function public.my_company_chat_profiles() to authenticated;
+
 alter table public.chat_conversations enable row level security;
 alter table public.chat_members enable row level security;
 alter table public.chat_messages enable row level security;
