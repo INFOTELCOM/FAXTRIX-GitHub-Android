@@ -683,15 +683,24 @@
 
     <form class="contact-form" id="tkForm" data-kind="tk" hidden>
       <input type="hidden" id="tkId">
+      <div class="ticket-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div><small style="color:var(--slate-2)">N° DU TICKET</small><strong id="tkNumero" style="display:block;margin-top:4px;">Attribution automatique</strong></div>
+        <div><small style="color:var(--slate-2)">OUVERT LE</small><strong id="tkOpenedAt" style="display:block;margin-top:4px;">—</strong></div>
+      </div>
       <label>Titre du ticket<input type="text" id="tkTitre" required placeholder="Problème réseau"></label>
       <label>Client concerné<input type="text" id="tkClient" placeholder="ABC Réseaux"></label>
       <label>Catégorie<select id="tkCategorie"><option>Général</option><option>Réseau</option><option>Système</option><option>Cybersécurité</option><option>Logiciel</option><option>Matériel</option><option>Compte & accès</option></select></label>
       <label>Priorité<select id="tkPriorite"><option>Basse</option><option selected>Moyenne</option><option>Haute</option></select></label>
-      <label>Statut<select id="tkStatut"><option>Nouveau</option><option>En cours</option><option>Résolu</option><option>Fermé</option></select></label>
+      <label>Statut<select id="tkStatut"><option>Brouillon</option><option>Nouveau</option><option>En cours</option><option>Résolu</option><option>Fermé</option></select></label>
       <label>Assigné à<input type="text" id="tkAssigned" placeholder="Technicien / responsable"></label>
       <label>Échéance<input type="datetime-local" id="tkDue"></label>
-      <label>Description<textarea id="tkDescription" rows="4" placeholder="Décrivez précisément le problème, le contexte et les actions déjà tentées."></textarea></label>
-      <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
+      <label>Le problème<textarea id="tkProblem" rows="4" placeholder="Décrivez le problème rencontré, ses symptômes et son contexte."></textarea></label>
+      <label>Tâches à faire<textarea id="tkTasks" rows="4" placeholder="1. Vérifier le switch&#10;2. Tester la connexion&#10;3. Corriger la configuration…"></textarea></label>
+      <label>Recommandations<textarea id="tkRecommendations" rows="4" placeholder="Conseils à suivre pour éviter que le problème se reproduise."></textarea></label>
+      <label>Résolution / comment le problème a été réglé<textarea id="tkResolution" rows="4" placeholder="Décrivez les actions réalisées et la solution appliquée."></textarea></label>
+      <label>Description complémentaire<textarea id="tkDescription" rows="3" placeholder="Informations supplémentaires."></textarea></label>
+      <div id="tkAutosaveStatus" style="font-size:11px;color:var(--slate-2);min-height:18px;">Les modifications sont sauvegardées automatiquement.</div>
+      <button type="submit" class="btn btn-primary"><span>Enregistrer les modifications</span></button>
     </form>
 
     <form class="contact-form" id="teForm" data-kind="te" hidden>
