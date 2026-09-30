@@ -1,4 +1,5 @@
 # FAXTRIX — Web + Android
+Site github : https://infotelcom.github.io/FAXTRIX-GitHub-Android/site.html
 
 FAXTRIX est une application de gestion d'entreprise (CRM, tickets, terrain, équipes, automatisations, rapports, sécurité et assistant) avec un espace web et une application Android construite avec Capacitor.
 
