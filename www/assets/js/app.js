@@ -381,7 +381,7 @@ function renderCrm() {
   });
   list.innerHTML = rows.length ? rows.map(function (c) {
     var chipClass = c.statut === 'Actif' ? 'ok' : (c.statut === 'Négociation' ? 'mid' : (c.statut === 'Attente' ? 'crit' : ''));
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(c.nom) + '</b><span>' + euros(c.valeur) + '</span></div>' +
+    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(c.nom) + '</b><span>' + euros(c.valeur) + ' · Enregistré : ' + escapeHtml(fmtDateTime(c.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(c.updated_at)) + '</span></div>' +
       '<span class="chip ' + chipClass + '">' + c.statut + '</span>' +
       '<div class="app-row-actions"><button class="row-btn" data-crm-edit="' + c.id + '">✎</button><button class="row-btn" data-crm-del="' + c.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun client pour ce filtre.</div>';
@@ -437,6 +437,14 @@ function updateTicketSessionUI(t) {
   $('#tkStartSessionBtn').disabled = !t || !t.id || active || !!(t && t.work_closed_at);
   $('#tkEndSessionBtn').disabled = !active;
 }
+setInterval(function(){
+  var id=$('#tkId')&&$('#tkId').value;
+  if(!id)return;
+  var t=state.tickets.find(function(x){return x.id===id;});
+  if(t && t.work_started_at && !t.work_closed_at){
+    $('#tkWorkDuration').textContent='Durée : '+fmtElapsed(ticketWorkElapsed(t));
+  }
+},1000);
 async function loadTicketHistory(id) {
   var box = $('#tkHistory'), list = $('#tkHistoryList');
   if (!id) { box.style.display='none'; return; }
@@ -605,7 +613,16 @@ $('#teForm').addEventListener('submit',async function(e){
   e.preventDefault();
   var id=$('#teId').value;
   var data={tech:$('#teTech').value.trim(),client:$('#teClient').value.trim(),adresse:$('#teAdresse').value.trim(),statut:$('#teStatut').value,notes:$('#teNotes').value.trim(),compte_rendu:$('#teCompteRendu').value.trim()};
-  if(id){
+  var current=id?state.terrain.find(function(x){return x.id===id;}):null;
+  var now=new Date().toISOString();
+  if(id && current){
+    if(data.statut==='En cours' && !current.started_at){ data.started_at=now; data.completed_at=null; }
+    if(data.statut==='Terminée' && current.statut!=='Terminée'){
+      data.completed_at=now;
+      data.started_at=current.started_at||now;
+      data.elapsed_ms=Math.max(current.elapsed_ms||0,Math.floor(new Date(now).getTime()-new Date(data.started_at).getTime()));
+    }
+    if(data.statut!=='Terminée' && current.statut==='Terminée'){ data.completed_at=null; }
     var res=await sb.from('terrain_missions').update(data).eq('id',id).select().single();
     if(res.error){toast('Impossible d’enregistrer la mission : '+res.error.message,'crit');return;}
     var item=state.terrain.find(function(x){return x.id===id;}); if(item)Object.assign(item,res.data);
@@ -700,7 +717,7 @@ function renderEquipes() {
   var list = $('#eqList');
   list.innerHTML = state.equipes.length ? state.equipes.map(function (m) {
     var chipClass = m.statut === 'Disponible' ? 'ok' : (m.statut === 'En mission' ? 'crit' : 'mid');
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(m.nom) + '</b><span>' + escapeHtml(m.role || '—') + '</span></div>' +
+    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(m.nom) + '</b><span>' + escapeHtml(m.role || '—') + ' · Enregistré : ' + escapeHtml(fmtDateTime(m.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(m.updated_at)) + '</span></div>' +
       '<span class="mono" style="min-width:40px;">' + m.charge + '%</span>' +
       '<span class="chip ' + chipClass + '">' + m.statut + '</span>' +
       '<div class="app-row-actions"><button class="row-btn" data-eq-edit="' + m.id + '">✎</button><button class="row-btn" data-eq-del="' + m.id + '">🗑</button></div></div>';
@@ -726,7 +743,7 @@ async function deleteAuto(id) {
 function renderAuto() {
   var wrap = $('#autoList');
   wrap.innerHTML = state.automations.length ? state.automations.map(function (a) {
-    return '<div class="rule-row"><em>SI</em>' + escapeHtml(a.trigger_text) + '<em>ALORS</em>' + escapeHtml(a.action_text) +
+    return '<div class="rule-row"><em>SI</em>' + escapeHtml(a.trigger_text) + '<em>ALORS</em>' + escapeHtml(a.action_text) + '<small style="opacity:.72;margin-left:8px;">Enregistré : ' + escapeHtml(fmtDateTime(a.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(a.updated_at)) + '</small>' +
       (a.live ? '<span class="chip ok">Active</span>' : '') +
       '<button class="row-btn r-x" data-auto-del="' + a.id + '">🗑</button></div>';
   }).join('') : '<div class="app-empty">Aucune règle définie.</div>';
