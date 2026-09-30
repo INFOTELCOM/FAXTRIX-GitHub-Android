@@ -204,13 +204,32 @@ language plpgsql
 security definer
 set search_path=''
 as $$
-declare v_company uuid;
+declare
+  v_company uuid;
+  v_admin_count integer;
 begin
   if not public.is_infotelcom_admin() then raise exception 'Accès administrateur INFOTELCOM refusé'; end if;
   if p_role not in ('owner','manager','commercial','technicien','lecture_seule','infotelcom_admin') then raise exception 'Rôle invalide'; end if;
+
+  -- Protection du compte qui administre INFOTELCOM :
+  -- un administrateur ne peut pas supprimer/modifier son propre accès depuis cette interface.
+  if p_user_id=auth.uid() then
+    raise exception 'Votre propre rôle INFOTELCOM ne peut pas être modifié depuis cette interface';
+  end if;
+
   select company_id into v_company from public.profiles where id=p_user_id;
   if v_company is null then raise exception 'Utilisateur introuvable'; end if;
+
+  -- Ne jamais retirer le dernier administrateur INFOTELCOM.
+  if (select role from public.profiles where id=p_user_id)='infotelcom_admin' and p_role<>'infotelcom_admin' then
+    select count(*) into v_admin_count from public.profiles where role='infotelcom_admin';
+    if v_admin_count<=1 then
+      raise exception 'Impossible de retirer le dernier administrateur INFOTELCOM';
+    end if;
+  end if;
+
   update public.profiles set role=p_role where id=p_user_id;
+
   insert into public.admin_audit_logs(admin_id,company_id,action,target_type,target_id,metadata)
   values(auth.uid(),v_company,'role_changed','profile',p_user_id::text,jsonb_build_object('role',p_role));
   return true;
