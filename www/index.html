@@ -272,7 +272,7 @@
             <h3 style="margin-bottom:4px;">Besoin d'assistance ?</h3>
             <p style="font-size:12.5px; color:var(--text-2);">Notre équipe est disponible 24/7.</p>
           </div>
-          <button class="btn btn-primary" data-go="tickets" data-open-ticket><span>Ouvrir un ticket →</span></button>
+          <button class="btn btn-primary" type="button" data-assistance-open><span>Signaler un besoin →</span></button>
         </div>
         <div class="app-grid2" style="margin-top:20px;">
           <div class="app-card">
@@ -773,6 +773,48 @@
     <button class="app-drawer-close" data-drawer-close-notif>&times;</button>
     <div class="app-card-head"><h3>Notifications</h3><button class="btn btn-ghost" id="markAllNotifBtn" type="button">Tout lire</button></div>
     <div class="app-list" id="notifList"></div>
+  </div>
+</div>
+
+<!-- ============ ASSISTANCE INFOTELCOM ============ -->
+<div class="app-drawer" id="assistanceDrawer">
+  <div class="app-drawer-bg" data-assistance-close></div>
+  <div class="app-drawer-panel" style="width:min(520px,94vw)">
+    <button class="app-drawer-close" data-assistance-close>&times;</button>
+    <span class="eyebrow">SUPPORT INFOTELCOM</span>
+    <h3 style="margin-top:6px;">Besoin d'assistance ?</h3>
+    <p style="font-size:13px;color:var(--text-2);line-height:1.6;">
+      Signalez-nous n'importe quel besoin : problème technique, demande d'accès,
+      droit supplémentaire, compte bloqué, erreur ou demande d'information.
+    </p>
+
+    <div class="contact-form" style="margin-top:16px;">
+      <label>Type de demande
+        <select id="supportType">
+          <option>Problème technique</option>
+          <option>Demande de droit / accès</option>
+          <option>Compte / connexion</option>
+          <option>Erreur dans FAXTRIX</option>
+          <option>Question / information</option>
+          <option>Autre besoin</option>
+        </select>
+      </label>
+      <label>Votre demande
+        <textarea id="supportMessage" rows="6" placeholder="Décrivez précisément votre besoin, ce qui s'est passé et, si nécessaire, le droit ou l'accès que vous souhaitez obtenir."></textarea>
+      </label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button type="button" class="btn btn-primary" id="supportEmailBtn"><span>✉️ Envoyer par e-mail</span></button>
+        <button type="button" class="btn btn-ghost" id="supportWhatsappBtn"><span>💬 WhatsApp</span></button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+        <a class="btn btn-ghost" href="tel:+242068498792"><span>☎️ +242 06 849 87 92</span></a>
+        <a class="btn btn-ghost" href="tel:+242068660821"><span>☎️ +242 06 866 08 21</span></a>
+      </div>
+      <div style="margin-top:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.035);font-size:12px;color:var(--text-2);">
+        E-mail : <b style="color:var(--text);">contact.infotelcom@gmail.com</b><br>
+        WhatsApp : <b style="color:var(--text);">+33 6 52 86 11 59</b>
+      </div>
+    </div>
   </div>
 </div>
 
