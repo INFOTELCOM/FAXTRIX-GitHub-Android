@@ -44,7 +44,7 @@ create or replace function public.is_infotelcom_admin()
 returns boolean
 language sql
 security definer
-set search_path=public
+set search_path=''
 as $$
   select exists (
     select 1 from public.profiles
@@ -60,7 +60,7 @@ create or replace function public.my_permissions()
 returns table(permission text, granted_at timestamptz, expires_at timestamptz)
 language sql
 security definer
-set search_path=public
+set search_path=''
 as $$
   select up.permission, up.granted_at, up.expires_at
   from public.user_permissions up
@@ -76,7 +76,7 @@ create or replace function public.request_faxtrix_permission(p_right text, p_rea
 returns uuid
 language plpgsql
 security definer
-set search_path=public
+set search_path=''
 as $$
 declare
   v_company uuid;
@@ -102,7 +102,7 @@ create or replace function public.my_permission_requests()
 returns table(id uuid, requested_right text, reason text, status text, admin_note text, created_at timestamptz, reviewed_at timestamptz)
 language sql
 security definer
-set search_path=public
+set search_path=''
 as $$
   select id, requested_right, reason, status, admin_note, created_at, reviewed_at
   from public.permission_requests
@@ -118,7 +118,7 @@ create or replace function public.infotelcom_admin_bootstrap()
 returns jsonb
 language plpgsql
 security definer
-set search_path=public
+set search_path=''
 as $$
 declare
   v jsonb;
@@ -167,7 +167,7 @@ create or replace function public.infotelcom_review_permission(
 returns boolean
 language plpgsql
 security definer
-set search_path=public
+set search_path=''
 as $$
 declare
   r public.permission_requests%rowtype;
@@ -202,7 +202,7 @@ create or replace function public.infotelcom_set_user_role(p_user_id uuid,p_role
 returns boolean
 language plpgsql
 security definer
-set search_path=public
+set search_path=''
 as $$
 declare v_company uuid;
 begin
@@ -225,7 +225,7 @@ create or replace function public.infotelcom_export_company(p_company_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path=public
+set search_path=''
 as $$
 declare result jsonb;
 begin
