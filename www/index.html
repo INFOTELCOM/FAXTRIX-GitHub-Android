@@ -361,9 +361,14 @@
             <button data-filter="Nouveau">Nouveaux</button>
             <button data-filter="En cours">En cours</button>
             <button data-filter="Résolu">Résolus</button>
+            <button data-filter="Mes tickets">Mes enregistrements</button>
           </div>
           <div class="app-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="tkSearch" placeholder="Rechercher un ticket…"></div>
           <button class="btn btn-primary" id="tkAddBtn"><span>+ Nouveau ticket</span></button>
+        </div>
+        <div id="tkMySummary" style="margin:12px 0;padding:14px;border:1px solid var(--line-soft);border-radius:14px;background:rgba(255,255,255,.03);display:none;">
+          <b>Mon activité</b>
+          <span id="tkMySummaryText" style="display:block;color:var(--slate-2);margin-top:5px;">Vos tickets, vos saisies et vos horaires de travail.</span>
         </div>
         <div class="app-list" id="tkList"></div>
       </section>
