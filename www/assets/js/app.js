@@ -332,12 +332,12 @@ if(assistanceForm) assistanceForm.addEventListener('submit',function(e){
   var type=$('#supportType').value;
   var subject=$('#supportSubject').value.trim();
   var message=$('#supportMessage').value.trim();
-  if(!type || !subject || !message){ showToast('Veuillez compléter les champs obligatoires.','error'); return; }
+  if(!type || !subject || !message){ toast('Veuillez compléter les champs obligatoires.','error'); return; }
   var body=buildSupportMessage();
   var gmail='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent('contact.infotelcom@gmail.com')+
     '&su='+encodeURIComponent('[FAXTRIX] '+subject)+'&body='+encodeURIComponent(body);
   window.open(gmail,'_blank','noopener');
-  showToast('Gmail a été ouvert avec votre demande prête à être envoyée.','success');
+  toast('Gmail a été ouvert avec votre demande prête à être envoyée.','success');
 });
 refreshSupportIdentity();
 
