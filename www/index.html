@@ -185,6 +185,9 @@
       <button data-panel="equipes">
         <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="8" r="2.3"/><path d="M15 13.3c2.5.4 4.5 2.4 4.5 5.7"/></svg>Équipes
       </button>
+      <button data-panel="messagerie">
+        <svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 017.5 2h9A3.5 3.5 0 0120 5.5v7a3.5 3.5 0 01-3.5 3.5H11l-5.5 4v-4.5A3.5 3.5 0 014 12.5z"/><path d="M8 8h8M8 11.5h5"/></svg>Messagerie
+      </button>
       <button data-panel="automatisation">
         <svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>Automatisation
       </button>
@@ -513,6 +516,42 @@
         </div>
       </section>
 
+      <!-- ---------- MESSAGERIE ---------- -->
+      <section class="app-panel" data-panel="messagerie" id="chatPanel">
+        <div class="app-card">
+          <div class="app-card-head">
+            <div><h3>Messagerie FAXTRIX</h3><p style="font-size:12.5px;color:var(--text-2);margin-top:5px;">Échangez avec les membres de votre entreprise. Les conversations restent isolées par organisation.</p></div>
+            <button class="btn btn-primary" id="chatNewBtn"><span>+ Nouvelle conversation</span></button>
+          </div>
+        </div>
+        <div class="chat-layout">
+          <aside class="chat-sidebar">
+            <div class="app-search"><input type="search" id="chatSearch" placeholder="Rechercher une conversation…"></div>
+            <div id="chatConversationList" class="chat-conversations"></div>
+          </aside>
+          <div class="chat-main">
+            <div id="chatEmpty" class="chat-empty">Sélectionnez une conversation pour commencer.</div>
+            <div id="chatConversation" hidden>
+              <header class="chat-head">
+                <div class="chat-person"><div id="chatAvatar" class="chat-avatar">👤</div><div><b id="chatTitle">Conversation</b><span id="chatMembersLabel">—</span></div></div>
+                <div class="chat-head-actions">
+                  <button class="row-btn" id="chatAudioBtn" title="Appel audio">☎</button>
+                  <button class="row-btn" id="chatVideoBtn" title="Appel vidéo">▣</button>
+                </div>
+              </header>
+              <div id="chatMessages" class="chat-messages"></div>
+              <div class="chat-attachment" id="chatAttachment" hidden><span id="chatAttachmentName"></span><button type="button" class="row-btn" id="chatAttachmentRemove">×</button></div>
+              <form id="chatForm" class="chat-compose">
+                <input type="file" id="chatFile" hidden>
+                <button type="button" class="row-btn" id="chatFileBtn" title="Joindre un fichier">📎</button>
+                <input type="text" id="chatInput" autocomplete="off" placeholder="Écrire un message…">
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ---------- SUIVI & STATISTIQUES ---------- -->
       <section class="app-panel" data-panel="suivi">
         <div class="app-card">
@@ -770,6 +809,27 @@
       <button type="button" data-go="assistant"><i>✦</i>Assistant IA</button>
       <button type="button" data-go="securite"><i>🛡️</i>Cybersécurité</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ DÉTAIL D'UN ENREGISTREMENT ============ -->
+<div class="app-modal" id="recordDetail" hidden>
+  <div class="app-modal-bg" data-record-close></div>
+  <div class="app-modal-card">
+    <button class="app-drawer-close" data-record-close>&times;</button>
+    <div class="app-card-head"><div><h3 id="recordDetailTitle">Détail</h3><p id="recordDetailSub" style="font-size:12px;color:var(--slate-2);margin-top:4px;">Consultation de l'enregistrement</p></div><span class="chip ok">INVENTAIRE</span></div>
+    <div id="recordDetailBody" class="record-detail-grid"></div>
+  </div>
+</div>
+
+<!-- ============ APPEL AUDIO / VIDÉO ============ -->
+<div class="app-modal" id="callModal" hidden>
+  <div class="app-modal-bg" data-call-close></div>
+  <div class="app-modal-card call-card">
+    <button class="app-drawer-close" data-call-close>&times;</button>
+    <div class="app-card-head"><div><h3 id="callTitle">Appel</h3><p id="callStatus" style="font-size:12px;color:var(--slate-2);margin-top:4px;">Connexion…</p></div></div>
+    <div class="call-videos"><video id="callRemoteVideo" autoplay playsinline></video><video id="callLocalVideo" autoplay muted playsinline></video></div>
+    <div class="call-actions"><button class="btn btn-ghost" id="callMuteBtn">🎙️ Muet</button><button class="btn btn-ghost" id="callCameraBtn">📷 Caméra</button><button class="btn btn-primary" id="callHangupBtn">Raccrocher</button></div>
   </div>
 </div>
 
