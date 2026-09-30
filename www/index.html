@@ -533,7 +533,7 @@
             <div id="chatEmpty" class="chat-empty">Sélectionnez une conversation pour commencer.</div>
             <div id="chatConversation" hidden>
               <header class="chat-head">
-                <div class="chat-person"><div id="chatAvatar" class="chat-avatar">👤</div><div><b id="chatTitle">Conversation</b><span id="chatMembersLabel">—</span></div></div>
+                <div class="chat-person"><div id="chatAvatar" class="chat-avatar" title="Changer la photo de profil">👤</div><input type="file" id="chatAvatarFile" accept="image/*" hidden><div><b id="chatTitle">Conversation</b><span id="chatMembersLabel">—</span></div></div>
                 <div class="chat-head-actions">
                   <button class="row-btn" id="chatAudioBtn" title="Appel audio">☎</button>
                   <button class="row-btn" id="chatVideoBtn" title="Appel vidéo">▣</button>
@@ -968,7 +968,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/app.js?v=20260930-chat-1" defer></script>
+<script src="assets/js/app.js?v=20260930-chat-2" defer></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
 </body>
 </html>
