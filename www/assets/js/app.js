@@ -1496,6 +1496,19 @@ async function uploadChatAvatar(file){
 
 /* Appels WebRTC de base via Supabase Realtime broadcast. */
 var callState={pc:null,stream:null,remote:null,active:false,type:'video',peer:null};
+async function getFaxtrixIceServers(){
+  try{
+    var session=(await sb.auth.getSession()).data.session;
+    var res=await fetch(SUPABASE_URL+'/functions/v1/turn-ice-servers',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+(session?session.access_token:SUPABASE_ANON_KEY),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+      body:'{}'
+    });
+    var data=await res.json();
+    if(data&&Array.isArray(data.iceServers)&&data.iceServers.length)return data.iceServers;
+  }catch(e){}
+  return [{urls:['stun:stun.cloudflare.com:3478']}];
+}
 async function setupCall(type,peerId,initiator){
   if(!chatState.callChannel)chatState.callChannel=sb.channel('faxtrix-call-'+state.profile.company_id).on('broadcast',{event:'call-signal'},async function(ctx){
     var p=ctx.payload||{}; if(p.to!==state.profile.id||p.conversation_id!==chatState.current)return;
@@ -1514,7 +1527,8 @@ async function setupCall(type,peerId,initiator){
   $('#callTitle').textContent=type==='video'?'Appel vidéo':'Appel audio'; $('#callModal').hidden=false; $('#callStatus').textContent=initiator?'Appel en cours…':'Appel entrant…';
   callState.stream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==='video'});
   $('#callLocalVideo').srcObject=callState.stream; $('#callLocalVideo').style.display=type==='video'?'block':'none';
-  callState.pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  var iceServers=await getFaxtrixIceServers();
+  callState.pc=new RTCPeerConnection({iceServers:iceServers,iceTransportPolicy:'all'});
   callState.pc.onicecandidate=function(e){if(e.candidate)chatState.callChannel.send({type:'broadcast',event:'call-signal',payload:{type:'candidate',from:state.profile.id,to:peerId,conversation_id:chatState.current,candidate:e.candidate}});};
   callState.pc.ontrack=function(e){$('#callRemoteVideo').srcObject=e.streams[0];};
   callState.stream.getTracks().forEach(function(track){callState.pc.addTrack(track,callState.stream);});
