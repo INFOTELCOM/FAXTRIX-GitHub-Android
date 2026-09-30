@@ -642,6 +642,24 @@
           </form>
           <div class="profile-row"><span>Entreprise</span><span id="profCompanyName">—</span></div>
           <div class="profile-row" style="align-items:flex-start;">
+            <span>Devise</span>
+            <div style="min-width:230px;">
+              <select id="currencySelect" class="app-input" aria-label="Choisir la devise">
+                <option value="XAF">🇨🇲 FCFA — Franc CFA (Afrique centrale)</option>
+                <option value="EUR">🇪🇺 EUR — Euro</option>
+                <option value="USD">🇺🇸 USD — Dollar américain</option>
+                <option value="GBP">🇬🇧 GBP — Livre sterling</option>
+                <option value="CAD">🇨🇦 CAD — Dollar canadien</option>
+                <option value="CHF">🇨🇭 CHF — Franc suisse</option>
+                <option value="MAD">🇲🇦 MAD — Dirham marocain</option>
+                <option value="NGN">🇳🇬 NGN — Naira nigérian</option>
+                <option value="CNY">🇨🇳 CNY — Yuan chinois</option>
+                <option value="JPY">🇯🇵 JPY — Yen japonais</option>
+              </select>
+              <small style="display:block;margin-top:6px;color:var(--slate-2);">Les montants sont affichés dans la devise choisie.</small>
+            </div>
+          </div>
+          <div class="profile-row" style="align-items:flex-start;">
             <span>Thème</span>
             <div class="theme-switch" id="themeSwitch">
               <button type="button" data-theme-choice="light">☀️ Clair</button>
@@ -768,7 +786,7 @@
       <label>Statut
         <select id="crmStatut"><option>Prospect</option><option>Négociation</option><option>Actif</option><option>Attente</option></select>
       </label>
-      <label>Valeur estimée (FCFA)<input type="number" id="crmValeurInput" min="0" step="100" placeholder="12000"></label>
+      <label>Valeur estimée<input type="number" id="crmValeurInput" min="0" step="100" placeholder="12000"></label>
       <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
     </form>
 
