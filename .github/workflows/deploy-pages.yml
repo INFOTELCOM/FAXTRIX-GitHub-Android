@@ -3,7 +3,8 @@ name: Déployer FAXTRIX Web
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'www/**'
       - '.github/workflows/deploy-pages.yml'
@@ -13,17 +14,49 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Configurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Préparer FAXTRIX
+        run: |
+          set -e
+          rm -rf _site
+          mkdir -p _site
+
+          # Le site publié doit avoir index.html directement à sa racine.
+          cp -R www/. _site/
+
+          # Évite toute interprétation Jekyll de nos fichiers statiques.
+          touch _site/.nojekyll
+
+          echo "=== RACINE DE L'ARTEFACT FAXTRIX ==="
+          find _site -maxdepth 2 -type f | sort
+
+          echo "=== VÉRIFICATION DE L'ENTRÉE ==="
+          test -f _site/index.html
+          test ! -d _site/www
+          head -20 _site/index.html
+
+      - name: Publier l'artefact GitHub Pages
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: ./www
-      - id: deployment
+          path: ./_site
+
+      - name: Déployer FAXTRIX
+        id: deployment
         uses: actions/deploy-pages@v4
