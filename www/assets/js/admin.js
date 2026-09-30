@@ -8,6 +8,7 @@ $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();msg('Conn
 $('#logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
 $('#refresh').onclick=boot;
 $('#refreshPlatform').onclick=loadPlatformStats;
+setInterval(function(){if(document.visibilityState==='visible'&&document.body.classList.contains('admin-authenticated'))loadPlatformStats();},30000);
 async function loadPlatformStats(){
   const box=$('#platformStats'); if(!box)return;
   box.innerHTML='<div class="empty">Actualisation…</div>';
