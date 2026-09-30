@@ -479,6 +479,33 @@
           <div class="profile-row"><span>Authentification à deux facteurs</span><span class="chip">Bientôt disponible</span></div>
           <div class="profile-row"><span>Biométrie</span><span class="chip">Bientôt disponible</span></div>
           <div class="profile-row"><span>Sessions actives</span><button class="btn btn-ghost" id="logoutAllBtn"><span>Déconnecter tous les appareils</span></button></div>
+          <div class="app-card" style="margin-top:18px;padding:18px;">
+            <div class="app-card-head"><h3>Droits d'accès</h3><span class="chip" id="permissionRole">—</span></div>
+            <p style="font-size:12.5px;color:var(--text-2);line-height:1.6;">Certains droits sensibles sont attribués après validation par l'équipe INFOTELCOM.</p>
+            <form class="contact-form" id="permissionRequestForm">
+              <label>Droit demandé
+                <select id="permissionRight" required>
+                  <option value="crm_edit">Modifier les données CRM</option>
+                  <option value="tickets_manage">Gérer les tickets</option>
+                  <option value="terrain_manage">Gérer les missions terrain</option>
+                  <option value="team_manage">Gérer l'équipe</option>
+                  <option value="automation_manage">Gérer l'automatisation</option>
+                  <option value="reports_export">Exporter les rapports</option>
+                  <option value="data_export">Exporter les données de l'entreprise</option>
+                  <option value="data_delete">Supprimer des données</option>
+                  <option value="user_manage">Gérer les utilisateurs</option>
+                  <option value="administration">Administration de l'entreprise</option>
+                </select>
+              </label>
+              <label>Motif de la demande<textarea id="permissionReason" rows="3" placeholder="Expliquez brièvement pourquoi ce droit est nécessaire."></textarea></label>
+              <button type="submit" class="btn btn-primary"><span>Demander l'autorisation</span></button>
+              <p class="modal-status" id="permissionStatus"></p>
+            </form>
+            <div style="margin-top:18px;">
+              <div class="app-card-head"><h3>Mes demandes</h3></div>
+              <div id="permissionRequestsList" class="app-list"></div>
+            </div>
+          </div>
         </div>
       </section>
 
