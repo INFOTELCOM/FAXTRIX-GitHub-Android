@@ -1323,7 +1323,7 @@ function aiSay(text, who) {
 async function aiWebSearch(q) {
   try {
     var session=(await sb.auth.getSession()).data.session;
-    var res=await fetch(SUPABASE_URL+'/functions/v1/google-search',{
+    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-research',{
       method:'POST',
       headers:{'Authorization':'Bearer '+(session?session.access_token:SUPABASE_ANON_KEY),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({q:q})
@@ -1352,13 +1352,20 @@ async function aiAsk(q) {
     || /(ticket|client|crm|technicien|équipe|equipe|mission|terrain|faxtrix|infotelcom|devise|monnaie|statistique|rapport|messagerie)/i.test(q);
   if(known){t.innerHTML=aiRenderAnswer(local);$('#aiLog').scrollTop=9999;return;}
   var data=await aiWebSearch(q);
-  if(data&&data.results&&data.results.length){
-    var html='<strong>Recherche Google : '+escapeHtml(q)+'</strong><br><br>'+data.results.map(function(x,i){
+  if(data&&data.answer){
+    var html='<strong>Réponse de l’IA avec recherche web</strong><br><br>'+escapeHtml(data.answer).replace(/\n/g,'<br>');
+    if(data.results&&data.results.length){
+      html+='<br><br><strong>Sources consultées</strong><br>'+data.results.slice(0,5).map(function(x,i){
+        return '<div style="margin-top:8px;">['+(i+1)+'] '+escapeHtml(x.title||'Source')+' — <a class="ai-link" href="'+encodeURI(x.link||'#')+'" target="_blank" rel="noopener noreferrer">ouvrir ↗</a></div>';
+      }).join('');
+    }
+    t.innerHTML=html;
+  } else if(data&&data.results&&data.results.length){
+    t.innerHTML='<strong>Résultats web</strong><br><br>'+data.results.map(function(x,i){
       return '<div style="margin-bottom:12px;"><b>'+(i+1)+'. '+escapeHtml(x.title||'Résultat')+'</b><br>'+escapeHtml(x.snippet||'')+'<br><a class="ai-link" href="'+encodeURI(x.link||'#')+'" target="_blank" rel="noopener noreferrer">Ouvrir la source ↗</a></div>';
     }).join('');
-    t.innerHTML=html;
   } else {
-    t.innerHTML=aiRenderAnswer(local+(data&&data.error?'\n\nRecherche web indisponible : '+data.error:''));
+    t.innerHTML=aiRenderAnswer(local+(data&&data.error?'\n\nRecherche web indisponible : '+data.error:data&&data.warning?'\n\n'+data.warning:''));
   }
   $('#aiLog').scrollTop=9999;
 }
