@@ -1,5 +1,5 @@
 (function(){'use strict';
-const URL='https://xtkcfhbsksoqbpnaciga.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0a2NmYmhrc2tvYnBuYWNpZ2EiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc5MDM0Njg4MSwiZXhwIjoyMTA1OTIyODgxfQ.Drrgf-6Axsdfu3i1tHXhn3UoIhTC0Tu291ER0NAQQhTQ';
+const URL='https://xtkcfhbsksoqbpnaciga.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0a2NmaGJza3NvcWJwbmFjaWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNDY4ODEsImV4cCI6MjEwNTkyMjg4MX0.Drrgf-6Axsdf3u1tHXhn3UoIhTC0Tu291ER0NAQQhTQ';
 const sb=supabase.createClient(URL,KEY); let data={companies:[],users:[],requests:[],audit:[]};
 const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function msg(t){$('#loginMsg').textContent=t||''}
