@@ -1,6 +1,6 @@
 (function(){'use strict';
 const URL='https://xtkcfhbsksoqbpnaciga.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0a2NmaGJza3NvcWJwbmFjaWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNDY4ODEsImV4cCI6MjEwNTkyMjg4MX0.Drrgf-6Axsdf3u1tHXhn3UoIhTC0Tu291ER0NAQQhTQ';
-const sb=supabase.createClient(URL,KEY); let data={companies:[],users:[],requests:[],audit:[]};
+const sb=supabase.createClient(URL,KEY,{auth:{storageKey:'faxtrix-admin-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); let data={companies:[],users:[],requests:[],audit:[]};
 const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function msg(t){$('#loginMsg').textContent=t||''}
 async function boot(){const r=await sb.rpc('infotelcom_admin_bootstrap');if(r.error){document.body.classList.remove('admin-authenticated');$('#login').hidden=false;$('#login').style.setProperty('display','grid','important');$('#app').hidden=true;$('#app').style.setProperty('display','none','important');msg('Accès refusé ou administration non initialisée.');return false} data=r.data||{};document.body.classList.add('admin-authenticated');$('#login').hidden=true;$('#login').style.setProperty('display','none','important');$('#app').hidden=false;$('#app').style.removeProperty('display');$('#adminName').textContent=data.profile?.full_name||'INFOTELCOM';render();return true}
