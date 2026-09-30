@@ -4,7 +4,39 @@
 /* ---------------- 0. Aides ---------------- */
 function $(sel, ctx) { return (ctx || document).querySelector(sel); }
 function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
-function euros(n) { return Number(n || 0).toLocaleString('fr-FR') + " €"; }
+var FAXTRIX_CURRENCY_DEFAULT = 'XAF';
+function currentCurrency() {
+  try { return localStorage.getItem('faxtrix-currency') || FAXTRIX_CURRENCY_DEFAULT; } catch(e) { return FAXTRIX_CURRENCY_DEFAULT; }
+}
+function money(n) {
+  var code = currentCurrency();
+  try {
+    return new Intl.NumberFormat('fr-FR', { style:'currency', currency:code, maximumFractionDigits:2 }).format(Number(n||0));
+  } catch(e) {
+    return Number(n||0).toLocaleString('fr-FR') + ' ' + code;
+  }
+}
+function euros(n) { return money(n); }
+function initCurrencySelector() {
+  var el = $('#currencySelect'); if (!el) return;
+  var common = ['XAF','XOF','EUR','USD','GBP','CAD','CHF','MAD','NGN','GHS','ZAR','KES','ETB','EGP','AED','SAR','QAR','INR','CNY','JPY','KRW','AUD','NZD','SGD','HKD','BRL','MXN','ARS','CLP','COP','PEN','TRY','PLN','SEK','NOK','DKK','CZK','HUF','RON','UAH','ISK'];
+  var all = [];
+  try { all = Intl.supportedValuesOf('currency'); } catch(e) { all = common.slice(); }
+  var codes = common.concat(all.filter(function(x){return common.indexOf(x)===-1;}));
+  var current = currentCurrency();
+  var names;
+  try { names = new Intl.DisplayNames(['fr-FR'], {type:'currency'}); } catch(e) { names = null; }
+  el.innerHTML = codes.map(function(code){
+    var label = names ? (names.of(code)||code) : code;
+    return '<option value="'+code+'">'+code+' — '+escapeHtml(label)+'</option>';
+  }).join('');
+  el.value = codes.indexOf(current)>=0 ? current : FAXTRIX_CURRENCY_DEFAULT;
+  el.addEventListener('change', function(){
+    localStorage.setItem('faxtrix-currency', this.value);
+    renderAll();
+    renderReports();
+  });
+}
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -43,6 +75,8 @@ var state = {
   profile: { id: null, company_id: null, full_name: '', company_name: '', role: 'owner' },
   crm: [], tickets: [], terrain: [], equipes: [], automations: [], notifications: [], invitations: [], statistics: null
 };
+
+initCurrencySelector();
 
 /* ---------------- 2. Porte d'entrée (connexion / inscription / mot de passe) ---------------- */
 (function gate() {
@@ -290,6 +324,7 @@ function showPanel(name) {
   }
   $('#appSide').classList.remove('open');
   var serviceSheet = $('#servicesSheet'); if (serviceSheet) serviceSheet.classList.remove('on');
+  var plusSheet = $('#plusSheet'); if (plusSheet) plusSheet.classList.remove('on');
   renderAll();
 }
 $$('.app-nav button').forEach(function (b) {
@@ -311,6 +346,16 @@ if (servicesTabBtn) servicesTabBtn.addEventListener('click', function () { $('#s
 $$('[data-services-close]').forEach(function (el) { el.addEventListener('click', function () { $('#servicesSheet').classList.remove('on'); }); });
 var moreTabBtn = $('#moreTabBtn');
 if (moreTabBtn) moreTabBtn.addEventListener('click', function () { $('#plusSheet').classList.add('on'); });
+$('[data-plus-open]').forEach(function (el) {
+  el.addEventListener('click', function (e) {
+    e.preventDefault();
+    $('#plusSheet').classList.add('on');
+    if (state.profile) {
+      $('#plusUserName').textContent = state.profile.full_name || 'Votre espace FAXTRIX';
+      $('#plusUserRole').textContent = (state.profile.company_name || 'Votre entreprise') + ' · ' + (state.profile.role || 'membre');
+    }
+  });
+});
 $$('[data-plus-close]').forEach(function (el) { el.addEventListener('click', function () { $('#plusSheet').classList.remove('on'); }); });
 var plusLogoutBtn = $('#plusLogoutBtn');
 if (plusLogoutBtn) plusLogoutBtn.addEventListener('click', function () { doLogout(); });
@@ -1100,6 +1145,22 @@ $$('#rapportsRange button').forEach(function (b) {
     b.classList.add('active'); repRange = Number(b.getAttribute('data-range')); renderReports();
   });
 });
+function exportReportsCsv() {
+  var rows = [['Type','ID','Nom / titre','Statut','Date création','Date modification','Valeur / durée','Détails']];
+  state.crm.forEach(function(x){ rows.push(['Client',x.id,x.nom,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.valeur||0,'']); });
+  state.tickets.forEach(function(x){ rows.push(['Ticket',x.id,x.titre||x.numero,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.work_duration_seconds ? fmtElapsed(Number(x.work_duration_seconds)*1000) : '',x.problem||'']); });
+  state.terrain.forEach(function(x){ rows.push(['Terrain',x.id,x.client,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.elapsed_ms ? fmtElapsed(Number(x.elapsed_ms)) : '',x.adresse||'']); });
+  state.equipes.forEach(function(x){ rows.push(['Équipe',x.id,x.nom,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.charge||0,x.role||'']); });
+  state.automations.forEach(function(x){ rows.push(['Automatisation',x.id,x.trigger_text,x.live?'Active':'Inactive',fmtDateTime(x.created_at),fmtDateTime(x.updated_at),'',x.action_text||'']); });
+  function csvCell(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
+  var csv='\ufeff'+rows.map(function(r){return r.map(csvCell).join(';');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='FAXTRIX-rapport-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+}
+$('#exportReportBtn')&&$('#exportReportBtn').addEventListener('click',exportReportsCsv);
+
 function renderReports() {
   var svg = $('#repChart'); if (!svg) return;
   var since = Date.now() - repRange * 86400000;
@@ -1166,7 +1227,13 @@ function aiAnswer(q) {
     return state.terrain.filter(function (t) { return t.statut === 'En cours'; }).length + " mission(s) en cours sur " + state.terrain.length + " au total.";
   }
   if (/(crée|creer|créer|nouveau).*ticket/.test(q)) { showPanel('tickets'); $('#tkAddBtn').click(); return "J'ouvre le formulaire de nouveau ticket."; }
-  return "Je sais répondre sur vos tickets, clients, équipe et missions. Essayez : « Résume mes tickets ouverts ».";
+  if (/(faxtrix|infotelcom|entreprise|éditeur|createur|créateur|contact|téléphone|telephone|email|gmail)/.test(q)) {
+    return "FAXTRIX est la plateforme de gestion d'entreprise créée par INFOTELCOM, avec CRM, tickets, interventions terrain, équipes, automatisation, statistiques, messagerie interne et assistance. Support INFOTELCOM : contact.infotelcom@gmail.com · +242 06 849 8792 · +242 06 866 0821 · WhatsApp +33 6 52 86 11 59. Les données FAXTRIX sont isolées par entreprise.";
+  }
+  if (/(devise|prix|monnaie|euro|dollar|fcfa|xaf|usd|eur)/.test(q)) {
+    return "Les montants FAXTRIX sont affichés dans la devise choisie dans Paramètres. La sélection accepte les codes de devises internationaux pris en charge par votre navigateur.";
+  }
+  return "Je peux répondre sur FAXTRIX, INFOTELCOM, vos tickets, clients, équipe, missions, statistiques, rapports et messagerie. Exemple : « Que fait FAXTRIX ? »";
 }
 function aiSay(text, who) {
   var log = $('#aiLog'), m = document.createElement('div');
