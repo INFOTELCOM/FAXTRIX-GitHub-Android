@@ -3,7 +3,77 @@
 
 /* ---------------- 0. Aides ---------------- */
 function $(sel, ctx) { return (ctx || document).querySelector(sel); }
-function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
+function $(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
+
+// Filet de sécurité navigation : les actions essentielles restent cliquables
+// même si un module secondaire rencontre une erreur JS.
+document.addEventListener('click', function (e) {
+  var b = e.target && e.target.closest ? e.target.closest('button,[data-go],[data-plus-open]') : null;
+  if (!b) return;
+
+  var id = b.id || '';
+  var panel = b.getAttribute('data-panel');
+  var go = b.getAttribute('data-go');
+
+  if (id === 'crmAddBtn') {
+    e.preventDefault(); e.stopPropagation();
+    var f1 = $('#crmForm'); if (f1) f1.reset();
+    var i1 = $('#crmId'); if (i1) i1.value = '';
+    if (typeof openDrawer === 'function') openDrawer('crm', 'Nouveau client');
+    return;
+  }
+  if (id === 'tkAddBtn') {
+    e.preventDefault(); e.stopPropagation();
+    if (typeof openDrawer === 'function') openDrawer('tk', 'Ouverture d’un ticket');
+    if (typeof createTicketDraft === 'function') createTicketDraft();
+    return;
+  }
+  if (id === 'teAddBtn') {
+    e.preventDefault(); e.stopPropagation();
+    var f2 = $('#teForm'); if (f2) f2.reset();
+    var i2 = $('#teId'); if (i2) i2.value = '';
+    if (typeof openDrawer === 'function') openDrawer('te', 'Nouvelle mission');
+    return;
+  }
+  if (id === 'eqAddBtn') {
+    e.preventDefault(); e.stopPropagation();
+    var f3 = $('#eqForm'); if (f3) f3.reset();
+    var i3 = $('#eqId'); if (i3) i3.value = '';
+    if (typeof openDrawer === 'function') openDrawer('eq', 'Nouveau membre');
+    return;
+  }
+  if (id === 'autoAddBtn') {
+    e.preventDefault(); e.stopPropagation();
+    var f4 = $('#autoForm'); if (f4) f4.reset();
+    if (typeof openDrawer === 'function') openDrawer('auto', 'Nouvelle règle');
+    return;
+  }
+  if (id === 'moreTabBtn' || b.hasAttribute('data-plus-open') || go === 'plus') {
+    e.preventDefault(); e.stopPropagation();
+    var plus = $('#plusSheet'); if (plus) plus.classList.add('on');
+    return;
+  }
+  if (go === 'services-sheet') {
+    e.preventDefault(); e.stopPropagation();
+    var ss = $('#servicesSheet'); if (ss) ss.classList.add('on');
+    return;
+  }
+  if (go) {
+    e.preventDefault(); e.stopPropagation();
+    if (typeof showPanel === 'function') showPanel(go);
+    if (b.hasAttribute('data-open-ticket')) {
+      setTimeout(function () {
+        var add = $('#tkAddBtn');
+        if (add) add.click();
+      }, 150);
+    }
+    return;
+  }
+  if (panel && b.closest('.app-nav,.mobile-tabbar')) {
+    e.preventDefault(); e.stopPropagation();
+    if (typeof showPanel === 'function') showPanel(panel);
+  }
+});
 var CURRENCY_OPTIONS = {
   XAF: { label: 'FCFA', locale: 'fr-FR', suffix: ' FCFA' },
   EUR: { label: '€', locale: 'fr-FR', suffix: ' €' },
