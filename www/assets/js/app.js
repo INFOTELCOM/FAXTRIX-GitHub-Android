@@ -790,8 +790,44 @@ function renderAll() {
   renderPerfChart();
   animateKpis();
 }
+async function initPermissionsUI() {
+  var roleEl = $('#permissionRole'), list = $('#permissionRequestsList'), form = $('#permissionRequestForm');
+  if (!roleEl || !list || !form) return;
+  roleEl.textContent = state.profile.role || '—';
+  try {
+    var p = await sb.rpc('my_permissions');
+    var rights = (p.data || []).map(function(x){ return x.permission; });
+    var opts = $('#permissionRight option');
+    opts.forEach(function(o){ o.disabled = rights.indexOf(o.value) !== -1; });
+    var r = await sb.rpc('my_permission_requests');
+    if (r.error) { list.innerHTML = '<div class="app-empty">Impossible de charger les demandes.</div>'; return; }
+    var rows = r.data || [];
+    list.innerHTML = rows.length ? rows.map(function(x){
+      var cls = x.status === 'approved' ? 'ok' : (x.status === 'denied' ? 'crit' : 'mid');
+      return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(x.requested_right) + '</b><span>' + escapeHtml(x.reason || 'Sans motif') + '</span></div><span class="chip ' + cls + '">' + escapeHtml(x.status) + '</span></div>';
+    }).join('') : '<div class="app-empty">Aucune demande envoyée.</div>';
+    if (!form.dataset.bound) {
+      form.dataset.bound = '1';
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        var status = $('#permissionStatus');
+        status.textContent = 'Envoi…';
+        var right = $('#permissionRight').value;
+        var reason = $('#permissionReason').value.trim();
+        var res = await sb.rpc('request_faxtrix_permission', {p_right:right,p_reason:reason});
+        if (res.error) { status.setAttribute('data-state','err'); status.textContent = res.error.message || 'Demande impossible.'; return; }
+        status.setAttribute('data-state','ok'); status.textContent = 'Demande envoyée à INFOTELCOM.';
+        $('#permissionReason').value = '';
+        await initPermissionsUI();
+      });
+    }
+  } catch(e) {
+    list.innerHTML = '<div class="app-empty">Les droits seront disponibles après activation de la sécurité.</div>';
+  }
+}
 function boot() {
   renderAll();
+  initPermissionsUI();
 }
 
 /* ---------------- 18. Installation PWA ---------------- */
