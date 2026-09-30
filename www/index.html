@@ -688,6 +688,7 @@
         <div><small style="color:var(--slate-2)">OUVERT LE</small><strong id="tkOpenedAt" style="display:block;margin-top:4px;">—</strong></div>
         <div><small style="color:var(--slate-2)">SESSION DÉMARRÉE</small><strong id="tkWorkStartedAt" style="display:block;margin-top:4px;">—</strong></div>
         <div><small style="color:var(--slate-2)">SESSION FERMÉE</small><strong id="tkWorkClosedAt" style="display:block;margin-top:4px;">—</strong></div>
+        <div><small style="color:var(--slate-2)">DERNIÈRE MODIFICATION</small><strong id="tkLastModifiedAt" style="display:block;margin-top:4px;">—</strong></div>
       </div>
       <div id="tkWorkSession" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(255,255,255,.03);">
         <div><b id="tkWorkSessionLabel">Session de travail non démarrée</b><small id="tkWorkDuration" style="display:block;color:var(--slate-2);margin-top:4px;">Le temps de travail sera calculé automatiquement.</small></div>
@@ -709,6 +710,7 @@
       <label>Résolution / comment le problème a été réglé<textarea id="tkResolution" rows="4" placeholder="Décrivez les actions réalisées et la solution appliquée."></textarea></label>
       <label>Description complémentaire<textarea id="tkDescription" rows="3" placeholder="Informations supplémentaires."></textarea></label>
       <div id="tkAutosaveStatus" style="font-size:11px;color:var(--slate-2);min-height:18px;">Les modifications sont sauvegardées automatiquement.</div>
+      <div style="font-size:11px;color:var(--slate-2);padding:8px 0;">✎ Vous pouvez corriger une erreur dans ce ticket. Chaque modification est enregistrée automatiquement dans l’historique.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button type="submit" class="btn btn-primary"><span>Enregistrer les modifications</span></button>
         <button type="button" class="btn btn-ghost" id="tkCloseBtn"><span>✓ Fermer le ticket</span></button>
