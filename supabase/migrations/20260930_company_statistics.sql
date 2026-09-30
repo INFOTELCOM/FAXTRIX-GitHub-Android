@@ -140,21 +140,21 @@ as $$
     ),'[]'::jsonb),
     'daily_activity', coalesce((
       select jsonb_agg(
-        jsonb_build_object('label',to_char(d.day,'DD/MM'),'count',coalesce(x.n,0))
-        order by d.day
+        jsonb_build_object('label',to_char(d.calendar_day,'DD/MM'),'count',coalesce(x.n,0))
+        order by d.calendar_day
       )
       from generate_series(
         current_date - interval '13 days',
         current_date,
         interval '1 day'
-      ) d(day)
+      ) d(calendar_day)
       left join (
-        select date_trunc('day',created_at)::date day,count(*) n
+        select date_trunc('day',created_at)::date as activity_day,count(*) as n
         from public.company_activity_events
         where company_id=p_company_id
           and created_at >= current_date - interval '13 days'
         group by 1
-      ) x on x.day=d.day::date
+      ) x on x.activity_day=d.calendar_day::date
     ),'[]'::jsonb)
   );
 $$;
