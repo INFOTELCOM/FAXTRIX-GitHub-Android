@@ -257,14 +257,14 @@
         <div class="app-card" style="margin-top:20px;">
           <h3>Accès rapide</h3>
           <div class="quick-grid">
-            <button data-go="crm"><i>👤</i>Clients</button>
-            <button data-go="tickets"><i>🎫</i>Tickets</button>
-            <button data-go="equipes"><i>🛠️</i>Équipes</button>
-            <button data-go="terrain"><i>📍</i>Terrain</button>
-            <button data-go="rapports"><i>📊</i>Rapports</button>
-            <button data-go="automatisation"><i>⚡</i>Autom.</button>
-            <button data-go="parametres"><i>⚙️</i>Réglages</button>
-            <button data-plus-open><i>➕</i>Plus</button>
+            <button type="button" data-go="crm"><i>👤</i>Clients</button>
+            <button type="button" data-go="tickets"><i>🎫</i>Tickets</button>
+            <button type="button" data-go="equipes"><i>🛠️</i>Équipes</button>
+            <button type="button" data-go="terrain"><i>📍</i>Terrain</button>
+            <button type="button" data-go="rapports"><i>📊</i>Rapports</button>
+            <button type="button" data-go="automatisation"><i>⚡</i>Autom.</button>
+            <button type="button" data-go="parametres"><i>⚙️</i>Réglages</button>
+            <button type="button" data-plus-open><i>👤</i>Mon espace</button>
           </div>
         </div>
         <div class="app-card assist-cta">
@@ -374,31 +374,31 @@
           <div class="mobile-service-orb" aria-hidden="true"></div>
         </div>
         <div class="service-cards">
-          <button class="service-card" data-go="tickets">
+          <button type="button" class="service-card" data-go="tickets">
             <span class="service-icon orange">⌁</span><span><b>Support IT & Maintenance</b><small>Incidents, assistance et suivi des demandes</small></span><strong>›</strong>
           </button>
-          <button class="service-card" data-go="terrain">
+          <button type="button" class="service-card" data-go="terrain">
             <span class="service-icon aqua">⌖</span><span><b>Interventions terrain</b><small>Missions, techniciens et comptes rendus</small></span><strong>›</strong>
           </button>
-          <button class="service-card" data-go="crm">
+          <button type="button" class="service-card" data-go="crm">
             <span class="service-icon blue">◈</span><span><b>Clients & CRM</b><small>Prospects, clients actifs et pipeline</small></span><strong>›</strong>
           </button>
-          <button class="service-card" data-go="securite">
+          <button type="button" class="service-card" data-go="securite">
             <span class="service-icon red">◉</span><span><b>Cybersécurité</b><small>Accès, sessions et protection du compte</small></span><strong>›</strong>
           </button>
-          <button class="service-card" data-go="assistant">
+          <button type="button" class="service-card" data-go="assistant">
             <span class="service-icon violet">✦</span><span><b>Assistant FAXTRIX</b><small>Analysez vos données et vos opérations</small></span><strong>›</strong>
           </button>
-          <button class="service-card" data-go="suivi">
+          <button type="button" class="service-card" data-go="suivi">
             <span class="service-icon green">▥</span><span><b>Suivi & statistiques</b><small>Activité réelle de l'entreprise</small></span><strong>›</strong>
           </button>
-          <button class="service-card" data-go="rapports">
+          <button type="button" class="service-card" data-go="rapports">
             <span class="service-icon green">▥</span><span><b>Rapports & Analyses</b><small>Indicateurs et activité de l'entreprise</small></span><strong>›</strong>
           </button>
         </div>
         <div class="app-card mobile-service-footer">
           <div><b>Besoin d'aide ?</b><span>Créez directement un ticket auprès de votre équipe.</span></div>
-          <button class="btn btn-primary" data-go="tickets" data-open-ticket><span>Créer un ticket</span></button>
+          <button type="button" class="btn btn-primary" data-go="tickets" data-open-ticket><span>Créer un ticket</span></button>
         </div>
       </section>
 
@@ -702,7 +702,7 @@
     <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="8" r="2.3"/><path d="M15 13.3c2.5.4 4.5 2.4 4.5 5.7"/></svg><span>Équipe</span>
   </button>
   <button id="moreTabBtn" data-plus-open>
-    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Plus</span>
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Mon espace</span>
   </button>
 </nav>
 
@@ -712,7 +712,7 @@
   <div class="app-drawer-panel sheet-panel">
     <button class="app-drawer-close" data-plus-close>&times;</button>
     <div class="app-card-head" style="margin-bottom:14px;">
-      <div><span class="eyebrow">ESPACE PERSONNEL</span><h3 style="margin:4px 0 0;">Plus</h3></div>
+      <div><span class="eyebrow">ESPACE PERSONNEL</span><h3 style="margin:4px 0 0;">Mon espace</h3></div>
       <span class="chip" id="plusRoleChip">Mon espace</span>
     </div>
     <div class="app-card" style="margin-bottom:14px;padding:14px;">
@@ -720,16 +720,16 @@
       <span id="plusUserRole" style="display:block;color:var(--text-2);font-size:12px;margin-top:4px;">Accès et outils complémentaires</span>
     </div>
     <div class="quick-grid">
-      <button data-go="tickets" data-plus-filter="mine"><i>🧾</i>Mes enregistrements</button>
-      <button data-go="equipes"><i>👥</i>Mon équipe</button>
-      <button data-go="terrain"><i>📍</i>Terrain</button>
-      <button data-go="automatisation"><i>⚡</i>Automatisation</button>
-      <button data-go="intelligence"><i>🧠</i>Intelligence</button>
-      <button data-go="simulation"><i>🎛️</i>Simulation</button>
-      <button data-go="rapports"><i>📊</i>Rapports</button>
-      <button data-go="assistant"><i>🟠</i>Assistant IA</button>
-      <button data-go="securite"><i>🛡️</i>Sécurité</button>
-      <button data-go="parametres"><i>⚙️</i>Paramètres</button>
+      <button type="button" data-go="tickets" data-plus-filter="mine"><i>🧾</i>Mes enregistrements</button>
+      <button type="button" data-go="equipes"><i>👥</i>Mon équipe</button>
+      <button type="button" data-go="terrain"><i>📍</i>Terrain</button>
+      <button type="button" data-go="automatisation"><i>⚡</i>Automatisation</button>
+      <button type="button" data-go="intelligence"><i>🧠</i>Intelligence</button>
+      <button type="button" data-go="simulation"><i>🎛️</i>Simulation</button>
+      <button type="button" data-go="rapports"><i>📊</i>Rapports</button>
+      <button type="button" data-go="assistant"><i>🟠</i>Assistant IA</button>
+      <button type="button" data-go="securite"><i>🛡️</i>Sécurité</button>
+      <button type="button" data-go="parametres"><i>⚙️</i>Paramètres</button>
     </div>
     <button class="btn btn-ghost" id="plusLogoutBtn" style="width:100%; margin-top:18px;"><span>Se déconnecter</span></button>
   </div>
@@ -743,14 +743,14 @@
     <h3>Services FAXTRIX</h3>
     <p class="mobile-sheet-sub">Accédez rapidement aux modules de votre espace. Les données restent les mêmes que sur le web.</p>
     <div class="quick-grid service-grid">
-      <button data-go="crm"><i>👥</i>Clients</button>
-      <button data-go="tickets"><i>🎫</i>Support IT</button>
-      <button data-go="terrain"><i>📍</i>Interventions</button>
-      <button data-go="automatisation"><i>⚡</i>Automatisation</button>
-      <button data-go="intelligence"><i>🧠</i>Intelligence</button>
-      <button data-go="rapports"><i>📊</i>Rapports</button>
-      <button data-go="assistant"><i>✦</i>Assistant IA</button>
-      <button data-go="securite"><i>🛡️</i>Cybersécurité</button>
+      <button type="button" data-go="crm"><i>👥</i>Clients</button>
+      <button type="button" data-go="tickets"><i>🎫</i>Support IT</button>
+      <button type="button" data-go="terrain"><i>📍</i>Interventions</button>
+      <button type="button" data-go="automatisation"><i>⚡</i>Automatisation</button>
+      <button type="button" data-go="intelligence"><i>🧠</i>Intelligence</button>
+      <button type="button" data-go="rapports"><i>📊</i>Rapports</button>
+      <button type="button" data-go="assistant"><i>✦</i>Assistant IA</button>
+      <button type="button" data-go="securite"><i>🛡️</i>Cybersécurité</button>
     </div>
   </div>
 </div>
