@@ -381,9 +381,9 @@ function renderCrm() {
   });
   list.innerHTML = rows.length ? rows.map(function (c) {
     var chipClass = c.statut === 'Actif' ? 'ok' : (c.statut === 'Négociation' ? 'mid' : (c.statut === 'Attente' ? 'crit' : ''));
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(c.nom) + '</b><span>' + euros(c.valeur) + ' · Enregistré : ' + escapeHtml(fmtDateTime(c.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(c.updated_at)) + '</span></div>' +
+    return '<div class="app-row" data-record-view="crm:'+c.id+'"><div class="r-main"><b>' + escapeHtml(c.nom) + '</b><span>' + euros(c.valeur) + ' · Enregistré : ' + escapeHtml(fmtDateTime(c.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(c.updated_at)) + '</span></div>' +
       '<span class="chip ' + chipClass + '">' + c.statut + '</span>' +
-      '<div class="app-row-actions"><button class="row-btn" data-crm-edit="' + c.id + '">✎</button><button class="row-btn" data-crm-del="' + c.id + '">🗑</button></div></div>';
+      '<div class="app-row-actions"><button class="row-btn" data-record-open="crm:'+c.id+'">◉</button><button class="row-btn" data-crm-edit="' + c.id + '">✎</button><button class="row-btn" data-crm-del="' + c.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun client pour ce filtre.</div>';
 
   $('#crmTotal').textContent = state.crm.length;
@@ -581,9 +581,9 @@ function renderTickets(){
     var pClass=t.priorite==='Haute'?'crit':(t.priorite==='Moyenne'?'mid':'ok');
     var opened=fmtDateTime(t.opened_at||t.created_at), closed=fmtDateTime(t.closed_at);
     var work=t.work_started_at?'Travail '+fmtDateTime(t.work_started_at)+(t.work_closed_at?' → '+fmtDateTime(t.work_closed_at):' → en cours'):'Session non démarrée';
-    return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(t.numero||'Ticket')+' · '+escapeHtml(t.titre)+'</b><span>'+escapeHtml(t.client||'—')+' · Ouvert : '+escapeHtml(opened)+' · Fermé : '+escapeHtml(closed)+'<br>'+escapeHtml(work)+'</span></div>'+
+    return '<div class="app-row" data-record-view="ticket:'+t.id+'"><div class="r-main"><b>'+escapeHtml(t.numero||'Ticket')+' · '+escapeHtml(t.titre)+'</b><span>'+escapeHtml(t.client||'—')+' · Ouvert : '+escapeHtml(opened)+' · Fermé : '+escapeHtml(closed)+'<br>'+escapeHtml(work)+'</span></div>'+
       '<span class="chip '+pClass+'">'+escapeHtml(t.priorite)+'</span><span class="chip">'+escapeHtml(t.statut)+'</span>'+
-      '<div class="app-row-actions"><button class="row-btn" data-tk-edit="'+t.id+'">✎</button><button class="row-btn" data-tk-del="'+t.id+'">🗑</button></div></div>';
+      '<div class="app-row-actions"><button class="row-btn" data-record-open="ticket:'+t.id+'">◉</button><button class="row-btn" data-tk-edit="'+t.id+'">✎</button><button class="row-btn" data-tk-del="'+t.id+'">🗑</button></div></div>';
   }).join(''):'<div class="app-empty">Aucun ticket pour ce filtre.</div>';
   $('#tkTotal').textContent=state.tickets.length;
   $('#tkOuverts').textContent=state.tickets.filter(function(t){return t.statut!=='Résolu'&&t.statut!=='Fermé';}).length;
@@ -669,8 +669,8 @@ function renderTerrain(){
     var actions='<div class="app-row-actions">';
     if(t.statut!=='En cours'&&t.statut!=='Terminée')actions+='<button class="row-btn" data-te-start="'+t.id+'">▶</button>';
     if(t.statut==='En cours')actions+='<button class="row-btn" data-te-stop="'+t.id+'">■</button>';
-    actions+='<button class="row-btn" data-te-edit="'+t.id+'">✎</button><button class="row-btn" data-te-del="'+t.id+'">🗑</button></div>';
-    return '<div class="app-row" data-te-row="'+t.id+'"><div class="r-main"><b>'+escapeHtml(t.tech)+'</b><span>'+escapeHtml(t.client||'—')+' · Début : '+escapeHtml(fmtDateTime(t.started_at))+' · Fin : '+escapeHtml(fmtDateTime(t.completed_at))+' · Durée : '+escapeHtml(fmtElapsed(elapsed))+'</span></div>'+
+    actions+='<button class="row-btn" data-record-open="terrain:'+t.id+'">◉</button><button class="row-btn" data-te-edit="'+t.id+'">✎</button><button class="row-btn" data-te-del="'+t.id+'">🗑</button></div>';
+    return '<div class="app-row" data-te-row="'+t.id+'" data-record-view="terrain:'+t.id+'"><div class="r-main"><b>'+escapeHtml(t.tech)+'</b><span>'+escapeHtml(t.client||'—')+' · Début : '+escapeHtml(fmtDateTime(t.started_at))+' · Fin : '+escapeHtml(fmtDateTime(t.completed_at))+' · Durée : '+escapeHtml(fmtElapsed(elapsed))+'</span></div>'+
       '<span class="mono" data-te-timer="'+t.id+'" style="min-width:70px;text-align:right;">'+fmtElapsed(elapsed)+'</span><span class="chip '+chipClass+'">'+escapeHtml(t.statut)+'</span>'+actions+'</div>';
   }).join(''):'<div class="app-empty">Aucune mission enregistrée.</div>';
   $('#teTotal').textContent=state.terrain.length;
@@ -717,10 +717,10 @@ function renderEquipes() {
   var list = $('#eqList');
   list.innerHTML = state.equipes.length ? state.equipes.map(function (m) {
     var chipClass = m.statut === 'Disponible' ? 'ok' : (m.statut === 'En mission' ? 'crit' : 'mid');
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(m.nom) + '</b><span>' + escapeHtml(m.role || '—') + ' · Enregistré : ' + escapeHtml(fmtDateTime(m.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(m.updated_at)) + '</span></div>' +
+    return '<div class="app-row" data-record-view="team:'+m.id+'"><div class="r-main"><b>' + escapeHtml(m.nom) + '</b><span>' + escapeHtml(m.role || '—') + ' · Enregistré : ' + escapeHtml(fmtDateTime(m.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(m.updated_at)) + '</span></div>' +
       '<span class="mono" style="min-width:40px;">' + m.charge + '%</span>' +
       '<span class="chip ' + chipClass + '">' + m.statut + '</span>' +
-      '<div class="app-row-actions"><button class="row-btn" data-eq-edit="' + m.id + '">✎</button><button class="row-btn" data-eq-del="' + m.id + '">🗑</button></div></div>';
+      '<div class="app-row-actions"><button class="row-btn" data-record-open="team:'+m.id+'">◉</button><button class="row-btn" data-eq-edit="' + m.id + '">✎</button><button class="row-btn" data-eq-del="' + m.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun membre enregistré.</div>';
 }
 
@@ -743,7 +743,7 @@ async function deleteAuto(id) {
 function renderAuto() {
   var wrap = $('#autoList');
   wrap.innerHTML = state.automations.length ? state.automations.map(function (a) {
-    return '<div class="rule-row"><em>SI</em>' + escapeHtml(a.trigger_text) + '<em>ALORS</em>' + escapeHtml(a.action_text) + '<small style="opacity:.72;margin-left:8px;">Enregistré : ' + escapeHtml(fmtDateTime(a.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(a.updated_at)) + '</small>' +
+    return '<div class="rule-row" data-record-view="auto:'+a.id+'"><button class="row-btn" data-record-open="auto:'+a.id+'">◉</button><em>SI</em>' + escapeHtml(a.trigger_text) + '<em>ALORS</em>' + escapeHtml(a.action_text) + '<small style="opacity:.72;margin-left:8px;">Enregistré : ' + escapeHtml(fmtDateTime(a.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(a.updated_at)) + '</small>' +
       (a.live ? '<span class="chip ok">Active</span>' : '') +
       '<button class="row-btn r-x" data-auto-del="' + a.id + '">🗑</button></div>';
   }).join('') : '<div class="app-empty">Aucune règle définie.</div>';
@@ -1267,3 +1267,239 @@ var verEl = document.createElement('div'); verEl.className = 'profile-row'; verE
 var ps = $('#profCompanyName'); if (ps && ps.parentNode) ps.parentNode.parentNode.insertBefore(verEl, ps.parentNode.nextSibling);
 
 })();
+
+
+/* ---------------- 24. Inventaire détaillé des enregistrements ---------------- */
+function detailItem(label,value,full){
+  return '<div class="record-detail-item'+(full?' full':'')+'"><small>'+escapeHtml(label)+'</small><b>'+escapeHtml(value==null||value===''?'—':String(value))+'</b></div>';
+}
+function openRecordDetail(kind,id){
+  var data, title, sub, html='';
+  if(kind==='crm') data=state.crm.find(function(x){return x.id===id;});
+  if(kind==='ticket') data=state.tickets.find(function(x){return x.id===id;});
+  if(kind==='terrain') data=state.terrain.find(function(x){return x.id===id;});
+  if(kind==='team') data=state.equipes.find(function(x){return x.id===id;});
+  if(kind==='auto') data=state.automations.find(function(x){return x.id===id;});
+  if(!data)return;
+  if(kind==='crm'){
+    title=data.nom||'Client'; sub='Fiche client complète';
+    html=detailItem('Statut',data.statut)+detailItem('Valeur',euros(data.valeur))+detailItem('Enregistré le',fmtDateTime(data.created_at))+detailItem('Dernière modification',fmtDateTime(data.updated_at))+detailItem('Identifiant',data.id,true);
+  }else if(kind==='ticket'){
+    title=(data.numero||'Ticket')+' · '+(data.titre||''); sub='Fiche ticket et temps de travail';
+    html=detailItem('Client',data.client)+detailItem('Statut',data.statut)+detailItem('Priorité',data.priorite)+detailItem('Catégorie',data.categorie)+detailItem('Assigné à',data.assigned_to)+detailItem('Ouverture',fmtDateTime(data.opened_at||data.created_at))+detailItem('Début du travail',fmtDateTime(data.work_started_at))+detailItem('Fin du travail',fmtDateTime(data.work_closed_at))+detailItem('Fermeture',fmtDateTime(data.closed_at))+detailItem('Dernière modification',fmtDateTime(data.last_modified_at||data.updated_at))+detailItem('Durée de travail',data.work_started_at?fmtElapsed(ticketWorkElapsed(data)):'—')+detailItem('Échéance',fmtDateTime(data.due_at))+detailItem('Problème',data.problem,true)+detailItem('Tâches à effectuer',data.tasks,true)+detailItem('Recommandations',data.recommendations,true)+detailItem('Travail effectué',data.resolution,true)+detailItem('Description',data.description,true);
+  }else if(kind==='terrain'){
+    title='Mission · '+(data.client||'Terrain'); sub='Fiche intervention complète';
+    var elapsed=(data.elapsed_ms||0)+(data.statut==='En cours'&&data.started_at?(Date.now()-new Date(data.started_at).getTime()):0);
+    html=detailItem('Technicien',data.tech)+detailItem('Client',data.client)+detailItem('Statut',data.statut)+detailItem('Adresse',data.adresse)+detailItem('Ouverture / début',fmtDateTime(data.started_at))+detailItem('Fermeture / fin',fmtDateTime(data.completed_at))+detailItem('Durée',fmtElapsed(elapsed))+detailItem('Enregistré le',fmtDateTime(data.created_at))+detailItem('Dernière modification',fmtDateTime(data.updated_at))+detailItem('Notes',data.notes,true)+detailItem('Compte rendu',data.compte_rendu,true);
+  }else if(kind==='team'){
+    title=data.nom||'Membre'; sub='Fiche membre de l’équipe';
+    html=detailItem('Fonction',data.role)+detailItem('Statut',data.statut)+detailItem('Charge',String(data.charge||0)+' %')+detailItem('E-mail',data.email)+detailItem('Téléphone',data.telephone)+detailItem('Compétence',data.specialites)+detailItem('Enregistré le',fmtDateTime(data.created_at))+detailItem('Dernière modification',fmtDateTime(data.updated_at));
+  }else{
+    title='Règle d’automatisation'; sub='Fiche règle';
+    html=detailItem('Déclencheur',data.trigger_text,true)+detailItem('Action',data.action_text,true)+detailItem('Active',data.live?'Oui':'Non')+detailItem('Enregistrée le',fmtDateTime(data.created_at))+detailItem('Dernière modification',fmtDateTime(data.updated_at));
+  }
+  $('#recordDetailTitle').textContent=title; $('#recordDetailSub').textContent=sub; $('#recordDetailBody').innerHTML=html; $('#recordDetail').hidden=false;
+}
+function closeRecordDetail(){ $('#recordDetail').hidden=true; }
+
+/* ---------------- 25. Messagerie FAXTRIX ---------------- */
+var chatState={profiles:[],conversations:[],members:{},messages:[],current:null,channel:null,callChannel:null,attachment:null};
+function chatInitial(name){return (name||'?').trim().split(/\s+/).slice(0,2).map(function(x){return x.charAt(0).toUpperCase();}).join('')||'?';}
+function chatAvatarHtml(profile,size){
+  if(profile&&profile.avatar_url)return '<img src="'+escapeHtml(profile.avatar_url)+'" alt="">';
+  return escapeHtml(chatInitial(profile&&profile.full_name));
+}
+async function loadChatProfiles(){
+  var r=await sb.from('profiles').select('id,full_name,role,avatar_url').eq('company_id',state.profile.company_id).order('full_name');
+  chatState.profiles=r.data||[];
+}
+async function loadChatConversations(){
+  var r=await sb.from('chat_conversations').select('*').order('updated_at',{ascending:false});
+  chatState.conversations=r.data||[];
+  chatState.members={};
+  if(chatState.conversations.length){
+    var ids=chatState.conversations.map(function(x){return x.id;});
+    var m=await sb.from('chat_members').select('conversation_id,user_id,role,last_read_at').in('conversation_id',ids);
+    (m.data||[]).forEach(function(x){(chatState.members[x.conversation_id]||(chatState.members[x.conversation_id]=[])).push(x);});
+  }
+  renderChatConversationList();
+}
+function chatOtherProfiles(con){
+  return (chatState.members[con.id]||[]).map(function(m){return chatState.profiles.find(function(p){return p.id===m.user_id;});}).filter(Boolean);
+}
+function chatConversationLabel(con){
+  if(con.title)return con.title;
+  var names=chatOtherProfiles(con).filter(function(p){return p.id!==state.profile.id;}).map(function(p){return p.full_name;});
+  return names.join(', ')||'Conversation';
+}
+function renderChatConversationList(){
+  var q=($('#chatSearch')&&$('#chatSearch').value||'').trim().toLowerCase();
+  var list=$('#chatConversationList'); if(!list)return;
+  var rows=chatState.conversations.filter(function(c){return !q||chatConversationLabel(c).toLowerCase().indexOf(q)!==-1;});
+  list.innerHTML=rows.length?rows.map(function(c){
+    var people=chatOtherProfiles(c), first=people[0]||state.profile;
+    return '<button type="button" class="chat-conv '+(chatState.current===c.id?'active':'')+'" data-chat-open="'+c.id+'"><div class="chat-avatar">'+chatAvatarHtml(first,38)+'</div><div class="chat-conv-text"><b>'+escapeHtml(chatConversationLabel(c))+'</b><span>'+escapeHtml(c.is_group?(people.length+1)+' membres':'Conversation privée')+'</span></div></button>';
+  }).join(''):'<div class="app-empty">Aucune conversation.</div>';
+}
+async function openChatConversation(id){
+  chatState.current=id; renderChatConversationList();
+  var con=chatState.conversations.find(function(x){return x.id===id;}); if(!con)return;
+  $('#chatEmpty').hidden=true; $('#chatConversation').hidden=false;
+  var people=chatOtherProfiles(con), first=people[0]||state.profile;
+  $('#chatTitle').textContent=chatConversationLabel(con);
+  $('#chatMembersLabel').textContent=con.is_group?((people.length+1)+' membres'):(first.full_name||'Conversation privée');
+  $('#chatAvatar').innerHTML=chatAvatarHtml(first,38);
+  var r=await sb.from('chat_messages').select('*').eq('conversation_id',id).is('deleted_at',null).order('created_at',{ascending:true});
+  if(r.error){toast('Impossible de charger la conversation.','crit');return;}
+  chatState.messages=r.data||[]; renderChatMessages();
+  if(chatState.channel)await sb.removeChannel(chatState.channel);
+  chatState.channel=sb.channel('faxtrix-chat-'+id).on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages',filter:'conversation_id=eq.'+id},function(payload){
+    if(!chatState.messages.some(function(x){return x.id===payload.new.id;})){chatState.messages.push(payload.new);renderChatMessages();}
+  }).subscribe();
+}
+async function renderChatMessages(){
+  var box=$('#chatMessages'); if(!box)return;
+  box.innerHTML=chatState.messages.map(function(m){
+    var mine=m.sender_id===state.profile.id;
+    var body='';
+    if(m.message_type==='file'){
+      body='<div class="chat-file"><span>📎</span><b>'+escapeHtml(m.file_name||'Fichier')+'</b></div>';
+    }else if(m.message_type==='image'){
+      body='<div class="chat-file"><span>🖼️</span><b>'+escapeHtml(m.file_name||'Image')+'</b></div>';
+    }else body=escapeHtml(m.body||'').replace(/\n/g,'<br>');
+    return '<div class="chat-bubble '+(mine?'mine':'')+'" data-message-id="'+m.id+'">'+body+'<div class="chat-meta">'+(mine?'Vous':'Membre')+' · '+escapeHtml(fmtDateTime(m.created_at))+'</div></div>';
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+  for(const m of chatState.messages.filter(function(x){return x.file_path;})){
+    try{
+      var sr=await sb.storage.from('faxtrix-chat').createSignedUrl(m.file_path,3600);
+      var el=box.querySelector('[data-message-id="'+m.id+'"] .chat-file');
+      if(sr.data&&sr.data.signedUrl&&el)el.style.cursor='pointer',el.onclick=function(){window.open(sr.data.signedUrl,'_blank','noopener');};
+    }catch(e){}
+  }
+}
+async function createChatConversation(){
+  var opts=chatState.profiles.filter(function(p){return p.id!==state.profile.id;});
+  if(!opts.length){toast('Aucun autre utilisateur de votre entreprise n’est disponible.','crit');return;}
+  var html='<div class="chat-new-list">'+opts.map(function(p){return '<label class="chat-member-option"><input type="checkbox" value="'+p.id+'"> <div class="chat-avatar" style="width:30px;height:30px;min-width:30px;">'+chatAvatarHtml(p,30)+'</div><span>'+escapeHtml(p.full_name||'Utilisateur')+'</span></label>';}).join('')+'</div><label>Nom du groupe (facultatif)<input id="chatGroupName" type="text" placeholder="Ex. Équipe technique"></label><button type="button" class="btn btn-primary" id="chatCreateConfirm">Créer la conversation</button>';
+  $('#recordDetailTitle').textContent='Nouvelle conversation'; $('#recordDetailSub').textContent='Choisissez les membres de votre entreprise'; $('#recordDetailBody').innerHTML=html; $('#recordDetail').hidden=false;
+  $('#chatCreateConfirm').onclick=async function(){
+    var ids=$$('.chat-member-option input:checked').map(function(x){return x.value;});
+    if(!ids.length){toast('Sélectionnez au moins une personne.','crit');return;}
+    var selected=ids.map(function(id){return chatState.profiles.find(function(p){return p.id===id;});}).filter(Boolean);
+    var group=ids.length>1, name=$('#chatGroupName').value.trim();
+    var cr=await sb.from('chat_conversations').insert({company_id:state.profile.company_id,created_by:state.profile.id,title:group?(name||selected.map(function(p){return p.full_name;}).join(', ')):null,is_group:group}).select().single();
+    if(cr.error){toast('Création impossible : '+cr.error.message,'crit');return;}
+    var members=[{conversation_id:cr.data.id,user_id:state.profile.id,company_id:state.profile.company_id,role:'admin'}].concat(ids.map(function(id){return {conversation_id:cr.data.id,user_id:id,company_id:state.profile.company_id,role:'member'};}));
+    var mr=await sb.from('chat_members').insert(members);
+    if(mr.error){await sb.from('chat_conversations').delete().eq('id',cr.data.id);toast('Impossible d’ajouter les membres : '+mr.error.message,'crit');return;}
+    closeRecordDetail(); await loadChatConversations(); await openChatConversation(cr.data.id); toast('Conversation créée.','ok');
+  };
+}
+async function sendChatMessage(e){
+  e.preventDefault(); if(!chatState.current)return;
+  var input=$('#chatInput'), body=input.value.trim(), file=chatState.attachment;
+  if(!body&&!file)return;
+  var data={conversation_id:chatState.current,company_id:state.profile.company_id,sender_id:state.profile.id,body:body||null,message_type:'text'};
+  if(file){
+    var safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_'), path=state.profile.company_id+'/'+chatState.current+'/'+state.profile.id+'-'+Date.now()+'-'+safe;
+    var up=await sb.storage.from('faxtrix-chat').upload(path,file,{upsert:false});
+    if(up.error){toast('Envoi du fichier impossible : '+up.error.message,'crit');return;}
+    data.file_path=path; data.file_name=file.name; data.file_size=file.size; data.mime_type=file.type||'application/octet-stream'; data.message_type=(file.type||'').indexOf('image/')===0?'image':'file';
+  }
+  var r=await sb.from('chat_messages').insert(data).select().single();
+  if(r.error){toast('Message impossible à envoyer : '+r.error.message,'crit');return;}
+  input.value=''; chatState.attachment=null; $('#chatAttachment').hidden=true; $('#chatFile').value='';
+  await sb.from('chat_conversations').update({updated_at:new Date().toISOString()}).eq('id',chatState.current);
+  chatState.messages.push(r.data); renderChatMessages(); await loadChatConversations();
+}
+async function uploadChatAvatar(file){
+  if(!file)return;
+  var safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_'),path=state.profile.id+'/'+Date.now()+'-'+safe;
+  var up=await sb.storage.from('faxtrix-avatars').upload(path,file,{upsert:true});
+  if(up.error){toast('Photo impossible à enregistrer : '+up.error.message,'crit');return;}
+  var signed=await sb.storage.from('faxtrix-avatars').createSignedUrl(path,31536000);
+  if(!signed.data||!signed.data.signedUrl){toast('Photo enregistrée mais URL indisponible.','crit');return;}
+  var url=signed.data.signedUrl;
+  var pr=await sb.from('profiles').update({avatar_url:url}).eq('id',state.profile.id);
+  if(pr.error){toast('Impossible de mettre à jour la photo : '+pr.error.message,'crit');return;}
+  state.profile.avatar_url=url; var me=chatState.profiles.find(function(p){return p.id===state.profile.id;}); if(me)me.avatar_url=url;
+  renderChatConversationList(); if(chatState.current)openChatConversation(chatState.current); toast('Photo de profil mise à jour.','ok');
+}
+
+/* Appels WebRTC de base via Supabase Realtime broadcast. */
+var callState={pc:null,stream:null,remote:null,active:false,type:'video',peer:null};
+async function setupCall(type,peerId,initiator){
+  if(!chatState.callChannel)chatState.callChannel=sb.channel('faxtrix-call-'+state.profile.company_id).on('broadcast',{event:'call-signal'},async function(ctx){
+    var p=ctx.payload||{}; if(p.to!==state.profile.id||p.conversation_id!==chatState.current)return;
+    if(p.type==='offer'){
+      await setupCall(p.callType,p.from,false); $('#callStatus').textContent='Appel entrant…';
+      await callState.pc.setRemoteDescription(new RTCSessionDescription(p.sdp));
+      var answer=await callState.pc.createAnswer(); await callState.pc.setLocalDescription(answer);
+      chatState.callChannel.send({type:'broadcast',event:'call-signal',payload:{type:'answer',from:state.profile.id,to:p.from,conversation_id:chatState.current,callType:p.callType,sdp:answer}});
+    }else if(p.type==='answer'&&callState.pc){
+      await callState.pc.setRemoteDescription(new RTCSessionDescription(p.sdp)); $('#callStatus').textContent='Connecté';
+    }else if(p.type==='candidate'&&callState.pc){try{await callState.pc.addIceCandidate(new RTCIceCandidate(p.candidate));}catch(e){}}
+    else if(p.type==='hangup'){endCall(false);}
+  }).subscribe();
+  if(callState.active&&callState.peer===peerId)return;
+  callState.type=type;callState.peer=peerId;callState.active=true;
+  $('#callTitle').textContent=type==='video'?'Appel vidéo':'Appel audio'; $('#callModal').hidden=false; $('#callStatus').textContent=initiator?'Appel en cours…':'Appel entrant…';
+  callState.stream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==='video'});
+  $('#callLocalVideo').srcObject=callState.stream; $('#callLocalVideo').style.display=type==='video'?'block':'none';
+  callState.pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  callState.pc.onicecandidate=function(e){if(e.candidate)chatState.callChannel.send({type:'broadcast',event:'call-signal',payload:{type:'candidate',from:state.profile.id,to:peerId,conversation_id:chatState.current,candidate:e.candidate}});};
+  callState.pc.ontrack=function(e){$('#callRemoteVideo').srcObject=e.streams[0];};
+  callState.stream.getTracks().forEach(function(track){callState.pc.addTrack(track,callState.stream);});
+  if(initiator){var offer=await callState.pc.createOffer();await callState.pc.setLocalDescription(offer);await chatState.callChannel.send({type:'broadcast',event:'call-signal',payload:{type:'offer',from:state.profile.id,to:peerId,conversation_id:chatState.current,callType:type,sdp:offer}});}
+}
+function endCall(send){
+  if(send&&chatState.callChannel&&callState.peer)chatState.callChannel.send({type:'broadcast',event:'call-signal',payload:{type:'hangup',from:state.profile.id,to:callState.peer,conversation_id:chatState.current}});
+  if(callState.pc)callState.pc.close(); if(callState.stream)callState.stream.getTracks().forEach(function(t){t.stop();});
+  callState={pc:null,stream:null,remote:null,active:false,type:'video',peer:null}; $('#callModal').hidden=true; $('#callRemoteVideo').srcObject=null; $('#callLocalVideo').srcObject=null;
+}
+function startCurrentCall(type){
+  if(!chatState.current)return;
+  var people=chatOtherProfiles(chatState.conversations.find(function(c){return c.id===chatState.current;}));
+  var peer=people.find(function(p){return p.id!==state.profile.id;});
+  if(!peer){toast('Sélectionnez une conversation avec un membre à appeler.','crit');return;}
+  setupCall(type,peer.id,true).catch(function(e){toast('Appel impossible : '+(e.message||'autorisation micro/caméra requise'),'crit');endCall(false);});
+}
+$('#chatNewBtn')&&$('#chatNewBtn').addEventListener('click',function(){createChatConversation();});
+$('#chatSearch')&&$('#chatSearch').addEventListener('input',renderChatConversationList);
+$('#chatForm')&&$('#chatForm').addEventListener('submit',sendChatMessage);
+$('#chatFileBtn')&&$('#chatFileBtn').addEventListener('click',function(){$('#chatFile').click();});
+$('#chatFile')&&$('#chatFile').addEventListener('change',function(e){chatState.attachment=e.target.files[0]||null;$('#chatAttachment').hidden=!chatState.attachment;if(chatState.attachment)$('#chatAttachmentName').textContent=chatState.attachment.name;});
+$('#chatAttachmentRemove')&&$('#chatAttachmentRemove').addEventListener('click',function(){chatState.attachment=null;$('#chatFile').value='';$('#chatAttachment').hidden=true;});
+$('#chatAvatar')&&$('#chatAvatar').addEventListener('click',function(){chatAvatarFile.click();});
+chatAvatarFile.addEventListener('change',function(e){uploadChatAvatar(e.target.files[0]);});
+$('#chatAudioBtn')&&$('#chatAudioBtn').addEventListener('click',function(){startCurrentCall('audio');});
+$('#chatVideoBtn')&&$('#chatVideoBtn').addEventListener('click',function(){startCurrentCall('video');});
+$('#callHangupBtn')&&$('#callHangupBtn').addEventListener('click',function(){endCall(true);});
+$('#callMuteBtn')&&$('#callMuteBtn').addEventListener('click',function(){if(callState.stream){var t=callState.stream.getAudioTracks()[0];if(t){t.enabled=!t.enabled;this.textContent=t.enabled?'🎙️ Muet':'🔇 Activer le micro';}}});
+$('#callCameraBtn')&&$('#callCameraBtn').addEventListener('click',function(){if(callState.stream){var t=callState.stream.getVideoTracks()[0];if(t){t.enabled=!t.enabled;this.textContent=t.enabled?'📷 Caméra':'🚫 Caméra';}}});
+$$('[data-record-close]').forEach(function(x){x.addEventListener('click',closeRecordDetail);});
+$$('[data-call-close]').forEach(function(x){x.addEventListener('click',function(){endCall(true);});});
+document.addEventListener('click',function(e){
+  var t=e.target,id;
+  if((id=t.getAttribute&&t.getAttribute('data-chat-open'))){openChatConversation(id);return;}
+  if((id=t.getAttribute&&t.getAttribute('data-record-open'))){var a=id.split(':');openRecordDetail(a[0],a.slice(1).join(':'));return;}
+  var row=t.closest&&t.closest('[data-record-view]');
+  if(row&&!t.closest('button')){var a2=row.getAttribute('data-record-view').split(':');openRecordDetail(a2[0],a2.slice(1).join(':'));return;}
+});
+(function initChat(){
+  var panel=$('[data-panel="messagerie"]'); if(!panel)return;
+  var oldShowPanel=window.showPanel;
+  // Le panneau est chargé à la première ouverture; l'appel direct reste compatible avec le routeur existant.
+  var loaded=false;
+  var observer=new MutationObserver(function(){if(!panel.classList.contains('active')||loaded)return;loaded=true;loadChatProfiles().then(loadChatConversations).catch(function(e){toast('Messagerie indisponible : '+e.message,'crit');});});
+  observer.observe(panel,{attributes:true,attributeFilter:['class']});
+})();
+
+/* faxtrix-chat-loader */
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-panel="messagerie"]');
+  if(b){
+    setTimeout(function(){loadChatProfiles().then(loadChatConversations).catch(function(err){toast('Messagerie indisponible : '+err.message,'crit');});},80);
+  }
+});
