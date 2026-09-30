@@ -4,7 +4,7 @@
 /* ---------------- 0. Aides ---------------- */
 function $(sel, ctx) { return (ctx || document).querySelector(sel); }
 function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
-function euros(n) { return Number(n || 0).toLocaleString('fr-FR') + " €"; }
+function fcfa(n) { return Number(n || 0).toLocaleString('fr-FR') + " FCFA"; }
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -457,13 +457,13 @@ function renderCrm() {
   });
   list.innerHTML = rows.length ? rows.map(function (c) {
     var chipClass = c.statut === 'Actif' ? 'ok' : (c.statut === 'Négociation' ? 'mid' : (c.statut === 'Attente' ? 'crit' : ''));
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(c.nom) + '</b><span>' + euros(c.valeur) + '</span></div>' +
+    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(c.nom) + '</b><span>' + fcfa(c.valeur) + '</span></div>' +
       '<span class="chip ' + chipClass + '">' + c.statut + '</span>' +
       '<div class="app-row-actions"><button class="row-btn" data-crm-edit="' + c.id + '">✎</button><button class="row-btn" data-crm-del="' + c.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun client pour ce filtre.</div>';
 
   $('#crmTotal').textContent = state.crm.length;
-  $('#crmValeur').textContent = euros(state.crm.reduce(function (s, c) { return s + Number(c.valeur || 0); }, 0));
+  $('#crmValeur').textContent = fcfa(state.crm.reduce(function (s, c) { return s + Number(c.valeur || 0); }, 0));
   $('#crmActifs').textContent = state.crm.filter(function (c) { return c.statut === 'Actif'; }).length;
   $('#crmNego').textContent = state.crm.filter(function (c) { return c.statut === 'Négociation'; }).length;
 }
@@ -911,7 +911,7 @@ function renderBrain() {
     ? { t: ticketsHaute.length + ' ticket' + (ticketsHaute.length > 1 ? 's' : '') + ' en priorité haute encore ouvert' + (ticketsHaute.length > 1 ? 's' : '') + '.', c: 'crit' }
     : { t: 'Aucun ticket critique ouvert en ce moment.', c: 'ok' });
   items.push(nbNego
-    ? { t: nbNego + ' client' + (nbNego > 1 ? 's' : '') + ' en négociation, représentant ' + euros(valeurNego) + ' de pipeline.', c: 'mid' }
+    ? { t: nbNego + ' client' + (nbNego > 1 ? 's' : '') + ' en négociation, représentant ' + fcfa(valeurNego) + ' de pipeline.', c: 'mid' }
     : { t: 'Aucune négociation en cours.', c: '' });
   items.push(surcharge.length
     ? { t: surcharge.length + ' membre' + (surcharge.length > 1 ? 's' : '') + " d'équipe à plus de 80% de charge : " + surcharge.map(function (m) { return m.nom; }).join(', ') + '.', c: 'crit' }
@@ -1227,7 +1227,7 @@ function renderSuivi() {
   $('#suiviActions').textContent=s.activity_total||0;
   $('#suiviKpis').innerHTML=[
     ['Tickets ouverts',s.tickets_open||0],['Tickets résolus',s.tickets_resolved||0],
-    ['Clients actifs',s.clients_active||0],['Pipeline CRM',euros(s.pipeline_value||0)],
+    ['Clients actifs',s.clients_active||0],['Pipeline CRM',fcfa(s.pipeline_value||0)],
     ['Missions en cours',s.missions_active||0],['Missions terminées',s.missions_completed||0],
     ['Membres d’équipe',s.team_total||0],['Automatisations actives',s.automations_live||0]
   ].map(function(x){return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(x[0])+'</b><span>Valeur actuelle</span></div><strong>'+escapeHtml(String(x[1]))+'</strong></div>';}).join('');
@@ -1255,7 +1255,7 @@ function renderReports() {
   var inRange = state.tickets.filter(function (t) { return new Date(t.created_at).getTime() >= since; });
   $('#repTickets').textContent = inRange.filter(function (t) { return t.statut === 'Résolu' || t.statut === 'Fermé'; }).length;
   $('#repClients').textContent = state.crm.length;
-  $('#repValeur').textContent = euros(state.crm.reduce(function (s, c) { return s + Number(c.valeur || 0); }, 0));
+  $('#repValeur').textContent = fcfa(state.crm.reduce(function (s, c) { return s + Number(c.valeur || 0); }, 0));
   $('#repMissions').textContent = state.terrain.length;
   var overdue = state.tickets.filter(function(t){
     return t.due_at && new Date(t.due_at).getTime() < Date.now() && t.statut !== 'Résolu' && t.statut !== 'Fermé';
@@ -1331,7 +1331,7 @@ function aiAnswer(q) {
   }
   if (/(pipeline|crm|client|vente)/.test(q)) {
     var total = state.crm.reduce(function (s, c) { return s + Number(c.valeur || 0); }, 0);
-    return state.crm.length + " client(s) pour " + euros(total) + " au total, dont " + state.crm.filter(function (c) { return c.statut === 'Négociation'; }).length + " en négociation.";
+    return state.crm.length + " client(s) pour " + fcfa(total) + " au total, dont " + state.crm.filter(function (c) { return c.statut === 'Négociation'; }).length + " en négociation.";
   }
   if (/(mission|terrain|intervention)/.test(q)) {
     return state.terrain.filter(function (t) { return t.statut === 'En cours'; }).length + " mission(s) en cours sur " + state.terrain.length + " au total.";
@@ -1378,7 +1378,7 @@ $('#searchInput').addEventListener('input', function (e) { renderSearch(e.target
 function renderSearch(q) {
   var groups = [
     ['Tickets', 'tickets', state.tickets.filter(function (t) { return !q || t.titre.toLowerCase().indexOf(q) !== -1; }), function (t) { return [t.titre, t.statut + ' · ' + t.priorite]; }],
-    ['Clients', 'crm', state.crm.filter(function (c) { return !q || c.nom.toLowerCase().indexOf(q) !== -1; }), function (c) { return [c.nom, c.statut + ' · ' + euros(c.valeur)]; }],
+    ['Clients', 'crm', state.crm.filter(function (c) { return !q || c.nom.toLowerCase().indexOf(q) !== -1; }), function (c) { return [c.nom, c.statut + ' · ' + fcfa(c.valeur)]; }],
     ['Équipe', 'equipes', state.equipes.filter(function (m) { return !q || m.nom.toLowerCase().indexOf(q) !== -1 || (m.role || '').toLowerCase().indexOf(q) !== -1; }), function (m) { return [m.nom, (m.role || '—') + ' · ' + m.statut]; }]
   ], html = '';
   groups.forEach(function (g) {
