@@ -1320,19 +1320,47 @@ function aiSay(text, who) {
   var log = $('#aiLog'), m = document.createElement('div');
   m.className = 'ai-msg ' + who; if (who === 'bot' && /<strong>|<br>|<a /i.test(text)) m.innerHTML = text; else m.textContent = text; log.appendChild(m); log.scrollTop = log.scrollHeight; return m;
 }
-function aiAsk(q) {
+async function aiWebSearch(q) {
+  try {
+    var session=(await sb.auth.getSession()).data.session;
+    var res=await fetch(SUPABASE_URL+'/functions/v1/google-search',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+(session?session.access_token:SUPABASE_ANON_KEY),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({q:q})
+    });
+    var data=await res.json();
+    if(!res.ok) return null;
+    return data;
+  } catch(e) {
+    console.warn('FAXTRIX recherche Google:',e);
+    return null;
+  }
+}
+function aiRenderAnswer(text) {
+  return escapeHtml(text).replace(
+    /https:\/\/infotelcom-congo-brazzaville\.netlify\.app\//g,
+    '<a href="https://infotelcom-congo-brazzaville.netlify.app/" target="_blank" rel="noopener noreferrer" class="ai-link">Visiter le site INFOTELCOM ↗</a>'
+  );
+}
+async function aiAsk(q) {
   if (!q.trim()) return;
   aiSay(q, 'user');
   var t = document.createElement('div'); t.className = 'ai-msg bot'; t.innerHTML = '<span class="ai-typing"><i></i><i></i><i></i></span>';
   $('#aiLog').appendChild(t);
-  setTimeout(function () {
-    var answer = aiAnswer(q);
-    t.innerHTML = escapeHtml(answer).replace(
-      /https:\/\/infotelcom-congo-brazzaville\.netlify\.app\//g,
-      '<a href="https://infotelcom-congo-brazzaville.netlify.app/" target="_blank" rel="noopener noreferrer" class="ai-link">Visiter le site INFOTELCOM ↗</a>'
-    );
-    $('#aiLog').scrollTop = 9999;
-  }, 650);
+  var local=aiAnswer(q);
+  var known=/\b(crm|api|sql|rls|rpc|uuid|jwt|url|ui|ux|db|bdd|http|https|html|css|js|javascript|json|cdn|rest|crud|auth|rbac|realtime|webrtc|turn|stun|nat|tcp|udp|tls|smtp|git|github|supabase|postgresql|storage|pwa|apk|android|frontend|backend|web|email|csv|kpi|soc|rgpd|qa)\b/i.test(q)
+    || /(ticket|client|crm|technicien|équipe|equipe|mission|terrain|faxtrix|infotelcom|devise|monnaie|statistique|rapport|messagerie)/i.test(q);
+  if(known){t.innerHTML=aiRenderAnswer(local);$('#aiLog').scrollTop=9999;return;}
+  var data=await aiWebSearch(q);
+  if(data&&data.results&&data.results.length){
+    var html='<strong>Recherche Google : '+escapeHtml(q)+'</strong><br><br>'+data.results.map(function(x,i){
+      return '<div style="margin-bottom:12px;"><b>'+(i+1)+'. '+escapeHtml(x.title||'Résultat')+'</b><br>'+escapeHtml(x.snippet||'')+'<br><a class="ai-link" href="'+encodeURI(x.link||'#')+'" target="_blank" rel="noopener noreferrer">Ouvrir la source ↗</a></div>';
+    }).join('');
+    t.innerHTML=html;
+  } else {
+    t.innerHTML=aiRenderAnswer(local+(data&&data.error?'\n\nRecherche web indisponible : '+data.error:''));
+  }
+  $('#aiLog').scrollTop=9999;
 }
 $('#aiForm').addEventListener('submit', function (e) { e.preventDefault(); var i = $('#aiInput'); aiAsk(i.value); i.value = ''; });
 $$('[data-ai-suggest]').forEach(function (b) { b.addEventListener('click', function () { aiAsk(b.getAttribute('data-ai-suggest')); }); });
