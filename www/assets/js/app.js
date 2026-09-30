@@ -1284,6 +1284,10 @@ function aiProgramTermsAnswer(q) {
 }
 function aiAnswer(q) {
   q = q.toLowerCase();
+  var glossary = aiGlossaryAnswer(q);
+  if (glossary) return glossary;
+  var programTerms = aiProgramTermsAnswer(q);
+  if (programTerms) return programTerms;
   var open = state.tickets.filter(function (t) { return t.statut !== 'Résolu' && t.statut !== 'Fermé'; });
   if (/ticket/.test(q) && /(ouvert|résum|resum|combien|urgent)/.test(q)) {
     if (!open.length) return "Tout est sous contrôle : aucun ticket ouvert.";
@@ -1507,7 +1511,13 @@ async function openChatConversation(id){
   if(chatState.channel)await sb.removeChannel(chatState.channel);
   chatState.channel=sb.channel('faxtrix-chat-'+id).on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages',filter:'conversation_id=eq.'+id},function(payload){
     if(!chatState.messages.some(function(x){return x.id===payload.new.id;})){chatState.messages.push(payload.new);renderChatMessages();}
-  }).subscribe();
+  }).subscribe(function(status){
+    chatState.realtimeStatus=status;
+    if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+      console.warn('FAXTRIX messagerie Realtime:',status);
+      toast('Synchronisation instantanée indisponible : FAXTRIX utilise la synchronisation automatique.','crit');
+    }
+  });
 }
 async function renderChatMessages(){
   var box=$('#chatMessages'); if(!box)return;
@@ -1672,17 +1682,44 @@ document.addEventListener('click',function(e){
 });
 (function initChat(){
   var panel=$('[data-panel="messagerie"]'); if(!panel)return;
-  var oldShowPanel=window.showPanel;
-  // Le panneau est chargé à la première ouverture; l'appel direct reste compatible avec le routeur existant.
-  var loaded=false;
-  var observer=new MutationObserver(function(){if(!panel.classList.contains('active')||loaded)return;loaded=true;loadChatProfiles().then(loadChatConversations).catch(function(e){toast('Messagerie indisponible : '+e.message,'crit');});});
+  var loaded=false, pollTimer=null, listTimer=null;
+  async function refreshCurrentChat(){
+    if(!chatState.current)return;
+    var r=await sb.from('chat_messages').select('*').eq('conversation_id',chatState.current).is('deleted_at',null).order('created_at',{ascending:true});
+    if(r.error){console.error('FAXTRIX messages:',r.error);return;}
+    var incoming=r.data||[];
+    var changed=incoming.length!==chatState.messages.length || incoming.some(function(m,i){return !chatState.messages[i]||chatState.messages[i].id!==m.id;});
+    if(changed){chatState.messages=incoming;await renderChatMessages();}
+  }
+  async function refreshChat(){
+    try{
+      await loadChatProfiles();
+      await loadChatConversations();
+      await refreshCurrentChat();
+    }catch(e){
+      console.error('FAXTRIX messagerie:',e);
+      toast('Messagerie indisponible : '+(e.message||e),'crit');
+    }
+  }
+  function startPolling(){
+    if(pollTimer)return;
+    pollTimer=setInterval(function(){if(!document.hidden&&panel.classList.contains('active'))refreshCurrentChat();},3000);
+    listTimer=setInterval(function(){if(!document.hidden&&panel.classList.contains('active'))loadChatConversations();},5000);
+  }
+  function ensureLoaded(){
+    if(!panel.classList.contains('active'))return;
+    if(!loaded){loaded=true;refreshChat();}
+    startPolling();
+  }
+  var observer=new MutationObserver(ensureLoaded);
   observer.observe(panel,{attributes:true,attributeFilter:['class']});
+  if(panel.classList.contains('active'))ensureLoaded();
 })();
 
 /* faxtrix-chat-loader */
 document.addEventListener('click',function(e){
   var b=e.target.closest&&e.target.closest('[data-panel="messagerie"]');
   if(b){
-    setTimeout(function(){loadChatProfiles().then(loadChatConversations).catch(function(err){toast('Messagerie indisponible : '+err.message,'crit');});},80);
+    setTimeout(function(){loadChatProfiles().then(loadChatConversations).catch(function(err){toast('Messagerie indisponible : '+(err.message||err),'crit');});},80);
   }
 });
