@@ -84,7 +84,8 @@ for each row execute function public.sync_ticket_last_saved();
 -- FAXTRIX — messagerie interne entreprise
 -- Conversations privées/groupes, messages, fichiers et présence.
 alter table public.profiles
-  add column if not exists avatar_url text;
+  add column if not exists avatar_url text,
+  add column if not exists avatar_path text;
 
 create table if not exists public.chat_conversations (
   id uuid primary key default gen_random_uuid(),
