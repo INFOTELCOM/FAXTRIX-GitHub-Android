@@ -73,7 +73,7 @@ document.addEventListener('click', function (e) {
     e.preventDefault(); e.stopPropagation();
     if (typeof showPanel === 'function') showPanel(panel);
   }
-});
+}, true);
 var CURRENCY_OPTIONS = {
   XAF: { label: 'FCFA', locale: 'fr-FR', suffix: ' FCFA' },
   EUR: { label: '€', locale: 'fr-FR', suffix: ' €' },
