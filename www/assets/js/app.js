@@ -1310,7 +1310,7 @@ function chatAvatarHtml(profile,size){
   return escapeHtml(chatInitial(profile&&profile.full_name));
 }
 async function loadChatProfiles(){
-  var r=await sb.from('profiles').select('id,full_name,role,avatar_url').eq('company_id',state.profile.company_id).order('full_name');
+  var r=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path').eq('company_id',state.profile.company_id).order('full_name');
   chatState.profiles=r.data||[];
 }
 async function loadChatConversations(){
@@ -1421,7 +1421,7 @@ async function uploadChatAvatar(file){
   var signed=await sb.storage.from('faxtrix-avatars').createSignedUrl(path,31536000);
   if(!signed.data||!signed.data.signedUrl){toast('Photo enregistrée mais URL indisponible.','crit');return;}
   var url=signed.data.signedUrl;
-  var pr=await sb.from('profiles').update({avatar_url:url}).eq('id',state.profile.id);
+  var pr=await sb.from('profiles').update({avatar_url:url,avatar_path:path}).eq('id',state.profile.id);
   if(pr.error){toast('Impossible de mettre à jour la photo : '+pr.error.message,'crit');return;}
   state.profile.avatar_url=url; var me=chatState.profiles.find(function(p){return p.id===state.profile.id;}); if(me)me.avatar_url=url;
   renderChatConversationList(); if(chatState.current)openChatConversation(chatState.current); toast('Photo de profil mise à jour.','ok');
