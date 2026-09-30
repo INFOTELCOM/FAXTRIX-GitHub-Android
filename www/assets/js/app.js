@@ -1233,7 +1233,7 @@ function aiAnswer(q) {
   }
   if (/(crée|creer|créer|nouveau).*ticket/.test(q)) { showPanel('tickets'); $('#tkAddBtn').click(); return "J'ouvre le formulaire de nouveau ticket."; }
   if (/(faxtrix|infotelcom|entreprise|éditeur|createur|créateur|contact|téléphone|telephone|email|gmail)/.test(q)) {
-    return "FAXTRIX est la plateforme de gestion d'entreprise créée par INFOTELCOM, avec CRM, tickets, interventions terrain, équipes, automatisation, statistiques, messagerie interne et assistance. Support INFOTELCOM : contact.infotelcom@gmail.com · +242 06 849 8792 · +242 06 866 0821 · WhatsApp +33 6 52 86 11 59. Les données FAXTRIX sont isolées par entreprise.";
+    return "INFOTELCOM est l'entreprise à l'origine de FAXTRIX. Elle accompagne les entreprises dans leurs projets numériques, informatiques et de transformation digitale. Site officiel : https://infotelcom-congo-brazzaville.netlify.app/. FAXTRIX propose notamment CRM, tickets, interventions terrain, équipes, automatisation, statistiques, messagerie interne et assistance. Support : contact.infotelcom@gmail.com · +242 06 849 8792 · +242 06 866 0821 · WhatsApp +33 6 52 86 11 59.";
   }
   if (/(devise|prix|monnaie|euro|dollar|fcfa|xaf|usd|eur)/.test(q)) {
     return "Les montants FAXTRIX sont affichés dans la devise choisie dans Paramètres. La sélection accepte les codes de devises internationaux pris en charge par votre navigateur.";
@@ -1249,7 +1249,14 @@ function aiAsk(q) {
   aiSay(q, 'user');
   var t = document.createElement('div'); t.className = 'ai-msg bot'; t.innerHTML = '<span class="ai-typing"><i></i><i></i><i></i></span>';
   $('#aiLog').appendChild(t);
-  setTimeout(function () { t.textContent = aiAnswer(q); $('#aiLog').scrollTop = 9999; }, 650);
+  setTimeout(function () {
+    var answer = aiAnswer(q);
+    t.innerHTML = escapeHtml(answer).replace(
+      /https:\/\/infotelcom-congo-brazzaville\.netlify\.app\//g,
+      '<a href="https://infotelcom-congo-brazzaville.netlify.app/" target="_blank" rel="noopener noreferrer" class="ai-link">Visiter le site INFOTELCOM ↗</a>'
+    );
+    $('#aiLog').scrollTop = 9999;
+  }, 650);
 }
 $('#aiForm').addEventListener('submit', function (e) { e.preventDefault(); var i = $('#aiInput'); aiAsk(i.value); i.value = ''; });
 $$('[data-ai-suggest]').forEach(function (b) { b.addEventListener('click', function () { aiAsk(b.getAttribute('data-ai-suggest')); }); });
@@ -1289,7 +1296,7 @@ function renderSearch(q) {
     }).join('');
   });
   $('#searchResults').innerHTML = html || '<div class="app-empty">Aucun résultat.</div>';
-  $$$('.sr-item', $('#searchResults')).forEach(function (el) { el.addEventListener('click', function () { closeSearch(); showPanel(el.getAttribute('data-go')); }); });
+  $('.sr-item', $('#searchResults')).forEach(function (el) { el.addEventListener('click', function () { closeSearch(); showPanel(el.getAttribute('data-go')); }); });
 }
 
 /* ---------------- 24. Connexion réseau ---------------- */
@@ -1386,7 +1393,8 @@ async function loadChatProfiles(){
   chatState.profiles=r.data||[];
 }
 async function loadChatConversations(){
-  var r=await sb.from('chat_conversations').select('*').order('updated_at',{ascending:false});
+  var r=await sb.from('chat_conversations').select('*').eq('company_id',state.profile.company_id).order('updated_at',{ascending:false});
+  if(r.error){console.error('FAXTRIX messagerie conversations:',r.error);toast('Messagerie indisponible : '+r.error.message,'crit');chatState.conversations=[];chatState.members={};return;}
   chatState.conversations=r.data||[];
   chatState.members={};
   if(chatState.conversations.length){
