@@ -1468,12 +1468,24 @@ async function createChatConversation(){
     if(!ids.length){toast('Sélectionnez au moins une personne.','crit');return;}
     var selected=ids.map(function(id){return chatState.profiles.find(function(p){return p.id===id;});}).filter(Boolean);
     var group=ids.length>1, name=$('#chatGroupName').value.trim();
-    var cr=await sb.from('chat_conversations').insert({company_id:state.profile.company_id,created_by:state.profile.id,title:group?(name||selected.map(function(p){return p.full_name;}).join(', ')):null,is_group:group}).select().single();
+    var conversationId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(ch){var r=Math.random()*16|0,v=ch==='x'?r:(r&3|8);return v.toString(16);}));
+    var conversation={
+      id:conversationId,
+      company_id:state.profile.company_id,
+      created_by:state.profile.id,
+      title:group?(name||selected.map(function(p){return p.full_name;}).join(', ')):null,
+      is_group:group,
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
+    };
+    var cr=await sb.from('chat_conversations').insert(conversation);
     if(cr.error){toast('Création impossible : '+cr.error.message,'crit');return;}
-    var members=[{conversation_id:cr.data.id,user_id:state.profile.id,company_id:state.profile.company_id,role:'admin'}].concat(ids.map(function(id){return {conversation_id:cr.data.id,user_id:id,company_id:state.profile.company_id,role:'member'};}));
+    var members=[{conversation_id:conversationId,user_id:state.profile.id,company_id:state.profile.company_id,role:'admin'}].concat(ids.map(function(id){return {conversation_id:conversationId,user_id:id,company_id:state.profile.company_id,role:'member'};}));
     var mr=await sb.from('chat_members').insert(members);
-    if(mr.error){await sb.from('chat_conversations').delete().eq('id',cr.data.id);toast('Impossible d’ajouter les membres : '+mr.error.message,'crit');return;}
-    closeRecordDetail(); await loadChatConversations(); await openChatConversation(cr.data.id); toast('Conversation créée.','ok');
+    if(mr.error){await sb.from('chat_conversations').delete().eq('id',conversationId);toast('Impossible d’ajouter les membres : '+mr.error.message,'crit');return;}
+    chatState.conversations.unshift(conversation);
+    chatState.members[conversationId]=members;
+    closeRecordDetail(); renderChatConversationList(); await openChatConversation(conversationId); toast('Conversation créée.','ok');
   };
 }
 async function sendChatMessage(e){
@@ -1487,11 +1499,15 @@ async function sendChatMessage(e){
     if(up.error){toast('Envoi du fichier impossible : '+up.error.message,'crit');return;}
     data.file_path=path; data.file_name=file.name; data.file_size=file.size; data.mime_type=file.type||'application/octet-stream'; data.message_type=(file.type||'').indexOf('image/')===0?'image':'file';
   }
-  var r=await sb.from('chat_messages').insert(data).select().single();
+  var messageId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(ch){var r=Math.random()*16|0,v=ch==='x'?r:(r&3|8);return v.toString(16);}));
+  data.id=messageId;
+  data.created_at=new Date().toISOString();
+  var r=await sb.from('chat_messages').insert(data);
   if(r.error){toast('Message impossible à envoyer : '+r.error.message,'crit');return;}
+  var sent=Object.assign({},data);
   input.value=''; chatState.attachment=null; $('#chatAttachment').hidden=true; $('#chatFile').value='';
-  await sb.from('chat_conversations').update({updated_at:new Date().toISOString()}).eq('id',chatState.current);
-  chatState.messages.push(r.data); renderChatMessages(); await loadChatConversations();
+  await sb.from('chat_conversations').update({updated_at:sent.created_at}).eq('id',chatState.current);
+  chatState.messages.push(sent); renderChatMessages(); await loadChatConversations();
 }
 async function uploadChatAvatar(file){
   if(!file)return;
