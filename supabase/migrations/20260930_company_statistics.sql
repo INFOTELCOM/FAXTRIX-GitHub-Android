@@ -65,7 +65,8 @@ begin
     );
   end if;
 
-  return coalesce(NEW, OLD);
+  if TG_OP = 'DELETE' then return OLD; end if;
+  return NEW;
 end;
 $$;
 
