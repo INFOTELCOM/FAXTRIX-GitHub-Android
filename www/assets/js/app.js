@@ -299,13 +299,24 @@ $$('.app-nav button').forEach(function (b) {
 $$('.mobile-tabbar button[data-panel]').forEach(function (b) {
   b.addEventListener('click', function () { showPanel(b.getAttribute('data-panel')); });
 });
-$$('[data-go]').forEach(function (b) {
-  b.addEventListener('click', function () {
-    var t = b.getAttribute('data-go');
-    if (t === 'services-sheet') { $('#servicesSheet').classList.add('on'); return; }
-    showPanel(t);
-    if (b.hasAttribute('data-open-ticket')) setTimeout(function () { $('#tkAddBtn').click(); }, 250);
-  });
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('[data-go]');
+  if (!b) return;
+  var t = b.getAttribute('data-go');
+  if (!t) return;
+  if (t === 'services-sheet') {
+    var ss = $('#servicesSheet'); if (ss) ss.classList.add('on');
+    return;
+  }
+  if (t === 'plus') {
+    var ps = $('#plusSheet'); if (ps) ps.classList.add('on');
+    return;
+  }
+  showPanel(t);
+  var ps2 = $('#plusSheet'); if (ps2) ps2.classList.remove('on');
+  if (b.hasAttribute('data-open-ticket')) {
+    setTimeout(function () { var add = $('#tkAddBtn'); if (add) add.click(); }, 250);
+  }
 });
 function buildSupportMessage(){
   var type=$('#supportType') ? $('#supportType').value : 'Assistance';
@@ -344,17 +355,24 @@ refreshSupportIdentity();
 var servicesTabBtn = $('#servicesTabBtn');
 if (servicesTabBtn) servicesTabBtn.addEventListener('click', function () { $('#servicesSheet').classList.add('on'); });
 $$('[data-services-close]').forEach(function (el) { el.addEventListener('click', function () { $('#servicesSheet').classList.remove('on'); }); });
-$('[data-plus-open]').forEach(function (el) { el.addEventListener('click', function () {
+document.addEventListener('click', function (e) {
+  var el = e.target.closest && e.target.closest('[data-plus-open]');
+  if (!el) return;
+  e.preventDefault();
+  e.stopPropagation();
   var sheet=$('#plusSheet');
   if(sheet) sheet.classList.add('on');
   var name=state.profile && (state.profile.full_name || state.profile.name || state.profile.email);
   var role=state.profile && (state.profile.role || state.profile.job_title || state.profile.fonction);
   if($('#plusUserName')) $('#plusUserName').textContent=name || 'Votre espace FAXTRIX';
-  if($('#plusUserRole')) $('#plusUserRole').textContent=role ? 'Fonction : '+role : 'Accès et outils complémentaires';
-  if($('#plusRoleChip')) $('#plusRoleChip').textContent=role || 'Mon espace';
-}); });
+  if($('#plusUserRole')) $('#plusUserRole').textContent=role ? 'Fonction : '+role+' • Mes enregistrements, horaires et outils' : 'Mes enregistrements, horaires, interventions et outils personnels';
+  if($('#plusRoleChip')) $('#plusRoleChip').textContent='Espace personnel';
+});
 var moreTabBtn = $('#moreTabBtn');
-if (moreTabBtn) moreTabBtn.addEventListener('click', function () { $('#plusSheet').classList.add('on'); });
+if (moreTabBtn) moreTabBtn.addEventListener('click', function (e) {
+  e.preventDefault();
+  var sheet=$('#plusSheet'); if(sheet) sheet.classList.add('on');
+});
 $('[data-plus-close]').forEach(function (el) { el.addEventListener('click', function () { $('#plusSheet').classList.remove('on'); }); });
 $('[data-plus-filter="mine"]').forEach(function (el) { el.addEventListener('click', function () {
   $('#plusSheet').classList.remove('on');
