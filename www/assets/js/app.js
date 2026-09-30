@@ -328,6 +328,14 @@ $$('[data-drawer-close]').forEach(function (el) { el.addEventListener('click', c
 
 var notifDrawer = $('#notifDrawer');
 $$('[data-drawer-close-notif]').forEach(function (el) { el.addEventListener('click', function () { notifDrawer.classList.remove('on'); }); });
+$('#markAllNotifBtn').addEventListener('click', async function () {
+  var unread = state.notifications.filter(function(n){ return !n.read; }).map(function(n){ return n.id; });
+  if (!unread.length) return;
+  state.notifications.forEach(function(n){ n.read = true; });
+  renderNotifBadge(); renderNotifList();
+  await sb.from('notifications').update({read:true}).in('id', unread);
+  toast('Toutes les notifications sont marquées comme lues.', 'ok');
+});
 $('#notifBtn').addEventListener('click', async function () {
   notifDrawer.classList.add('on');
   var unread = state.notifications.filter(function (n) { return !n.read; }).map(function (n) { return n.id; });
@@ -408,7 +416,16 @@ $('#tkSearch').addEventListener('input', function (e) { tkQuery = e.target.value
 $('#tkForm').addEventListener('submit', async function (e) {
   e.preventDefault();
   var id = $('#tkId').value;
-  var data = { titre: $('#tkTitre').value.trim(), client: $('#tkClient').value.trim(), priorite: $('#tkPriorite').value, statut: $('#tkStatut').value };
+  var data = {
+    titre: $('#tkTitre').value.trim(),
+    client: $('#tkClient').value.trim(),
+    categorie: $('#tkCategorie').value,
+    priorite: $('#tkPriorite').value,
+    statut: $('#tkStatut').value,
+    assigned_to: $('#tkAssigned').value.trim(),
+    due_at: $('#tkDue').value ? new Date($('#tkDue').value).toISOString() : null,
+    description: $('#tkDescription').value.trim()
+  };
   if (id) {
     var res = await sb.from('tickets').update(data).eq('id', id).select().single();
     if (!res.error) { var item = state.tickets.find(function (t) { return t.id === id; }); if (item) Object.assign(item, res.data); }
@@ -428,7 +445,15 @@ $('#tkForm').addEventListener('submit', async function (e) {
 });
 function editTk(id) {
   var t = state.tickets.find(function (x) { return x.id === id; }); if (!t) return;
-  $('#tkId').value = t.id; $('#tkTitre').value = t.titre; $('#tkClient').value = t.client; $('#tkPriorite').value = t.priorite; $('#tkStatut').value = t.statut;
+  $('#tkId').value = t.id;
+  $('#tkTitre').value = t.titre || '';
+  $('#tkClient').value = t.client || '';
+  $('#tkCategorie').value = t.categorie || 'Général';
+  $('#tkPriorite').value = t.priorite || 'Moyenne';
+  $('#tkStatut').value = t.statut || 'Nouveau';
+  $('#tkAssigned').value = t.assigned_to || '';
+  $('#tkDue').value = t.due_at ? new Date(t.due_at).toISOString().slice(0,16) : '';
+  $('#tkDescription').value = t.description || '';
   openDrawer('tk', 'Modifier le ticket');
 }
 async function deleteTk(id) {
@@ -444,8 +469,8 @@ function renderTickets() {
   });
   list.innerHTML = rows.length ? rows.map(function (t) {
     var pClass = t.priorite === 'Haute' ? 'crit' : (t.priorite === 'Moyenne' ? 'mid' : 'ok');
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(t.titre) + '</b><span>' + escapeHtml(t.client || '—') + ' · ' + timeAgo(t.created_at) + '</span></div>' +
-      '<span class="chip ' + pClass + '">' + t.priorite + '</span><span class="chip">' + t.statut + '</span>' +
+    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(t.titre) + '</b><span>' + escapeHtml(t.client || '—') + ' · ' + escapeHtml(t.assigned_to || 'Non assigné') + ' · ' + timeAgo(t.created_at) + '</span></div>' +
+      '<span class="chip">' + escapeHtml(t.categorie || 'Général') + '</span><span class="chip ' + pClass + '">' + escapeHtml(t.priorite || '') + '</span><span class="chip">' + escapeHtml(t.statut || '') + '</span>' +
       '<div class="app-row-actions"><button class="row-btn" data-tk-edit="' + t.id + '">✎</button><button class="row-btn" data-tk-del="' + t.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun ticket pour ce filtre.</div>';
 
@@ -463,7 +488,14 @@ $('#teAddBtn').addEventListener('click', function () {
 $('#teForm').addEventListener('submit', async function (e) {
   e.preventDefault();
   var id = $('#teId').value;
-  var data = { tech: $('#teTech').value.trim(), client: $('#teClient').value.trim(), statut: $('#teStatut').value };
+  var data = {
+    tech: $('#teTech').value.trim(),
+    client: $('#teClient').value.trim(),
+    adresse: $('#teAdresse').value.trim(),
+    statut: $('#teStatut').value,
+    notes: $('#teNotes').value.trim(),
+    compte_rendu: $('#teCompteRendu').value.trim()
+  };
   if (id) {
     var res = await sb.from('terrain_missions').update(data).eq('id', id).select().single();
     if (!res.error) { var item = state.terrain.find(function (x) { return x.id === id; }); if (item) Object.assign(item, res.data); }
@@ -476,7 +508,13 @@ $('#teForm').addEventListener('submit', async function (e) {
 });
 function editTe(id) {
   var t = state.terrain.find(function (x) { return x.id === id; }); if (!t) return;
-  $('#teId').value = t.id; $('#teTech').value = t.tech; $('#teClient').value = t.client; $('#teStatut').value = t.statut;
+  $('#teId').value = t.id;
+  $('#teTech').value = t.tech || '';
+  $('#teClient').value = t.client || '';
+  $('#teAdresse').value = t.adresse || '';
+  $('#teStatut').value = t.statut || 'Planifiée';
+  $('#teNotes').value = t.notes || '';
+  $('#teCompteRendu').value = t.compte_rendu || '';
   openDrawer('te', 'Modifier la mission');
 }
 async function deleteTe(id) {
@@ -948,6 +986,10 @@ function renderReports() {
   $('#repClients').textContent = state.crm.length;
   $('#repValeur').textContent = euros(state.crm.reduce(function (s, c) { return s + Number(c.valeur || 0); }, 0));
   $('#repMissions').textContent = state.terrain.length;
+  var overdue = state.tickets.filter(function(t){
+    return t.due_at && new Date(t.due_at).getTime() < Date.now() && t.statut !== 'Résolu' && t.statut !== 'Fermé';
+  }).length;
+  var overdueEl = $('#repOverdue'); if (overdueEl) overdueEl.textContent = overdue;
   var days = Math.min(repRange, 14), buckets = [], i;
   for (i = days - 1; i >= 0; i--) {
     var d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
@@ -970,6 +1012,24 @@ function renderReports() {
 
 /* compteurs KPI animés */
 var kpiSeen = {};
+function exportReportsCsv() {
+  var rows = [
+    ['Type','Identifiant','Titre / Nom','Statut','Priorité / Valeur','Assignation / Client','Créé le'],
+    ...state.tickets.map(function(t){return ['Ticket',t.id,t.titre,t.statut,t.priorite,t.assigned_to||t.client||'',t.created_at];}),
+    ...state.crm.map(function(x){return ['Client',x.id,x.nom,x.statut,Number(x.valeur||0),'',x.created_at];}),
+    ...state.terrain.map(function(x){return ['Mission',x.id,x.client,x.statut,'',x.tech,x.created_at];})
+  ];
+  var csv = rows.map(function(row){return row.map(function(v){return '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';}).join(';');}).join('\n');
+  var blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='faxtrix-rapport-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('Rapport CSV exporté.', 'ok');
+}
+var exportReportBtn = $('#exportReportBtn');
+if (exportReportBtn) exportReportBtn.addEventListener('click', exportReportsCsv);
+
+/* KPI supplémentaires */
 function animateKpis() {
   $$('.app-stat b').forEach(function (el) {
     var txt = el.textContent, num = parseFloat(txt.replace(/[^\d.]/g, ''));
