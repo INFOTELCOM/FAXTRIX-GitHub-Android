@@ -41,7 +41,7 @@ var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: {
 
 var state = {
   profile: { id: null, company_id: null, full_name: '', company_name: '', role: 'owner' },
-  crm: [], tickets: [], terrain: [], equipes: [], automations: [], notifications: [], invitations: []
+  crm: [], tickets: [], terrain: [], equipes: [], automations: [], notifications: [], invitations: [], statistics: null
 };
 
 /* ---------------- 2. Porte d'entrée (connexion / inscription / mot de passe) ---------------- */
@@ -237,6 +237,8 @@ async function loadAll() {
   state.automations = results[4].data || [];
   state.notifications = results[5].data || [];
   state.invitations = results[6].data || [];
+  var statsRes = await sb.rpc('my_company_statistics');
+  state.statistics = statsRes.error ? null : (statsRes.data || null);
   return true;
 }
 
@@ -787,6 +789,7 @@ function renderAll() {
   renderTopUser();
   renderInvites();
   renderReports();
+  renderSuivi();
   renderPerfChart();
   animateKpis();
 }
@@ -894,6 +897,40 @@ function boot() {
   });
   mql.addEventListener('change', function () { if (current === 'auto') apply('auto'); });
 })();
+
+/* ---------------- 20. Suivi & statistiques ---------------- */
+function suiviLabel(action, entity) {
+  var map = {created:'Création',updated:'Modification',deleted:'Suppression'};
+  var em = {clients:'client',tickets:'ticket',terrain_missions:'mission terrain',team_members:'membre d’équipe',automation_rules:'règle d’automatisation'};
+  return (map[action] || action || 'Action') + ' · ' + (em[entity] || entity || 'donnée');
+}
+function renderSuivi() {
+  var s = state.statistics;
+  if (!s) {
+    ['#suiviClients','#suiviTickets','#suiviMissions','#suiviActions'].forEach(function(id){var e=$(id);if(e)e.textContent='—';});
+    var k=$('#suiviKpis'); if(k)k.innerHTML='<div class="app-empty">Les statistiques de suivi ne sont pas encore disponibles.</div>';
+    var ac=$('#suiviActivity'); if(ac)ac.innerHTML='<div class="app-empty">Aucune activité.</div>';
+    return;
+  }
+  $('#suiviClients').textContent=s.clients_total||0;
+  $('#suiviTickets').textContent=s.tickets_total||0;
+  $('#suiviMissions').textContent=s.missions_total||0;
+  $('#suiviActions').textContent=s.activity_total||0;
+  $('#suiviKpis').innerHTML=[
+    ['Tickets ouverts',s.tickets_open||0],['Tickets résolus',s.tickets_resolved||0],
+    ['Clients actifs',s.clients_active||0],['Pipeline CRM',euros(s.pipeline_value||0)],
+    ['Missions en cours',s.missions_active||0],['Missions terminées',s.missions_completed||0],
+    ['Membres d’équipe',s.team_total||0],['Automatisations actives',s.automations_live||0]
+  ].map(function(x){return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(x[0])+'</b><span>Valeur actuelle</span></div><strong>'+escapeHtml(String(x[1]))+'</strong></div>';}).join('');
+  var acts=s.recent_activity||[];
+  $('#suiviActivity').innerHTML=acts.length?acts.map(function(x){return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(suiviLabel(x.action,x.entity_type))+'</b><span>'+timeAgo(x.created_at)+'</span></div></div>';}).join(''):'<div class="app-empty">Aucune activité enregistrée.</div>';
+  var svg=$('#suiviChart'); if(!svg)return;
+  var days=s.daily_activity||[];
+  var max=Math.max.apply(null,days.map(function(x){return Number(x.count||0);}).concat([1]));
+  var w=600/(days.length||1),out='';
+  days.forEach(function(d,i){var n=Number(d.count||0),hh=Math.max(4,(n/max)*120);out+='<rect class="bar" x="'+(i*w+w*.2)+'" y="'+(140-hh)+'" width="'+(w*.6)+'" height="'+hh+'" rx="6"/><text x="'+(i*w+w/2)+'" y="160" text-anchor="middle">'+escapeHtml(String(d.label||''))+'</text>';if(n)out+='<text x="'+(i*w+w/2)+'" y="'+(134-hh)+'" text-anchor="middle" style="fill:var(--accent)">'+n+'</text>';});
+  svg.innerHTML=out;
+}
 
 /* ---------------- 20. Rapports (graphique animé) ---------------- */
 var repRange = 7;
