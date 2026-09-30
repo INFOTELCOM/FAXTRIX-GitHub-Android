@@ -440,6 +440,7 @@ function setTicketForm(t) {
   $('#tkDescription').value = t.description || '';
   $('#tkLastModifiedAt').textContent = t.last_modified_at ? new Date(t.last_modified_at).toLocaleString('fr-FR') : '—';
   renderTicketWorkSession(t);
+  loadTicketHistory(t.id);
 }
 
 function formatTicketDate(value) {
@@ -487,6 +488,23 @@ async function endTicketWorkSession() {
   ticketAutosaveStatus('✓ Session de travail fermée automatiquement à '+new Date(now).toLocaleTimeString('fr-FR'),true);
   notify('Session terminée pour '+(res.data.numero||'le ticket'),'ok');
   renderAll();
+}
+async function loadTicketHistory(ticketId) {
+  var box=$('#tkHistory'), list=$('#tkHistoryList');
+  if(!box || !list) return;
+  if(!ticketId){ box.style.display='none'; return; }
+  box.style.display='block'; list.textContent='Chargement de l’historique…';
+  var res=await sb.from('ticket_edit_history').select('id,editor_id,action,changed_at,before_data,after_data').eq('ticket_id',ticketId).order('changed_at',{ascending:false}).limit(20);
+  if(res.error){ list.textContent='Historique indisponible pour le moment.'; return; }
+  var rows=res.data||[];
+  if(!rows.length){ list.textContent='Aucune modification enregistrée pour le moment.'; return; }
+  list.innerHTML=rows.map(function(h){
+    var before=h.before_data||{}, after=h.after_data||{}, changed=[];
+    ['titre','problem','tasks','recommendations','resolution','description','priorite','statut','assigned_to','due_at'].forEach(function(k){
+      if(JSON.stringify(before[k])!==JSON.stringify(after[k])) changed.push(k);
+    });
+    return '<div style="padding:8px 0;border-top:1px solid var(--line-soft);"><b>'+escapeHtml(formatTicketDate(h.changed_at))+'</b><span style="display:block;">'+escapeHtml(changed.length ? 'Champs corrigés : '+changed.join(', ') : 'Enregistrement du ticket')+'</span></div>';
+  }).join('');
 }
 function ticketAutosaveStatus(message, ok) {
   var el = $('#tkAutosaveStatus');
