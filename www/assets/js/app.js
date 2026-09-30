@@ -1465,7 +1465,14 @@ function chatAvatarHtml(profile,size){
   return escapeHtml(chatInitial(profile&&profile.full_name));
 }
 async function loadChatProfiles(){
+  if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable pour la messagerie.','crit');return;}
   var r=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path').eq('company_id',state.profile.company_id).order('full_name');
+  if(r.error){
+    console.error('FAXTRIX profils messagerie:',r.error);
+    toast('Impossible de charger les membres : '+r.error.message,'crit');
+    chatState.profiles=[];
+    return;
+  }
   chatState.profiles=r.data||[];
 }
 async function loadChatConversations(){
@@ -1541,8 +1548,9 @@ async function renderChatMessages(){
   }
 }
 async function createChatConversation(){
+  if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable.','crit');return;}
+  if(!chatState.profiles.length) await loadChatProfiles();
   var opts=chatState.profiles.filter(function(p){return p.id!==state.profile.id;});
-  if(!opts.length){toast('Aucun autre utilisateur de votre entreprise n’est disponible.','crit');return;}
   var html='<div class="chat-new-list">'+opts.map(function(p){return '<label class="chat-member-option"><input type="checkbox" value="'+p.id+'"> <div class="chat-avatar" style="width:30px;height:30px;min-width:30px;">'+chatAvatarHtml(p,30)+'</div><span>'+escapeHtml(p.full_name||'Utilisateur')+'</span></label>';}).join('')+'</div><label>Nom du groupe (facultatif)<input id="chatGroupName" type="text" placeholder="Ex. Équipe technique"></label><button type="button" class="btn btn-primary" id="chatCreateConfirm">Créer la conversation</button>';
   $('#recordDetailTitle').textContent='Nouvelle conversation'; $('#recordDetailSub').textContent='Choisissez les membres de votre entreprise'; $('#recordDetailBody').innerHTML=html; $('#recordDetail').hidden=false;
   $('#chatCreateConfirm').onclick=async function(){
@@ -1657,7 +1665,17 @@ function startCurrentCall(type){
   if(!peer){toast('Sélectionnez une conversation avec un membre à appeler.','crit');return;}
   setupCall(type,peer.id,true).catch(function(e){toast('Appel impossible : '+(e.message||'autorisation micro/caméra requise'),'crit');endCall(false);});
 }
-$('#chatNewBtn')&&$('#chatNewBtn').addEventListener('click',function(){createChatConversation();});
+/* La messagerie peut être initialisée après le rendu de l'application : délégation robuste du bouton. */
+document.addEventListener('click',function(e){
+  var btn=e.target.closest&&e.target.closest('#chatNewBtn');
+  if(btn){
+    e.preventDefault();
+    createChatConversation().catch(function(err){
+      console.error('FAXTRIX nouvelle conversation:',err);
+      toast('Impossible d’ouvrir la nouvelle conversation : '+(err.message||err),'crit');
+    });
+  }
+});
 $('#chatSearch')&&$('#chatSearch').addEventListener('input',renderChatConversationList);
 $('#chatForm')&&$('#chatForm').addEventListener('submit',sendChatMessage);
 $('#chatFileBtn')&&$('#chatFileBtn').addEventListener('click',function(){$('#chatFile').click();});
