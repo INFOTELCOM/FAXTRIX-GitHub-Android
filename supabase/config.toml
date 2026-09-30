@@ -2,3 +2,5 @@ project_id = "xtkcfhbsksoqbpnaciga"
 
 [functions.turn-ice-servers]
 verify_jwt = true
+[functions.google-search]
+verify_jwt = true
