@@ -683,9 +683,18 @@
 
     <form class="contact-form" id="tkForm" data-kind="tk" hidden>
       <input type="hidden" id="tkId">
-      <div class="ticket-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="ticket-meta" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;">
         <div><small style="color:var(--slate-2)">N° DU TICKET</small><strong id="tkNumero" style="display:block;margin-top:4px;">Attribution automatique</strong></div>
         <div><small style="color:var(--slate-2)">OUVERT LE</small><strong id="tkOpenedAt" style="display:block;margin-top:4px;">—</strong></div>
+        <div><small style="color:var(--slate-2)">SESSION DÉMARRÉE</small><strong id="tkWorkStartedAt" style="display:block;margin-top:4px;">—</strong></div>
+        <div><small style="color:var(--slate-2)">SESSION FERMÉE</small><strong id="tkWorkClosedAt" style="display:block;margin-top:4px;">—</strong></div>
+      </div>
+      <div id="tkWorkSession" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;margin-bottom:14px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(255,255,255,.03);">
+        <div><b id="tkWorkSessionLabel">Session de travail non démarrée</b><small id="tkWorkDuration" style="display:block;color:var(--slate-2);margin-top:4px;">Le temps de travail sera calculé automatiquement.</small></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost" id="tkStartSessionBtn">▶ Démarrer</button>
+          <button type="button" class="btn btn-ghost" id="tkEndSessionBtn" disabled>■ Fermer la session</button>
+        </div>
       </div>
       <label>Titre du ticket<input type="text" id="tkTitre" required placeholder="Problème réseau"></label>
       <label>Client concerné<input type="text" id="tkClient" placeholder="ABC Réseaux"></label>
