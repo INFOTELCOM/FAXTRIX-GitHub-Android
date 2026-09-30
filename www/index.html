@@ -831,6 +831,12 @@
     </form>
 
     <form class="contact-form" id="teForm" data-kind="te" hidden>
+      <div class="ticket-meta" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;">
+        <div><small style="color:var(--slate-2)">OUVERT / DÉBUT</small><strong id="teStartedAt" style="display:block;margin-top:4px;">—</strong></div>
+        <div><small style="color:var(--slate-2)">FERMÉ / FIN</small><strong id="teCompletedAt" style="display:block;margin-top:4px;">—</strong></div>
+        <div><small style="color:var(--slate-2)">DURÉE</small><strong id="teDuration" style="display:block;margin-top:4px;">00:00:00</strong></div>
+        <div><small style="color:var(--slate-2)">DERNIÈRE MODIFICATION</small><strong id="teModifiedAt" style="display:block;margin-top:4px;">—</strong></div>
+      </div>
       <input type="hidden" id="teId">
       <label>Technicien<input type="text" id="teTech" required placeholder="Sarah K."></label>
       <label>Client / site<input type="text" id="teClient" placeholder="ABC Réseaux — Agence centre-ville"></label>
