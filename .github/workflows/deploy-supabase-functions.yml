@@ -30,4 +30,4 @@ jobs:
         run: |
           echo "Supabase deploy secrets are not configured yet."
           echo "Required: SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF."
-          exit 1
+          echo "Automatic deployment is waiting for the required secrets."
