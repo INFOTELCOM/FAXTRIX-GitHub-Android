@@ -683,8 +683,12 @@
       <input type="hidden" id="tkId">
       <label>Titre du ticket<input type="text" id="tkTitre" required placeholder="Problème réseau"></label>
       <label>Client concerné<input type="text" id="tkClient" placeholder="ABC Réseaux"></label>
+      <label>Catégorie<select id="tkCategorie"><option>Général</option><option>Réseau</option><option>Système</option><option>Cybersécurité</option><option>Logiciel</option><option>Matériel</option><option>Compte & accès</option></select></label>
       <label>Priorité<select id="tkPriorite"><option>Basse</option><option selected>Moyenne</option><option>Haute</option></select></label>
       <label>Statut<select id="tkStatut"><option>Nouveau</option><option>En cours</option><option>Résolu</option><option>Fermé</option></select></label>
+      <label>Assigné à<input type="text" id="tkAssigned" placeholder="Technicien / responsable"></label>
+      <label>Échéance<input type="datetime-local" id="tkDue"></label>
+      <label>Description<textarea id="tkDescription" rows="4" placeholder="Décrivez précisément le problème, le contexte et les actions déjà tentées."></textarea></label>
       <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
     </form>
 
@@ -692,7 +696,10 @@
       <input type="hidden" id="teId">
       <label>Technicien<input type="text" id="teTech" required placeholder="Sarah K."></label>
       <label>Client / site<input type="text" id="teClient" placeholder="ABC Réseaux — Agence centre-ville"></label>
+      <label>Adresse d'intervention<input type="text" id="teAdresse" placeholder="Adresse / site"></label>
       <label>Statut<select id="teStatut"><option>Planifiée</option><option>En cours</option><option>Terminée</option></select></label>
+      <label>Notes<textarea id="teNotes" rows="3" placeholder="Consignes, matériel, contraintes…"></textarea></label>
+      <label>Compte rendu<textarea id="teCompteRendu" rows="4" placeholder="Compte rendu de l'intervention."></textarea></label>
       <button type="submit" class="btn btn-primary"><span>Enregistrer</span></button>
     </form>
 
@@ -721,7 +728,7 @@
   <div class="app-drawer-bg" data-drawer-close-notif></div>
   <div class="app-drawer-panel" style="width:min(360px,92vw)">
     <button class="app-drawer-close" data-drawer-close-notif>&times;</button>
-    <h3>Notifications</h3>
+    <div class="app-card-head"><h3>Notifications</h3><button class="btn btn-ghost" id="markAllNotifBtn" type="button">Tout lire</button></div>
     <div class="app-list" id="notifList"></div>
   </div>
 </div>
