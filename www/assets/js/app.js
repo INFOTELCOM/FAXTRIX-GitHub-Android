@@ -1625,24 +1625,18 @@ async function startChatWithPerson(userId,close){
     return ids.length===2&&ids.indexOf(state.profile.id)!==-1&&ids.indexOf(userId)!==-1;
   });
   if(existing){close();await openChatConversation(existing.id);return;}
-  var conversationId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(ch){var rr=Math.random()*16|0,v=ch==='x'?rr:(rr&3|8);return v.toString(16);}));
-  var now=new Date().toISOString();
-  var conversation={id:conversationId,company_id:state.profile.company_id,created_by:state.profile.id,title:null,is_group:false,created_at:now,updated_at:now};
-  var cr=await sb.from('chat_conversations').insert(conversation);
-  if(cr.error){toast('Création impossible : '+cr.error.message,'crit');return;}
-  var members=[
-    {conversation_id:conversationId,user_id:state.profile.id,company_id:state.profile.company_id,role:'admin'},
-    {conversation_id:conversationId,user_id:userId,company_id:state.profile.company_id,role:'member'}
-  ];
-  var mr=await sb.from('chat_members').insert(members);
-  if(mr.error){
-    await sb.from('chat_conversations').delete().eq('id',conversationId);
-    toast('Impossible d’ajouter cette personne : '+mr.error.message,'crit');return;
+  if(!state.profile||!state.profile.company_id){toast('Votre profil entreprise est introuvable.','crit');return;}
+  var target=chatState.profiles.find(function(p){return p.id===userId;});
+  if(!target||target.company_id&&target.company_id!==state.profile.company_id){toast('Cette personne n’appartient pas à votre entreprise.','crit');return;}
+  var cr=await sb.rpc('start_chat_conversation',{p_user_id:userId});
+  if(cr.error){
+    console.error('FAXTRIX start_chat_conversation:',cr.error);
+    toast('Impossible de démarrer la conversation : '+(cr.error.message||'erreur serveur'),'crit');
+    return;
   }
-  chatState.conversations.unshift(conversation);
-  chatState.members[conversationId]=members;
+  var conversationId=cr.data;
+  await loadChatConversations();
   close();
-  renderChatConversationList();
   await openChatConversation(conversationId);
   toast('Conversation démarrée.','ok');
 }
