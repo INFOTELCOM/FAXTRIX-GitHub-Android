@@ -700,7 +700,10 @@
       <label>Résolution / comment le problème a été réglé<textarea id="tkResolution" rows="4" placeholder="Décrivez les actions réalisées et la solution appliquée."></textarea></label>
       <label>Description complémentaire<textarea id="tkDescription" rows="3" placeholder="Informations supplémentaires."></textarea></label>
       <div id="tkAutosaveStatus" style="font-size:11px;color:var(--slate-2);min-height:18px;">Les modifications sont sauvegardées automatiquement.</div>
-      <button type="submit" class="btn btn-primary"><span>Enregistrer les modifications</span></button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary"><span>Enregistrer les modifications</span></button>
+        <button type="button" class="btn btn-ghost" id="tkCloseBtn"><span>✓ Fermer le ticket</span></button>
+      </div>
     </form>
 
     <form class="contact-form" id="teForm" data-kind="te" hidden>
