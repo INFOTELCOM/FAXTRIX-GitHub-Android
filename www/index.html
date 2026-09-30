@@ -715,6 +715,10 @@
       <label>Résolution / comment le problème a été réglé<textarea id="tkResolution" rows="4" placeholder="Décrivez les actions réalisées et la solution appliquée."></textarea></label>
       <label>Description complémentaire<textarea id="tkDescription" rows="3" placeholder="Informations supplémentaires."></textarea></label>
       <div id="tkAutosaveStatus" style="font-size:11px;color:var(--slate-2);min-height:18px;">Les modifications sont sauvegardées automatiquement.</div>
+      <div id="tkHistory" style="margin:10px 0;padding:12px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(255,255,255,.025);display:none;">
+        <b>Historique de mes enregistrements</b>
+        <div id="tkHistoryList" style="margin-top:8px;color:var(--slate-2);font-size:12px;">Chargement…</div>
+      </div>
       <div style="font-size:11px;color:var(--slate-2);padding:8px 0;">✎ Vous pouvez corriger une erreur dans ce ticket. Chaque modification est enregistrée automatiquement dans l’historique.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button type="submit" class="btn btn-primary"><span>Enregistrer les modifications</span></button>
