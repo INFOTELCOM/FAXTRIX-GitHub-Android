@@ -73,7 +73,7 @@ var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: {
 
 var state = {
   profile: { id: null, company_id: null, full_name: '', company_name: '', role: 'owner' },
-  crm: [], tickets: [], terrain: [], equipes: [], automations: [], notifications: [], invitations: [], statistics: null
+  crm: [], tickets: [], terrain: [], equipes: [], automations: [], notifications: [], invitations: [], inviteLinks: {}, statistics: null
 };
 
 initCurrencySelector();
@@ -269,8 +269,8 @@ async function loadAll() {
     sb.from('team_members').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
     sb.from('automation_rules').select('*').eq('company_id', companyId).order('created_at', { ascending: false }),
     sb.from('notifications').select('*').eq('company_id', companyId).order('created_at', { ascending: false }).limit(40),
-    state.profile.role === 'owner'
-      ? sb.from('invitations').select('*').order('created_at', { ascending: false })
+    (state.profile.role === 'owner' || state.profile.role === 'manager' || state.profile.role === 'infotelcom_admin')
+      ? sb.from('invitations').select('*').eq('company_id', companyId).order('created_at', { ascending: false })
       : Promise.resolve({ data: [] })
   ]);
   var labels = ['clients','tickets','missions terrain','équipe','automatisations','notifications'];
@@ -917,36 +917,32 @@ $('#profileForm').addEventListener('submit', async function (e) {
   await sb.from('profiles').update({ full_name: name }).eq('id', state.profile.id);
   toast('Profil mis à jour.', 'ok');
 });
-$('#inviteForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  var email = $('#inviteEmail').value.trim();
-  var form = $('#inviteForm');
-  var statusEl = $('[data-status]', form);
-  var res = await sb.from('invitations').insert({ company_id: state.profile.company_id, email: email }).select().single();
-  if (res.error) {
-    statusEl.setAttribute('data-state', 'err');
-    statusEl.textContent = "Impossible d'inviter cette adresse.";
-    return;
-  }
-  state.invitations.unshift(res.data);
-  form.reset();
-  statusEl.setAttribute('data-state', 'ok');
-  statusEl.textContent = 'Invitation enregistrée — ' + email + ' rejoindra votre entreprise en s\u2019inscrivant avec cette adresse.';
-  renderInvites();
+$('#inviteForm').addEventListener('submit', async function(e){
+  e.preventDefault(); var email=$('#inviteEmail').value.trim(),form=$('#inviteForm'),statusEl=$('[data-status]',form);
+  statusEl.setAttribute('data-state','ok');statusEl.textContent='Préparation de l’accès…';
+  try{
+    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'invite',company_id:state.profile.company_id,full_name:email.split('@')[0],email:email,role:'lecture_seule',generate_link:true,redirect_to:location.origin+location.pathname}});
+    if(out.error)throw new Error(out.error.message||'Service d’invitation indisponible.'); if(out.data&&out.data.error)throw new Error(out.data.error);
+    state.invitations.unshift({id:'local-'+Date.now(),company_id:state.profile.company_id,email:out.data.email,full_name:out.data.full_name,role:out.data.role,accepted:false,created_at:new Date().toISOString()});
+    state.inviteLinks[out.data.email]=out.data.action_link||''; form.reset();
+    statusEl.textContent=out.data.action_link?'Accès créé. Ouvrez le lien pour choisir le mot de passe.':'Invitation créée. La personne recevra son lien par e-mail.'; renderInvites();
+  }catch(err){console.error('FAXTRIX invitation utilisateur:',err);statusEl.setAttribute('data-state','err');statusEl.textContent='Invitation impossible : '+(err.message||'erreur serveur');}
 });
 async function cancelInvite(id) {
   state.invitations = state.invitations.filter(function (x) { return x.id !== id; }); renderInvites();
   await sb.from('invitations').delete().eq('id', id);
 }
-function renderInvites() {
-  var card = $('#teamCard');
-  card.hidden = state.profile.role !== 'owner';
-  var wrap = $('#inviteList');
-  var pending = state.invitations.filter(function (i) { return !i.accepted; });
-  wrap.innerHTML = pending.length ? pending.map(function (i) {
-    return '<div class="app-row"><div class="r-main"><b>' + escapeHtml(i.email) + '</b><span>Invitation en attente · ' + timeAgo(i.created_at) + '</span></div>' +
-      '<button class="row-btn" data-invite-del="' + i.id + '">🗑</button></div>';
-  }).join('') : '<div class="app-empty">Aucune invitation en attente.</div>';
+async function regenerateInviteLink(email){
+  try{
+    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'regenerate_link',company_id:state.profile.company_id,email:email,redirect_to:location.origin+location.pathname}});
+    if(out.error)throw new Error(out.error.message||'Service indisponible.');if(out.data&&out.data.error)throw new Error(out.data.error);
+    state.inviteLinks[email]=out.data.action_link||'';renderInvites();if(out.data.action_link)window.open(out.data.action_link,'_blank','noopener');toast('Nouveau lien généré.','ok');
+  }catch(e){toast('Lien impossible : '+(e.message||'erreur serveur'),'crit');}
+}
+function renderInvites(){
+  var card=$('#teamCard');if(!card)return;var canManage=['owner','manager','infotelcom_admin'].indexOf(state.profile.role)!==-1;card.hidden=!canManage;
+  var wrap=$('#inviteList');if(!wrap)return;var pending=state.invitations.filter(function(i){return !i.accepted;});
+  wrap.innerHTML=pending.length?pending.map(function(i){var link=state.inviteLinks[i.email]||'';return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(i.full_name||i.email)+'</b><span>'+escapeHtml(i.email)+' · '+escapeHtml(i.role||'lecture_seule')+' · Invitation en attente</span>'+(link?'<a class="invite-link" href="'+escapeAttribute(link)+'" target="_blank" rel="noopener">Ouvrir le lien d’invitation ↗</a>':'')+'</div><div class="app-row-actions"><button class="row-btn" data-invite-link="'+escapeHtml(i.email)+'" title="Régénérer le lien">🔗</button><button class="row-btn" data-invite-del="'+i.id+'">🗑</button></div></div>';}).join(''):'<div class="app-empty">Aucune invitation en attente.</div>';
 }
 function renderTopUser() {
   var name = state.profile.full_name || 'Vous';
@@ -978,6 +974,7 @@ document.addEventListener('click', function (e) {
   else if ((id = t.getAttribute && t.getAttribute('data-eq-del'))) deleteEq(id);
   else if ((id = t.getAttribute && t.getAttribute('data-auto-del'))) deleteAuto(id);
   else if ((id = t.getAttribute && t.getAttribute('data-invite-del'))) cancelInvite(id);
+  else if ((id = t.getAttribute && t.getAttribute('data-invite-link'))) regenerateInviteLink(id);
 });
 
 /* ---------------- 16. Menu mobile (barre latérale) ---------------- */
@@ -1558,30 +1555,15 @@ function chatAvatarHtml(profile,size){
   return escapeHtml(chatInitial(profile&&profile.full_name));
 }
 async function loadChatProfiles(){
-  if(!state.profile||!state.profile.company_id){
-    toast('Profil entreprise introuvable pour la messagerie.','crit');
-    return false;
-  }
-  var rpcPromise=sb.rpc('my_company_chat_profiles');
-  var timeout=new Promise(function(_,reject){setTimeout(function(){reject(new Error('Le chargement des membres dépasse 10 secondes.'));},10000);});
-  var r;
-  try{ r=await Promise.race([rpcPromise,timeout]); }
-  catch(e){
-    console.error('FAXTRIX profils messagerie RPC timeout:',e);
-    chatState.profiles=[];
-    toast('Impossible de charger les membres : '+(e.message||'RPC indisponible'),'crit');
-    return false;
-  }
-  if(r.error){
-    console.error('FAXTRIX profils messagerie RPC:',r.error);
-    chatState.profiles=[];
-    toast('Impossible de charger les membres : '+(r.error.message||'RPC indisponible'),'crit');
-    return false;
-  }
-  chatState.profiles=(r.data||[]).map(function(p){
-    return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});
-  });
-  return true;
+  if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable pour la messagerie.','crit');return false;}
+  var direct=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path,company_id').eq('company_id',state.profile.company_id).order('full_name',{ascending:true});
+  if(!direct.error){chatState.profiles=(direct.data||[]).map(function(p){return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});});return true;}
+  console.warn('FAXTRIX profils directs indisponibles, tentative RPC:',direct.error);
+  try{
+    var rpcPromise=sb.rpc('my_company_chat_profiles'),timeout=new Promise(function(_,reject){setTimeout(function(){reject(new Error('Le chargement des membres dépasse 10 secondes.'));},10000);});
+    var r=await Promise.race([rpcPromise,timeout]); if(r.error)throw r.error;
+    chatState.profiles=(r.data||[]).map(function(p){return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});}); return true;
+  }catch(e){console.error('FAXTRIX profils messagerie RPC:',e);chatState.profiles=[];toast('Impossible de charger les membres : '+(e.message||'RPC indisponible'),'crit');return false;}
 }
 async function loadChatConversations(){
   var r=await sb.from('chat_conversations').select('*').eq('company_id',state.profile.company_id).order('updated_at',{ascending:false});
@@ -1694,30 +1676,21 @@ window.FAXTRIX.openNewConversation = async function(){
   renderPeople();
 };
 async function startChatWithPerson(userId,close){
-  var existing=chatState.conversations.find(function(c){
-    if(c.is_group)return false;
-    var ids=(chatState.members[c.id]||[]).map(function(m){return m.user_id;});
-    return ids.length===2&&ids.indexOf(state.profile.id)!==-1&&ids.indexOf(userId)!==-1;
-  });
+  var existing=chatState.conversations.find(function(c){if(c.is_group)return false;var ids=(chatState.members[c.id]||[]).map(function(m){return m.user_id;});return ids.length===2&&ids.indexOf(state.profile.id)!==-1&&ids.indexOf(userId)!==-1;});
   if(existing){close();await openChatConversation(existing.id);return;}
   if(!state.profile||!state.profile.company_id){toast('Votre profil entreprise est introuvable.','crit');return;}
   var target=chatState.profiles.find(function(p){return p.id===userId;});
-  if(!target||target.company_id&&target.company_id!==state.profile.company_id){toast('Cette personne n’appartient pas à votre entreprise.','crit');return;}
-  var cr=await sb.rpc('start_chat_conversation',{p_user_id:userId});
-  if(cr.error){
-    console.error('FAXTRIX start_chat_conversation:',cr.error);
-    toast('Impossible de démarrer la conversation : '+(cr.error.message||'erreur serveur'),'crit');
-    return;
+  if(!target||target.company_id!==state.profile.company_id){toast('Cette personne n’appartient pas à votre entreprise.','crit');return;}
+  var cr=await sb.rpc('start_chat_conversation',{p_user_id:userId}),conversationId=cr.data;
+  if(cr.error||!conversationId){
+    var cid=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(ch){var r=Math.random()*16|0,v=ch==='x'?r:(r&3|8);return v.toString(16);}));
+    var ins=await sb.from('chat_conversations').insert({id:cid,company_id:state.profile.company_id,created_by:state.profile.id,title:null,is_group:false,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
+    if(ins.error){toast('Impossible de créer la conversation : '+ins.error.message,'crit');return;}
+    var mem=await sb.from('chat_members').insert([{conversation_id:cid,user_id:state.profile.id,company_id:state.profile.company_id,role:'admin'},{conversation_id:cid,user_id:userId,company_id:state.profile.company_id,role:'member'}]);
+    if(mem.error){await sb.from('chat_conversations').delete().eq('id',cid);toast('Impossible d’ajouter le membre : '+mem.error.message,'crit');return;}
+    conversationId=cid;
   }
-  var conversationId=cr.data;
-  if(!conversationId){
-    toast('Le serveur n’a pas renvoyé la conversation.','crit');
-    return;
-  }
-  await loadChatConversations();
-  close();
-  await openChatConversation(conversationId);
-  toast('Conversation démarrée.','ok');
+  await loadChatConversations(); close(); await openChatConversation(conversationId); toast('Conversation démarrée.','ok');
 }
 async function createChatConversation(){
   return window.FAXTRIX.openNewConversation();
