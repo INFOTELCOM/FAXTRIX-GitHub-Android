@@ -12,7 +12,7 @@ export default {
     const googleKey=Deno.env.get("GOOGLE_API_KEY");
     const googleCx=Deno.env.get("GOOGLE_CX");
     const routerKey=Deno.env.get("OPENROUTER_API_KEY");
-    const model=Deno.env.get("OPENROUTER_MODEL")||"openrouter/auto";
+    const model=Deno.env.get("OPENROUTER_MODEL")||"openai/gpt-5.5";
     const costTier=Deno.env.get("OPENROUTER_COST_TIER")||"medium";
     const supabaseUrl=Deno.env.get("SUPABASE_URL");
     const supabaseKey=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
@@ -81,12 +81,9 @@ export default {
           ],
           temperature:0.2,max_tokens:1800,
           tools:[
-            {type:"openrouter:web_search",parameters:{max_results:5}}
+            {type:"openrouter:web_search",parameters:{engine:"auto",max_results:5,search_context_size:"high"}}
           ],
-          plugins:[
-            {id:"auto-router",cost_quality_tradeoff:3}
-          ],
-          max_tool_calls:5
+          
 
         })
       });
