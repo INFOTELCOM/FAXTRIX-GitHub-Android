@@ -1,7 +1,7 @@
 (function(){'use strict';
 const URL='https://xtkcfhbsksoqbpnaciga.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0a2NmaGJza3NvcWJwbmFjaWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNDY4ODEsImV4cCI6MjEwNTkyMjg4MX0.Drrgf-6Axsdf3u1tHXhn3UoIhTC0Tu291ER0NAQQhTQ';
 const sb=supabase.createClient(URL,KEY,{auth:{storageKey:'faxtrix-admin-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); let data={companies:[],users:[],requests:[],audit:[],invitations:[]};
-const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s); const escapeAttribute=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function msg(t){$('#loginMsg').textContent=t||''}
 async function boot(){const r=await sb.rpc('infotelcom_admin_bootstrap');if(r.error){document.body.classList.remove('admin-authenticated');$('#login').hidden=false;$('#login').style.setProperty('display','grid','important');$('#app').hidden=true;$('#app').style.setProperty('display','none','important');msg('Accès refusé ou administration non initialisée.');return false} data=r.data||{};const inv=await sb.from('invitations').select('email,full_name,role,company_id,created_at').eq('accepted',false).order('created_at',{ascending:false});data.invitations=inv.error?[]:(inv.data||[]);document.body.classList.add('admin-authenticated');$('#login').hidden=true;$('#login').style.setProperty('display','none','important');$('#app').hidden=false;$('#app').style.removeProperty('display');$('#adminName').textContent=data.profile?.full_name||'INFOTELCOM';render();fillCreateUserCompanies();loadPlatformStats();return true}
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();msg('Connexion…');const r=await sb.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#pass').value});if(r.error){msg('Connexion impossible.');return}await boot()});
@@ -26,45 +26,10 @@ async function loadPlatformStats(){
 async function adminUserAction(payload){
   const msgEl=$('#createUserMsg');
   if(msgEl) msgEl.textContent='Traitement…';
-  if(payload.action==='invite'){
-    const r=await sb.from('invitations').insert({
-      company_id:payload.company_id,
-      email:payload.email,
-      full_name:payload.full_name,
-      role:payload.role,
-      accepted:false
-    }).select().single();
-    if(r.error){
-      const detail=r.error.message||'Impossible de préparer l’accès.';
-      if(msgEl) msgEl.textContent=detail;
-      throw new Error(detail);
-    }
-    return {ok:true,message:'Accès préparé pour '+payload.email+'. Le mot de passe sera choisi par l’utilisateur lors de son inscription.'};
-  }
-  if(payload.action==='seed_demo'){
-    const users=[
-      ['Amina Dupont','demo01@faxtrix.test','manager'],
-      ['Marc Okoro','demo02@faxtrix.test','commercial'],
-      ['Sophie Martin','demo03@faxtrix.test','technicien'],
-      ['David Nkosi','demo04@faxtrix.test','technicien'],
-      ['Nadia Kiala','demo05@faxtrix.test','commercial'],
-      ['Kevin Mouzita','demo06@faxtrix.test','manager'],
-      ['Sarah Mavoungou','demo07@faxtrix.test','lecture_seule'],
-      ['Junior Ngoma','demo08@faxtrix.test','technicien'],
-      ['Claire Bemba','demo09@faxtrix.test','commercial'],
-      ['Patrick Samba','demo10@faxtrix.test','lecture_seule']
-    ];
-    const created=[];
-    for(const u of users){
-      const r=await sb.from('invitations').upsert({
-        company_id:payload.company_id,email:u[1],full_name:u[0],role:u[2],accepted:false
-      },{onConflict:'company_id,email'}).select().single();
-      if(r.error) created.push({full_name:u[0],email:u[1],role:u[2],error:r.error.message});
-      else created.push({full_name:u[0],email:u[1],role:u[2]});
-    }
-    return {ok:true,message:'10 accès de démonstration sont prêts.',users:created};
-  }
-  throw new Error('Action inconnue.');
+  const r=await sb.functions.invoke('infotelcom-user-admin',{body:payload});
+  if(r.error) throw new Error(r.error.message||'Service de gestion des utilisateurs indisponible.');
+  if(r.data&&r.data.error) throw new Error(r.data.error);
+  return r.data||{};
 }
 function fillCreateUserCompanies(){
   const el=$('#createUserCompany'); if(!el)return;
@@ -97,16 +62,16 @@ $('#seedDemoUsers')?.addEventListener('click',async()=>{
   if(!companyId){alert('Sélectionnez d’abord une entreprise.');return;}
   const btn=$('#seedDemoUsers'); btn.disabled=true; btn.textContent='Création…';
   try{
-    const out=await adminUserAction({action:'seed_demo',company_id:companyId});
+    const out=await adminUserAction({action:'seed_demo',company_id:companyId,redirect_to:location.origin+location.pathname.replace('admin.html','index.html')});
     const box=$('#demoCredentials');
     if(box){
       box.hidden=false;
-      box.innerHTML='<b>Comptes de test créés</b><small>Ces accès sont en attente d’inscription : chaque utilisateur choisira lui-même son mot de passe.</small><div class="credential-grid">'+(out.users||[]).map(x=>'<div><b>'+esc(x.full_name)+'</b><span>'+esc(x.email)+' · '+esc(x.role||'membre')+'</span><code>Mot de passe choisi à l’inscription</code></div>').join('')+'</div>';
+      box.innerHTML='<b>10 comptes de démonstration</b><small>Les comptes existent maintenant dans Supabase Auth. Chaque personne choisit son mot de passe via son lien d’invitation.</small><div class="credential-grid">'+(out.users||[]).map(x=>'<div><b>'+esc(x.full_name)+'</b><span>'+esc(x.email)+' · '+esc(x.role||'membre')+'</span>'+(x.action_link?'<a class="btn btn-ghost" style="display:inline-block;margin-top:8px" href="'+escapeAttribute(x.action_link)+'" target="_blank" rel="noopener">Ouvrir le lien d’invitation ↗</a>':'<code>Invitation e-mail</code>')+(x.error?'<small style="color:#ff8d8d">'+esc(x.error)+'</small>':'')+'</div>').join('')+'</div>';
     }
     await boot();
-  }catch(err){} finally{btn.disabled=false;btn.textContent='Préparer 10 accès de test';}
+  }catch(err){alert(err.message||'Création impossible.');}
+  finally{btn.disabled=false;btn.textContent='Créer 10 utilisateurs de test';}
 });
-
 function renderCompanyStats(s){const box=$('#companyStats'),act=$('#companyActivity');if(!box||!act)return;if(!s){box.innerHTML='<div class="empty">Sélectionnez une entreprise.</div>';act.innerHTML='';return}box.innerHTML='<div><b>'+Number(s.clients_total||0)+'</b><span>CLIENTS</span></div><div><b>'+Number(s.tickets_total||0)+'</b><span>TICKETS</span></div><div><b>'+Number(s.missions_total||0)+'</b><span>MISSIONS</span></div><div><b>'+Number(s.activity_total||0)+'</b><span>ACTIONS</span></div>';const rows=s.recent_activity||[];act.innerHTML=rows.length?rows.map(x=>'<div class="item"><div><b>'+esc(x.action||'Action')+' · '+esc(x.entity_type||'donnée')+'</b><small>'+new Date(x.created_at).toLocaleString('fr-FR')+'</small></div><span class="chip">lecture seule</span></div>').join(''):'<div class="empty">Aucune activité enregistrée.</div>'}
 $('#companySelect').onchange=async()=>{fillCreateUserCompanies(); const id=$('#companySelect').value;if(!id){$('#companyInfo').textContent='';renderCompanyStats(null);return}const c=data.companies.find(x=>x.id===id);$('#companyInfo').innerHTML='<b>'+esc(c?.name||'')+'</b><div class="muted">'+(c?.users_count||0)+' utilisateur(s)</div>';const r=await sb.rpc('infotelcom_company_statistics',{p_company_id:id});if(r.error){renderCompanyStats(null);alert(r.error.message);return}renderCompanyStats(r.data||null)};
 function csvValue(v){if(v===null||v===undefined)return '';if(typeof v==='object')v=JSON.stringify(v);return '"'+String(v).replace(/"/g,'""')+'"'}
