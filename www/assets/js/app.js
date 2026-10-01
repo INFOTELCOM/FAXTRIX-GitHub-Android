@@ -1323,7 +1323,7 @@ function aiSay(text, who) {
 async function aiWebSearch(q) {
   try {
     var session=(await sb.auth.getSession()).data.session;
-    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-assistant',{
+    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-research',{
       method:'POST',
       headers:{'Authorization':'Bearer '+(session?session.access_token:SUPABASE_ANON_KEY),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({query:q})
