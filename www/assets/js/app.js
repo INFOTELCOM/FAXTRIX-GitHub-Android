@@ -915,6 +915,44 @@ function renderPerfChart() {
     '<path d="' + d + '" fill="none" stroke="#FF7A00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
     '<circle cx="' + w + '" cy="' + last + '" r="4.5" fill="#FF7A00"/>';
 }
+function homeSeries(items) {
+  var now = new Date();
+  var days = [];
+  for (var i = 6; i >= 0; i--) {
+    var d = new Date(now);
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate()-i);
+    days.push(d);
+  }
+  return days.map(function(d) {
+    var next = new Date(d); next.setDate(next.getDate()+1);
+    return items.filter(function(x) {
+      var t = new Date(x.created_at || x.updated_at || 0).getTime();
+      return t >= d.getTime() && t < next.getTime();
+    }).length;
+  });
+}
+function renderHomeDataGraphs() {
+  var wrap=$('#homeDataGraphs'); if(!wrap)return;
+  var defs=[
+    {title:'Clients CRM',label:'clients',items:state.crm},
+    {title:'Tickets',label:'tickets',items:state.tickets},
+    {title:'Missions terrain',label:'missions',items:state.terrain},
+    {title:'Équipe',label:'membres',items:state.equipes},
+    {title:'Automatisations',label:'règles',items:state.automations},
+    {title:'Notifications',label:'notifications',items:state.notifications}
+  ];
+  wrap.innerHTML=defs.map(function(g){
+    var values=homeSeries(g.items), max=Math.max.apply(null,values.concat([1])), total=g.items.length;
+    var bars=values.map(function(v,i){
+      var h=Math.max(5,Math.round((v/max)*100));
+      var d=new Date(); d.setDate(d.getDate()-(6-i));
+      var day=d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','');
+      return '<div class="home-bar-wrap"><span class="home-bar-value">'+v+'</span><i class="home-bar" style="height:'+h+'%"></i><small>'+day+'</small></div>';
+    }).join('');
+    return '<div class="home-data-card"><div class="home-data-head"><div><b>'+escapeHtml(g.title)+'</b><span>7 derniers jours</span></div><strong>'+total+'</strong></div><div class="home-bars" aria-label="'+escapeHtml(g.title)+' sur 7 jours">'+bars+'</div><div class="home-legend"><span><i></i>Enregistrés</span><span>Total : <b>'+total+'</b></span></div></div>';
+  }).join('');
+}
 function renderAccueil() {
   $('#statClients').textContent = state.crm.length;
   $('#statTickets').textContent = state.tickets.filter(function (t) { return t.statut !== 'Résolu' && t.statut !== 'Fermé'; }).length;
@@ -1024,18 +1062,54 @@ document.addEventListener('click', function (e) {
 (function mobileSide() {
   var side = $('#appSide');
   var top = $('.app-top');
-  if (!top) return;
-  var toggle = document.createElement('button');
-  toggle.className = 'row-btn';
-  toggle.style.display = 'none';
-  toggle.setAttribute('aria-label', 'Menu');
-  toggle.innerHTML = '☰';
-  top.insertBefore(toggle, top.firstChild);
+  if (!top || !side) return;
+  var toggle = $('#faxtrixMobileMenuBtn');
+  if (!toggle) {
+    toggle = document.createElement('button');
+    toggle.className = 'app-icon-btn mobile-menu-btn';
+    toggle.id = 'faxtrixMobileMenuBtn';
+    toggle.type = 'button';
+    toggle.setAttribute('aria-label', 'Ouvrir le menu');
+    toggle.innerHTML = '☰';
+    top.querySelector('.app-top-actions')?.insertBefore(toggle, top.querySelector('.app-top-actions').firstChild);
+  }
   function sync() { toggle.style.display = window.innerWidth <= 900 ? 'grid' : 'none'; }
   sync();
   window.addEventListener('resize', sync);
-  toggle.addEventListener('click', function () { side.classList.toggle('open'); });
+  toggle.onclick = function () { side.classList.toggle('open'); };
+  $('#appSide button[data-panel]').forEach(function (b) {
+    b.addEventListener('click', function () { if (window.innerWidth <= 900) side.classList.remove('open'); });
+  });
 })();
+
+var missionAlertTimer=null;
+function closeMissionStartupAlert(markRead) {
+  var box=$('#missionAlert'); if(!box)return;
+  var ids=state.notifications.filter(function(n){return !n.read && /mission|intervention/i.test(n.msg||'');}).map(function(n){return n.id;});
+  if(markRead && ids.length) {
+    state.notifications.forEach(function(n){if(ids.indexOf(n.id)!==-1)n.read=true;});
+    sb.from('notifications').update({read:true}).in('id',ids).then(function(){renderNotifBadge();});
+  }
+  box.hidden=true;
+}
+function showMissionStartupAlert() {
+  if(missionAlertTimer) clearTimeout(missionAlertTimer);
+  missionAlertTimer=setTimeout(function(){
+    var box=$('#missionAlert'); if(!box)return;
+    var notes=state.notifications.filter(function(n){return !n.read && /mission|intervention/i.test(n.msg||'');}).slice(0,5);
+    if(!notes.length)return;
+    var list=$('#missionAlertList');
+    list.innerHTML=notes.map(function(n){
+      var text=escapeHtml(n.msg||'Nouvelle mission terrain');
+      return '<div class="mission-alert-item"><b>'+text+'</b><span>'+timeAgo(n.created_at)+'</span></div>';
+    }).join('');
+    $('#missionAlertText').textContent=notes.length===1?'Une nouvelle mission terrain a été enregistrée.':'De nouvelles missions terrain nécessitent votre attention.';
+    box.hidden=false;
+    $('#missionAlertOk').onclick=function(){closeMissionStartupAlert(true);};
+    $('#missionAlertGo').onclick=function(){closeMissionStartupAlert(true);showPanel('terrain');};
+    $('#missionAlert [data-mission-alert-close]').forEach(function(x){x.onclick=function(){closeMissionStartupAlert(true);};});
+  },250);
+}
 
 /* ---------------- 17. Rendu global & démarrage ---------------- */
 function renderAll() {
@@ -1054,6 +1128,7 @@ function renderAll() {
   renderReports();
   renderSuivi();
   renderPerfChart();
+  renderHomeDataGraphs();
   animateKpis();
 }
 async function initPermissionsUI() {
@@ -1094,6 +1169,7 @@ async function initPermissionsUI() {
 function boot() {
   renderAll();
   initPermissionsUI();
+  showMissionStartupAlert();
 }
 
 /* ---------------- 18. Installation PWA ---------------- */
