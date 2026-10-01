@@ -12,14 +12,14 @@ language sql
 stable
 security definer
 set search_path = public, pg_temp
-as $
+as $$
   select exists (
     select 1
     from public.chat_members m
     where m.conversation_id = p_conversation_id
       and m.user_id = p_user_id
   );
-$;
+$$;
 
 revoke all on function public.is_chat_member(uuid, uuid) from public;
 grant execute on function public.is_chat_member(uuid, uuid) to authenticated;
@@ -36,7 +36,7 @@ language sql
 stable
 security definer
 set search_path = public, pg_temp
-as $
+as $$
   select
     p.id,
     p.full_name,
@@ -50,7 +50,7 @@ as $
     where me.id = auth.uid()
   )
   order by p.full_name;
-$;
+$$;
 
 revoke all on function public.my_company_chat_profiles() from public;
 grant execute on function public.my_company_chat_profiles() to authenticated;
@@ -60,7 +60,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $
+as $$
 declare
   me_company uuid;
   target_company uuid;
@@ -108,7 +108,7 @@ begin
 
   return cid;
 end;
-$;
+$$;
 
 revoke all on function public.start_chat_conversation(uuid) from public;
 grant execute on function public.start_chat_conversation(uuid) to authenticated;
