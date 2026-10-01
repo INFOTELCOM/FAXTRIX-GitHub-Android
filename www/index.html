@@ -423,6 +423,7 @@
             <button data-filter="Attente">En attente</button>
           </div>
           <div class="app-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="crmSearch" placeholder="Rechercher un client…"></div>
+          <button type="button" class="btn btn-ghost" id="crmSearchBtn">🔎 Rechercher</button>
           <button class="btn btn-primary" id="crmAddBtn"><span>+ Nouveau client</span></button>
         </div>
         <div class="app-list" id="crmList"></div>
@@ -522,7 +523,7 @@
         <div class="app-card">
           <div class="app-card-head">
             <div><h3>Messagerie FAXTRIX</h3><p style="font-size:12.5px;color:var(--text-2);margin-top:5px;">Échangez avec les membres de votre entreprise. Les conversations restent isolées par organisation.</p></div>
-            <button type="button" class="btn btn-primary" id="chatNewBtn" onclick="window.FAXTRIX&&window.FAXTRIX.openNewConversation&&window.FAXTRIX.openNewConversation()"><span>+ Démarrer une conversation</span></button>
+            <button type="button" class="btn btn-primary" id="chatNewBtn" onclick="window.FAXTRIX&&window.FAXTRIX.openNewConversation&&window.FAXTRIX.openNewConversation()"><span>👥 Personnes &amp; conversations</span></button>
           </div>
         </div>
         <div class="chat-layout">
@@ -969,7 +970,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/app.js?v=20261001-chat-ai-users-final-3" defer></script>
+<script src="assets/js/app.js?v=20261001-chat-ai-users-final-4" defer></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
 </body>
 </html>
