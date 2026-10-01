@@ -1290,13 +1290,20 @@ const FAXTRIX_GLOSSARY = {
   "nodejs":"Node.js permet d'exécuter JavaScript côté serveur grâce au moteur V8.",
   "postgresql":"PostgreSQL est un système de gestion de base de données relationnelle open source."
 };
-function aiGlossaryAnswer(q) {
-  var s=String(q||'').toLowerCase().trim();
-  var m=s.match(/(?:c[’']est quoi|c'est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(?:le|la|les|un|une|l[’'])?\s*([a-z0-9][a-z0-9._-]*)/i);
+function aiDefinitionKey(q, dictionary) {
+  var s=String(q||'').toLowerCase().trim().replace(/[?!.,;:]+$/,'');
+  var m=s.match(/(?:c[’']est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(.+)$/i);
   if(!m) return null;
-  var key=m[1].toLowerCase().replace(/[’']/g,'');
-  if(FAXTRIX_GLOSSARY[key]) return '<strong>'+key.toUpperCase()+'</strong> — '+FAXTRIX_GLOSSARY[key];
+  var words=m[1].trim().split(/\s+/);
+  for(var i=0;i<words.length;i++){
+    var key=words[i].toLowerCase().replace(/^[«"'“”]+|[»"'“”]+$/g,'').replace(/[^a-z0-9à-ÿ._-]/gi,'');
+    if(key && dictionary[key]) return key;
+  }
   return null;
+}
+function aiGlossaryAnswer(q) {
+  var key=aiDefinitionKey(q,FAXTRIX_GLOSSARY);
+  return key ? '<strong>'+key.toUpperCase()+'</strong> — '+FAXTRIX_GLOSSARY[key] : null;
 }
 var FAXTRIX_GENERAL_KNOWLEDGE = {
   google: "Google est une entreprise technologique connue notamment pour son moteur de recherche, Android, Chrome, Google Cloud et de nombreux services numériques.",
@@ -1311,12 +1318,8 @@ var FAXTRIX_GENERAL_KNOWLEDGE = {
   programmation: "La programmation consiste à écrire des instructions qu'un ordinateur peut exécuter pour réaliser une tâche ou construire un logiciel."
 };
 function aiGeneralKnowledgeAnswer(q) {
-  var s=String(q||'').toLowerCase().trim();
-  var m=s.match(/(?:c[’']est quoi|c'est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(?:le|la|les|un|une|l[’'])?\s*([a-z0-9À-ÿ._-]+)/i);
-  if(!m) return null;
-  var key=m[1].toLowerCase();
-  if(!FAXTRIX_GENERAL_KNOWLEDGE[key]) return null;
-  return '<strong>'+key.toUpperCase()+'</strong> — '+FAXTRIX_GENERAL_KNOWLEDGE[key];
+  var key=aiDefinitionKey(q,FAXTRIX_GENERAL_KNOWLEDGE);
+  return key ? '<strong>'+key.toUpperCase()+'</strong> — '+FAXTRIX_GENERAL_KNOWLEDGE[key] : null;
 }
 function aiProgramTermsAnswer(q) {
   var s=String(q||'').toLowerCase();
@@ -1325,9 +1328,9 @@ function aiProgramTermsAnswer(q) {
 }
 function aiAnswer(q) {
   q = q.toLowerCase();
-  var glossary = aiGlossaryAnswer(q);
-  if (glossary) return glossary;
   var general = aiGeneralKnowledgeAnswer(q);
+  if (general) return general;
+  var glossary = aiGlossaryAnswer(q);
   if (general) return general;
   var programTerms = aiProgramTermsAnswer(q);
   if (programTerms) return programTerms;
@@ -1361,7 +1364,7 @@ function aiAnswer(q) {
 }
 function aiSay(text, who) {
   var log = $('#aiLog'), m = document.createElement('div');
-  m.className = 'ai-msg ' + who; if (who === 'bot' && /<strong>|<br>|<a /i.test(text)) m.innerHTML = text; else m.textContent = text; log.appendChild(m); log.scrollTop = log.scrollHeight; return m;
+  m.className = 'ai-msg ' + who; if (who === 'bot') m.innerHTML = aiRenderAnswer(text); else m.textContent = text; log.appendChild(m); log.scrollTop = log.scrollHeight; return m;
 }
 async function aiWebSearch(q) {
   try {
@@ -1393,7 +1396,7 @@ async function aiAsk(q) {
   /* Les réponses locales connues doivent rester locales : ne pas les envoyer
      inutilement vers l'Edge Function et ne jamais laisser une réponse web
      écraser un glossaire ou une définition connue. */
-  var directLocal=aiGlossaryAnswer(q)||aiGeneralKnowledgeAnswer(q)||aiProgramTermsAnswer(q);
+  var directLocal=aiGeneralKnowledgeAnswer(q)||aiGlossaryAnswer(q)||aiProgramTermsAnswer(q);
   if(directLocal){t.innerHTML=aiRenderAnswer(directLocal);$('#aiLog').scrollTop=9999;return;}
   var known=/\b(crm|api|sql|rls|rpc|uuid|jwt|url|ui|ux|db|bdd|http|https|html|css|js|javascript|json|cdn|rest|crud|auth|rbac|realtime|webrtc|turn|stun|nat|tcp|udp|tls|smtp|git|github|supabase|postgresql|storage|pwa|apk|android|frontend|backend|web|email|csv|kpi|soc|rgpd|qa|python|java|php|cpp|csharp|typescript|react|nextjs|nodejs)\b/i.test(q)
     || /(ticket|client|crm|technicien|équipe|equipe|mission|terrain|faxtrix|infotelcom|devise|monnaie|statistique|rapport|messagerie)/i.test(q);
