@@ -1331,7 +1331,7 @@ function aiAnswer(q) {
   var general = aiGeneralKnowledgeAnswer(q);
   if (general) return general;
   var glossary = aiGlossaryAnswer(q);
-  if (general) return general;
+  if (glossary) return glossary;
   var programTerms = aiProgramTermsAnswer(q);
   if (programTerms) return programTerms;
   var open = state.tickets.filter(function (t) { return t.statut !== 'Résolu' && t.statut !== 'Fermé'; });
