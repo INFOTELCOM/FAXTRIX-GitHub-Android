@@ -14,7 +14,7 @@ async function getCaller(req:Request){
   if(caller.error||!caller.data.user) throw new Error("Session invalide.");
   const p=await adminSb.from("profiles").select("id,company_id,role,full_name").eq("id",caller.data.user.id).maybeSingle();
   if(p.error||!p.data) throw new Error("Profil introuvable.");
-  const allowed=p.data.role==="infotelcom_admin"||p.data.role==="owner";
+  const allowed=p.data.role==="infotelcom_admin"||p.data.role==="owner"||p.data.role==="manager";
   let canManage=allowed;
   if(!canManage){
     const perm=await adminSb.from("user_permissions").select("permission,expires_at").eq("user_id",caller.data.user.id).eq("permission","user_manage").maybeSingle();
