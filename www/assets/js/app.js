@@ -921,7 +921,7 @@ $('#inviteForm').addEventListener('submit', async function(e){
   e.preventDefault(); var email=$('#inviteEmail').value.trim(),form=$('#inviteForm'),statusEl=$('[data-status]',form);
   statusEl.setAttribute('data-state','ok');statusEl.textContent='Préparation de l’accès…';
   try{
-    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'invite',company_id:state.profile.company_id,full_name:email.split('@')[0],email:email,role:'lecture_seule',generate_link:true,redirect_to:location.origin+location.pathname}});
+    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'invite',company_id:state.profile.company_id,full_name:$('#inviteName').value.trim(),email:email,role:$('#inviteRole').value,generate_link:true,redirect_to:location.origin+location.pathname}});
     if(out.error)throw new Error(out.error.message||'Service d’invitation indisponible.'); if(out.data&&out.data.error)throw new Error(out.data.error);
     state.invitations.unshift({id:'local-'+Date.now(),company_id:state.profile.company_id,email:out.data.email,full_name:out.data.full_name,role:out.data.role,accepted:false,created_at:new Date().toISOString()});
     state.inviteLinks[out.data.email]=out.data.action_link||''; form.reset();
