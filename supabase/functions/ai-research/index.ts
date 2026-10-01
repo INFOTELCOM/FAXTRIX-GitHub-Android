@@ -1,97 +1,25 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const cors = {"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
+const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
+const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...cors,"Content-Type":"application/json"}});
 
-function json(data:any,status=200){return Response.json(data,{status,headers:{...cors,"Content-Type":"application/json"}});}
-
-export default {
-  async fetch(req: Request) {
-    if (req.method === "OPTIONS") return new Response("ok",{headers:cors});
-    if (req.method !== "POST") return json({error:"POST uniquement"},405);
-
-    const googleKey=Deno.env.get("GOOGLE_API_KEY");
-    const googleCx=Deno.env.get("GOOGLE_CX");
-    const routerKey=Deno.env.get("OPENROUTER_API_KEY");
-    const model=Deno.env.get("OPENROUTER_MODEL")||"openai/gpt-5.5";
-    const costTier=Deno.env.get("OPENROUTER_COST_TIER")||"medium";
-    const supabaseUrl=Deno.env.get("SUPABASE_URL");
-    const supabaseKey=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
-
-    try {
-      const body=await req.json();
-      const q=String(body?.query||body?.q||"").trim().slice(0,700);
-      if(!q) return json({error:"Requête vide"},400);
-
-      let results:any[]=[];
-      let searchWarning="";
-      if(googleKey&&googleCx){
-        const url=new URL("https://www.googleapis.com/customsearch/v1");
-        url.searchParams.set("key",googleKey); url.searchParams.set("cx",googleCx);
-        url.searchParams.set("q",q); url.searchParams.set("num","8"); url.searchParams.set("hl","fr");
-        const googleRes=await fetch(url); const googleData=await googleRes.json();
-        if(googleRes.ok) results=(googleData.items||[]).slice(0,8).map((x:any)=>({title:x.title,link:x.link,snippet:x.snippet}));
-        else searchWarning=googleData?.error?.message||"Recherche Google indisponible.";
-      } else searchWarning="Google non configuré : utilisation de la recherche web OpenRouter.";
-
-      let companyContext="";
-      const auth=req.headers.get("Authorization");
-      if(auth&&supabaseUrl&&supabaseKey){
-        const userSb=createClient(supabaseUrl,supabaseKey,{global:{headers:{Authorization:auth}}});
-        const me=await userSb.auth.getUser();
-        const uid=me.data.user?.id;
-        if(uid){
-          const profile=await userSb.from("profiles").select("id,company_id,full_name,role,companies(name)").eq("id",uid).maybeSingle();
-          const companyId=profile.data?.company_id;
-          if(companyId){
-            const [clients,tickets,missions,team]=await Promise.all([
-              userSb.from("clients").select("nom,statut,valeur").eq("company_id",companyId).limit(100),
-              userSb.from("tickets").select("numero,titre,statut,priorite,categorie,assigned_to,description,created_at").eq("company_id",companyId).order("created_at",{ascending:false}).limit(100),
-              userSb.from("terrain_missions").select("technicien,client,adresse,statut,notes,compte_rendu,created_at").eq("company_id",companyId).order("created_at",{ascending:false}).limit(100),
-              userSb.from("team_members").select("nom,role,statut,charge,email,specialites").eq("company_id",companyId).limit(100)
-            ]);
-            companyContext=JSON.stringify({
-              entreprise:profile.data?.companies?.name||"Entreprise FAXTRIX",
-              utilisateur:profile.data?.full_name||"",
-              role:profile.data?.role||"",
-              clients:clients.data||[],
-              tickets:tickets.data||[],
-              missions:missions.data||[],
-              equipe:team.data||[]
-            }).slice(0,30000);
-          }
-        }
-      }
-
-      if(!routerKey) return json({query:q,results,answer:null,warning:searchWarning||"OPENROUTER_API_KEY non configurée."});
-
-      const webContext=results.length?results.map((x:any,i:number)=>"["+ (i+1)+"] "+(x.title||"Source")+"\n"+(x.snippet||"")+"\n"+(x.link||"")).join("\n\n"):"Aucune source Google fournie. Utilise impérativement openrouter:web_search si la question nécessite des informations actuelles.";
-      const prompt="Question utilisateur: "+q+
-        "\n\nDONNÉES PRIVÉES FAXTRIX DE L'ENTREPRISE (à utiliser seulement pour répondre à cet utilisateur):\n"+(companyContext||"Aucune donnée privée disponible.")+
-        "\n\nSOURCES WEB GOOGLE:\n"+webContext+
-        "\n\nRéponds en français. Pour une question sur FAXTRIX, privilégie les données privées. Pour une question générale, utilise les sources web si elles existent. Cite les sources web [1], [2] quand tu les utilises. N'invente aucune donnée, personne, ticket ou source.";
-
-      const aiRes=await fetch("https://openrouter.ai/api/v1/chat/completions",{
-        method:"POST",
-        headers:{"Authorization":"Bearer "+routerKey,"Content-Type":"application/json","HTTP-Referer":"https://infotelcom.github.io/FAXTRIX-GitHub-Android/","X-Title":"FAXTRIX Assistant"},
-        body:JSON.stringify({
-          model,
-          messages:[
-            {role:"system",content:"Tu es l'assistant IA polyvalent de FAXTRIX. Tu peux expliquer des concepts, analyser les données privées de l'entreprise autorisée par la session, et synthétiser des informations web. Respecte strictement la séparation entre entreprises. Ne révèle jamais de données privées d'une autre entreprise."},
-            {role:"user",content:prompt}
-          ],
-          temperature:0.2,max_tokens:1800,
-          tools:[
-            {type:"openrouter:web_search"}
-          ],
-          
-
-        })
-      });
-      const aiData=await aiRes.json();
-      if(!aiRes.ok) return json({query:q,results,answer:null,warning:aiData?.error?.message||"Synthèse OpenRouter indisponible."});
-      return json({query:q,results,answer:aiData?.choices?.[0]?.message?.content||null,model,warning:searchWarning||null});
-    } catch(e) {
-      return json({error:e instanceof Error?e.message:"Erreur de recherche IA"},500);
-    }
-  }
-};
+Deno.serve(async(req)=>{
+  if(req.method==="OPTIONS") return new Response("ok",{headers:cors});
+  if(req.method!=="POST") return json({error:"POST uniquement"},405);
+  try{
+    const body=await req.json(),q=String(body?.query||body?.q||"").trim().slice(0,700);
+    if(!q)return json({error:"Requête vide"},400);
+    const googleKey=Deno.env.get("GOOGLE_API_KEY")||"",googleCx=Deno.env.get("GOOGLE_CX")||"",routerKey=Deno.env.get("OPENROUTER_API_KEY")||"",model=Deno.env.get("OPENROUTER_MODEL")||"openai/gpt-5.5",supabaseUrl=Deno.env.get("SUPABASE_URL")||"",supabaseKey=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY")||"";
+    let results:any[]=[],searchWarning="";
+    if(googleKey&&googleCx){try{const u=new URL("https://www.googleapis.com/customsearch/v1");u.searchParams.set("key",googleKey);u.searchParams.set("cx",googleCx);u.searchParams.set("q",q);u.searchParams.set("num","8");u.searchParams.set("hl","fr");const gr=await fetch(u),gd=await gr.json();if(gr.ok)results=(gd.items||[]).slice(0,8).map((x:any)=>({title:x.title,link:x.link,snippet:x.snippet}));else searchWarning=gd?.error?.message||"Recherche Google indisponible.";}catch(e){searchWarning="Recherche Google indisponible.";}}else searchWarning="Recherche Google non configurée.";
+    let companyContext="";
+    const auth=req.headers.get("Authorization")||"";
+    if(auth&&supabaseUrl&&supabaseKey){try{const userSb=createClient(supabaseUrl,supabaseKey,{global:{headers:{Authorization:auth}},auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}),me=await userSb.auth.getUser(),uid=me.data.user?.id;if(uid){const profile=await userSb.from("profiles").select("id,company_id,full_name,role,companies(name)").eq("id",uid).maybeSingle(),companyId=profile.data?.company_id;if(companyId){const [clients,tickets,missions,team]=await Promise.all([userSb.from("clients").select("nom,statut,valeur").eq("company_id",companyId).limit(100),userSb.from("tickets").select("numero,titre,statut,priorite,categorie,assigned_to,description,created_at").eq("company_id",companyId).order("created_at",{ascending:false}).limit(100),userSb.from("terrain_missions").select("tech,client,adresse,statut,notes,compte_rendu,created_at").eq("company_id",companyId).order("created_at",{ascending:false}).limit(100),userSb.from("team_members").select("nom,role,statut,charge,email,specialites").eq("company_id",companyId).limit(100)]);companyContext=JSON.stringify({entreprise:profile.data?.companies?.name||"Entreprise FAXTRIX",utilisateur:profile.data?.full_name||"",role:profile.data?.role||"",clients:clients.data||[],tickets:tickets.data||[],missions:missions.data||[],equipe:team.data||[]}).slice(0,30000);}}}catch(e){companyContext="";}
+    if(!routerKey)return json({query:q,results,answer:null,warning:(searchWarning?searchWarning+" ":"")+"OPENROUTER_API_KEY non configurée."});
+    const sources=results.length?results.map((x:any,i:number)=>"["+(i+1)+"] "+(x.title||"Source")+"\n"+(x.snippet||"")+"\n"+(x.link||"")).join("\n\n"):"Aucune source Google disponible.";
+    const prompt=`Question utilisateur: ${q}\n\nDONNÉES PRIVÉES FAXTRIX DE L'ENTREPRISE DE LA SESSION:\n${companyContext||"Aucune donnée privée disponible."}\n\nSOURCES WEB:\n${sources}\n\nRéponds en français. Pour FAXTRIX, utilise les données privées de la session. Pour une question générale, réponds avec tes connaissances et utilise les sources web si elles sont présentes. N'invente aucune donnée, personne, ticket ou source. Si tu utilises une source web, référence-la [1], [2], etc.`;
+    const aiRes=await fetch("https://openrouter.ai/api/v1/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+routerKey,"Content-Type":"application/json","HTTP-Referer":"https://infotelcom.github.io/FAXTRIX-GitHub-Android/","X-Title":"FAXTRIX Assistant"},body:JSON.stringify({model,messages:[{role:"system",content:"Tu es l'assistant IA polyvalent de FAXTRIX. Respecte strictement l'isolation des entreprises. Tu peux expliquer des concepts généraux et analyser uniquement les données privées de la session fournie."},{role:"user",content:prompt}],temperature:0.2,max_tokens:1800})});
+    const aiData=await aiRes.json();if(!aiRes.ok)return json({query:q,results,answer:null,warning:aiData?.error?.message||"Synthèse IA indisponible."});
+    return json({query:q,results,answer:aiData?.choices?.[0]?.message?.content||null,model,warning:searchWarning||null});
+  }catch(e){return json({error:e instanceof Error?e.message:"Erreur IA"},200);}
+});
