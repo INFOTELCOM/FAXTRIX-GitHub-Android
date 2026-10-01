@@ -396,6 +396,11 @@ $('#notifBtn').addEventListener('click', async function () {
 
 /* ---------------- 6. CRM ---------------- */
 var crmFilter = 'Tous', crmQuery = '';
+var crmSearchBtn=$('#crmSearchBtn');
+if(crmSearchBtn) crmSearchBtn.addEventListener('click',function(){
+  var input=$('#crmSearch');
+  if(input){ input.focus(); input.select(); }
+});
 $('#crmAddBtn').addEventListener('click', function () {
   $('#crmForm').reset(); $('#crmId').value = '';
   openDrawer('crm', 'Nouveau client');
