@@ -26,13 +26,45 @@ async function loadPlatformStats(){
 async function adminUserAction(payload){
   const msgEl=$('#createUserMsg');
   if(msgEl) msgEl.textContent='Traitement…';
-  const r=await sb.functions.invoke('infotelcom-user-admin',{body:payload});
-  if(r.error){
-    const detail=r.error.message||'Erreur Edge Function';
-    if(msgEl) msgEl.textContent=detail;
-    throw new Error(detail);
+  if(payload.action==='invite'){
+    const r=await sb.from('invitations').insert({
+      company_id:payload.company_id,
+      email:payload.email,
+      full_name:payload.full_name,
+      role:payload.role,
+      accepted:false
+    }).select().single();
+    if(r.error){
+      const detail=r.error.message||'Impossible de préparer l’accès.';
+      if(msgEl) msgEl.textContent=detail;
+      throw new Error(detail);
+    }
+    return {ok:true,message:'Accès préparé pour '+payload.email+'. Le mot de passe sera choisi par l’utilisateur lors de son inscription.'};
   }
-  return r.data||{};
+  if(payload.action==='seed_demo'){
+    const users=[
+      ['Amina Dupont','demo01@faxtrix.test','manager'],
+      ['Marc Okoro','demo02@faxtrix.test','commercial'],
+      ['Sophie Martin','demo03@faxtrix.test','technicien'],
+      ['David Nkosi','demo04@faxtrix.test','technicien'],
+      ['Nadia Kiala','demo05@faxtrix.test','commercial'],
+      ['Kevin Mouzita','demo06@faxtrix.test','manager'],
+      ['Sarah Mavoungou','demo07@faxtrix.test','lecture_seule'],
+      ['Junior Ngoma','demo08@faxtrix.test','technicien'],
+      ['Claire Bemba','demo09@faxtrix.test','commercial'],
+      ['Patrick Samba','demo10@faxtrix.test','lecture_seule']
+    ];
+    const created=[];
+    for(const u of users){
+      const r=await sb.from('invitations').upsert({
+        company_id:payload.company_id,email:u[1],full_name:u[0],role:u[2],accepted:false
+      },{onConflict:'company_id,email'}).select().single();
+      if(r.error) created.push({full_name:u[0],email:u[1],role:u[2],error:r.error.message});
+      else created.push({full_name:u[0],email:u[1],role:u[2]});
+    }
+    return {ok:true,message:'10 accès de démonstration sont prêts.',users:created};
+  }
+  throw new Error('Action inconnue.');
 }
 function fillCreateUserCompanies(){
   const el=$('#createUserCompany'); if(!el)return;
