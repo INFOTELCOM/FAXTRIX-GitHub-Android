@@ -919,13 +919,13 @@ $('#profileForm').addEventListener('submit', async function (e) {
 });
 $('#inviteForm').addEventListener('submit', async function(e){
   e.preventDefault(); var email=$('#inviteEmail').value.trim(),form=$('#inviteForm'),statusEl=$('[data-status]',form);
-  statusEl.setAttribute('data-state','ok');statusEl.textContent='Préparation de l’accès…';
+  statusEl.setAttribute('data-state','ok');statusEl.textContent='Création du compte et du mot de passe initial…';
   try{
-    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'invite',company_id:state.profile.company_id,full_name:$('#inviteName').value.trim(),email:email,role:$('#inviteRole').value,generate_link:true,redirect_to:location.origin+location.pathname}});
+    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'create_user',company_id:state.profile.company_id,full_name:$('#inviteName').value.trim(),email:email,role:$('#inviteRole').value}});
     if(out.error)throw new Error(out.error.message||'Service d’invitation indisponible.'); if(out.data&&out.data.error)throw new Error(out.data.error);
     state.invitations.unshift({id:'local-'+Date.now(),company_id:state.profile.company_id,email:out.data.email,full_name:out.data.full_name,role:out.data.role,accepted:false,created_at:new Date().toISOString()});
     state.inviteLinks[out.data.email]=out.data.action_link||''; form.reset();
-    statusEl.textContent=out.data.action_link?'Accès créé. Ouvrez le lien pour choisir le mot de passe.':'Invitation créée. La personne recevra son lien par e-mail.'; renderInvites();
+    if(out.data&&out.data.temporary_password){statusEl.textContent='Accès créé. Mot de passe initial : '+out.data.temporary_password+' — transmettez-le à l’utilisateur, puis il pourra le remplacer dans Sécurité.'; state.inviteLinks[out.data.email]='';} else {statusEl.textContent=out.data.message||'Accès créé.';} renderInvites();
   }catch(err){console.error('FAXTRIX invitation utilisateur:',err);statusEl.setAttribute('data-state','err');statusEl.textContent='Invitation impossible : '+(err.message||'erreur serveur');}
 });
 async function cancelInvite(id) {
@@ -934,15 +934,15 @@ async function cancelInvite(id) {
 }
 async function regenerateInviteLink(email){
   try{
-    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'regenerate_link',company_id:state.profile.company_id,email:email,redirect_to:location.origin+location.pathname}});
+    var out=await sb.functions.invoke('infotelcom-user-admin',{body:{action:'set_password',company_id:state.profile.company_id,email:email}});
     if(out.error)throw new Error(out.error.message||'Service indisponible.');if(out.data&&out.data.error)throw new Error(out.data.error);
-    state.inviteLinks[email]=out.data.action_link||'';renderInvites();if(out.data.action_link)window.open(out.data.action_link,'_blank','noopener');toast('Nouveau lien généré.','ok');
+    state.inviteLinks[email]='';renderInvites();if(out.data&&out.data.temporary_password){navigator.clipboard?.writeText(out.data.temporary_password).catch(function(){});alert('Mot de passe initial pour '+(out.data.full_name||email)+' :\n\n'+out.data.temporary_password+'\n\nCopié si le navigateur l’autorise.');}toast('Mot de passe initial défini.','ok');
   }catch(e){toast('Lien impossible : '+(e.message||'erreur serveur'),'crit');}
 }
 function renderInvites(){
   var card=$('#teamCard');if(!card)return;var canManage=['owner','manager','infotelcom_admin'].indexOf(state.profile.role)!==-1;card.hidden=!canManage;
   var wrap=$('#inviteList');if(!wrap)return;var pending=state.invitations.filter(function(i){return !i.accepted;});
-  wrap.innerHTML=pending.length?pending.map(function(i){var link=state.inviteLinks[i.email]||'';return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(i.full_name||i.email)+'</b><span>'+escapeHtml(i.email)+' · '+escapeHtml(i.role||'lecture_seule')+' · Invitation en attente</span>'+(link?'<a class="invite-link" href="'+escapeAttribute(link)+'" target="_blank" rel="noopener">Ouvrir le lien d’invitation ↗</a>':'')+'</div><div class="app-row-actions"><button class="row-btn" data-invite-link="'+escapeHtml(i.email)+'" title="Régénérer le lien">🔗</button><button class="row-btn" data-invite-del="'+i.id+'">🗑</button></div></div>';}).join(''):'<div class="app-empty">Aucune invitation en attente.</div>';
+  wrap.innerHTML=pending.length?pending.map(function(i){var link=state.inviteLinks[i.email]||'';return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(i.full_name||i.email)+'</b><span>'+escapeHtml(i.email)+' · '+escapeHtml(i.role||'lecture_seule')+' · Invitation en attente</span>'+(link?'<a class="invite-link" href="'+escapeAttribute(link)+'" target="_blank" rel="noopener">Ouvrir le lien d’invitation ↗</a>':'')+'</div><div class="app-row-actions"><button class="row-btn" data-invite-link="'+escapeHtml(i.email)+'" title="Définir un nouveau mot de passe">🔑</button><button class="row-btn" data-invite-del="'+i.id+'">🗑</button></div></div>';}).join(''):'<div class="app-empty">Aucune invitation en attente.</div>';
 }
 function renderTopUser() {
   var name = state.profile.full_name || 'Vous';
