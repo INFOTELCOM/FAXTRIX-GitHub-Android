@@ -28,7 +28,7 @@
       <article class="card"><div class="head"><h2>Entreprises</h2><button id="exportSelected">Exporter</button></div><select id="companySelect"><option value="">Sélectionner une entreprise</option></select><div id="companyInfo"></div></article>
       <article class="card wide"><div class="head"><div><h2>Statistiques de suivi</h2><div class="muted">Lecture seule · suivi généré automatiquement</div></div><span class="chip">INFOTELCOM</span></div><div id="companyStats" class="stats"></div><div id="companyActivity" class="list" style="margin-top:14px;"></div></article>
       <article class="card wide">
-  <div class="head"><div><h2>Utilisateurs & rôles</h2><div class="muted">INFOTELCOM peut créer et activer les accès d'une entreprise. Un mot de passe initial est généré et remis de façon sécurisée à l'utilisateur, qui peut ensuite le remplacer depuis Sécurité.</div></div></div>
+  <div class="head"><div><h2>Utilisateurs & rôles</h2><div class="muted">INFOTELCOM peut créer les accès d’une entreprise, y compris son administrateur. L’administrateur d’entreprise pourra ensuite gérer ses propres utilisateurs depuis son espace FAXTRIX.</div></div></div>
   <div class="admin-user-create">
     <div class="create-head">
       <b>Créer un accès utilisateur</b>
@@ -38,14 +38,14 @@
       <label>Entreprise<select id="createUserCompany" required><option value="">Sélectionner</option></select></label>
       <label>Nom complet<input id="createUserName" required placeholder="Nom Prénom"></label>
       <label>E-mail<input id="createUserEmail" type="email" required placeholder="utilisateur@entreprise.com"></label>
-      <label>Fonction<select id="createUserRole"><option value="manager">manager</option><option value="commercial">commercial</option><option value="technicien">technicien</option><option value="lecture_seule">lecture_seule</option></select></label>
+      <label>Fonction<select id="createUserRole"><option value="owner">Administrateur entreprise</option><option value="manager">Manager</option><option value="commercial">Commercial</option><option value="technicien">Technicien</option><option value="lecture_seule">Lecture seule</option></select></label>
       <div class="create-actions"><button class="primary" type="submit">Créer l'utilisateur</button><span id="createUserMsg" class="muted"></span></div>
     </form>
   </div>
   <div id="demoCredentials" class="demo-credentials" hidden></div>
   <div id="users" class="table-wrap"></div>
   <div style="margin-top:18px;">
-    <div class="head"><div><h3 style="margin:0;">Accès en attente</h3><div class="muted">Les comptes sont actifs immédiatement avec un mot de passe initial. Pour les anciens accès encore en attente, utilisez « Définir le mot de passe ».</div></div></div>
+    <div class="head"><div><h3 style="margin:0;">Accès en attente</h3><div class="muted">Les comptes sont actifs immédiatement avec un mot de passe initial. L’administrateur de l’entreprise pourra ensuite gérer les autres accès.</div></div></div>
     <div id="pendingInvites" class="list"></div>
   </div>
 </article>
