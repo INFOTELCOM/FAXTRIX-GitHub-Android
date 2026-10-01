@@ -415,7 +415,7 @@ $('#crmSearch').addEventListener('input', function (e) { crmQuery = e.target.val
 $('#crmForm').addEventListener('submit', async function (e) {
   e.preventDefault();
   var id = $('#crmId').value;
-  var data = { nom: $('#crmNom').value.trim(), statut: $('#crmStatut').value, valeur: Number($('#crmValeurInput').value || 0) };
+  var data = { nom: $('#crmNom').value.trim(), statut: $('#crmStatut').value, valeur: Number($('#crmValeurInput').value || 0), email: ($('#crmEmail') && $('#crmEmail').value.trim()) || null, telephone: ($('#crmTelephone') && $('#crmTelephone').value.trim()) || null };
   if (id) {
     var res = await sb.from('clients').update(data).eq('id', id).select().single();
     if (!res.error) { var item = state.crm.find(function (c) { return c.id === id; }); if (item) Object.assign(item, res.data); }
@@ -427,12 +427,55 @@ $('#crmForm').addEventListener('submit', async function (e) {
 });
 function editCrm(id) {
   var c = state.crm.find(function (x) { return x.id === id; }); if (!c) return;
-  $('#crmId').value = c.id; $('#crmNom').value = c.nom; $('#crmStatut').value = c.statut; $('#crmValeurInput').value = c.valeur;
+  $('#crmId').value = c.id; $('#crmNom').value = c.nom; $('#crmStatut').value = c.statut; $('#crmValeurInput').value = c.valeur; if($('#crmEmail')) $('#crmEmail').value = c.email || ''; if($('#crmTelephone')) $('#crmTelephone').value = c.telephone || '';
   openDrawer('crm', 'Modifier le client');
 }
 async function deleteCrm(id) {
   state.crm = state.crm.filter(function (x) { return x.id !== id; }); renderAll();
   await sb.from('clients').delete().eq('id', id);
+}
+
+async function loadClientPortalMessages(clientId, box){
+  var r=await sb.from('client_portal_messages').select('id,sender_id,sender_type,body,created_at').eq('client_id',clientId).order('created_at',{ascending:true});
+  if(r.error){box.innerHTML='<div class="app-empty">Messages indisponibles : '+escapeHtml(r.error.message)+'</div>';return;}
+  box.innerHTML=(r.data||[]).length?(r.data||[]).map(function(m){
+    return '<div class="chat-bubble '+(m.sender_id===state.profile.id?'mine':'')+'">'+escapeHtml(m.body||'').replace(/\n/g,'<br>')+'<div class="chat-meta">'+(m.sender_type==='employee'?'Vous · équipe':'Client')+' · '+escapeHtml(fmtDateTime(m.created_at))+'</div></div>';
+  }).join(''):'<div class="app-empty">Aucun message avec ce client.</div>';
+  box.scrollTop=box.scrollHeight;
+}
+async function openClientPortal(clientId){
+  var c=state.crm.find(function(x){return x.id===clientId;}); if(!c)return;
+  var old=document.getElementById('faxtrixClientPortalOverlay'); if(old)old.remove();
+  var overlay=document.createElement('div'); overlay.id='faxtrixClientPortalOverlay'; overlay.className='faxtrix-chat-overlay';
+  overlay.innerHTML='<div class="faxtrix-chat-dialog" style="max-width:760px;width:min(760px,94vw);">'+
+    '<button type="button" class="app-drawer-close" data-cp-close>&times;</button>'+
+    '<div class="app-card-head"><div><h3>Portail Client FAXTRIX</h3><p>Accès séparé de la messagerie interne pour <b>'+escapeHtml(c.nom)+'</b>.</p></div><span class="chip">CLIENT</span></div>'+
+    '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;">'+
+      '<div class="app-card" style="padding:14px;"><h4>Accès</h4><label style="display:block;margin-top:10px;">E-mail<input id="cpEmail" type="email" value="'+escapeHtml(c.email||'')+'" placeholder="client@entreprise.com"></label>'+
+      '<button class="btn btn-primary" id="cpProvision" type="button">Créer / réinitialiser l’accès</button><div id="cpCredentials" style="margin-top:12px;"></div><p style="font-size:11px;color:var(--slate-2);line-height:1.5;">Le compte client est distinct des comptes employés. Le client choisit ensuite son propre mot de passe.</p></div>'+
+      '<div class="app-card" style="padding:14px;"><h4>Conversation avec le client</h4><div id="cpMessages" class="chat-messages" style="height:240px;"></div><form id="cpForm" class="chat-compose"><input id="cpInput" placeholder="Écrire au client…"><button class="btn btn-primary" type="submit">Envoyer</button></form><div id="cpStatus" style="font-size:11px;color:var(--slate-2);margin-top:7px;"></div></div>'+
+    '</div></div>';
+  document.body.appendChild(overlay);
+  overlay.querySelector('[data-cp-close]').onclick=function(){overlay.remove();};
+  var box=overlay.querySelector('#cpMessages');
+  await loadClientPortalMessages(clientId,box);
+  overlay.querySelector('#cpProvision').onclick=async function(){
+    var email=overlay.querySelector('#cpEmail').value.trim();
+    if(!email){overlay.querySelector('#cpCredentials').innerHTML='<span style="color:#ff9a9a">Saisissez l’e-mail du client.</span>';return;}
+    this.disabled=true; this.textContent='Création…';
+    var r=await sb.functions.invoke('client-portal-admin',{body:{action:'create_or_reset',company_id:state.profile.company_id,client_id:clientId,email:email,full_name:c.nom}});
+    this.disabled=false; this.textContent='Créer / réinitialiser l’accès';
+    if(r.error){overlay.querySelector('#cpCredentials').innerHTML='<span style="color:#ff9a9a">'+escapeHtml(r.error.message||'Erreur')+'</span>';return;}
+    var d=r.data||{};
+    c.email=d.email||email;
+    overlay.querySelector('#cpCredentials').innerHTML='<div style="padding:12px;border:1px solid rgba(255,138,24,.35);border-radius:12px;background:rgba(255,138,24,.08);"><b>Accès prêt</b><br><span>E-mail : '+escapeHtml(d.email||email)+'</span><br><span>Mot de passe initial : <strong>'+escapeHtml(d.temporary_password||'—')+'</strong></span><br><a href="client.html" target="_blank" style="color:#ffd19d">Ouvrir le Portail Client ↗</a></div>';
+  };
+  overlay.querySelector('#cpForm').onsubmit=async function(e){
+    e.preventDefault(); var input=overlay.querySelector('#cpInput'),body=input.value.trim(); if(!body)return;
+    var r=await sb.from('client_portal_messages').insert({company_id:state.profile.company_id,client_id:clientId,sender_id:state.profile.id,sender_type:'employee',body:body});
+    if(r.error){overlay.querySelector('#cpStatus').textContent='Envoi impossible : '+r.error.message;return;}
+    input.value=''; overlay.querySelector('#cpStatus').textContent='Message envoyé.'; await loadClientPortalMessages(clientId,box);
+  };
 }
 function renderCrm() {
   var list = $('#crmList');
@@ -445,7 +488,7 @@ function renderCrm() {
     var chipClass = c.statut === 'Actif' ? 'ok' : (c.statut === 'Négociation' ? 'mid' : (c.statut === 'Attente' ? 'crit' : ''));
     return '<div class="app-row" data-record-view="crm:'+c.id+'"><div class="r-main"><b>' + escapeHtml(c.nom) + '</b><span>' + euros(c.valeur) + ' · Enregistré : ' + escapeHtml(fmtDateTime(c.created_at)) + ' · Modifié : ' + escapeHtml(fmtDateTime(c.updated_at)) + '</span></div>' +
       '<span class="chip ' + chipClass + '">' + c.statut + '</span>' +
-      '<div class="app-row-actions"><button class="row-btn" data-record-open="crm:'+c.id+'">◉</button><button class="row-btn" data-crm-edit="' + c.id + '">✎</button><button class="row-btn" data-crm-del="' + c.id + '">🗑</button></div></div>';
+      '<div class="app-row-actions"><button class="row-btn" data-record-open="crm:'+c.id+'">◉</button><button class="row-btn" data-client-portal="' + c.id + '" title="Portail client">💬</button><button class="row-btn" data-crm-edit="' + c.id + '">✎</button><button class="row-btn" data-crm-del="' + c.id + '">🗑</button></div></div>';
   }).join('') : '<div class="app-empty">Aucun client pour ce filtre.</div>';
 
   $('#crmTotal').textContent = state.crm.length;
@@ -1556,14 +1599,27 @@ function chatAvatarHtml(profile,size){
 }
 async function loadChatProfiles(){
   if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable pour la messagerie.','crit');return false;}
-  var direct=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path,company_id').eq('company_id',state.profile.company_id).order('full_name',{ascending:true});
-  if(!direct.error){chatState.profiles=(direct.data||[]).map(function(p){return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});});return true;}
-  console.warn('FAXTRIX profils directs indisponibles, tentative RPC:',direct.error);
+  // Le profil complet de l'entreprise est servi par une RPC SECURITY DEFINER.
+  // Cela évite que la RLS de profiles limite la recherche au seul utilisateur courant.
   try{
-    var rpcPromise=sb.rpc('my_company_chat_profiles'),timeout=new Promise(function(_,reject){setTimeout(function(){reject(new Error('Le chargement des membres dépasse 10 secondes.'));},10000);});
-    var r=await Promise.race([rpcPromise,timeout]); if(r.error)throw r.error;
-    chatState.profiles=(r.data||[]).map(function(p){return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});}); return true;
-  }catch(e){console.error('FAXTRIX profils messagerie RPC:',e);chatState.profiles=[];toast('Impossible de charger les membres : '+(e.message||'RPC indisponible'),'crit');return false;}
+    var rpcPromise=sb.rpc('my_company_chat_profiles');
+    var timeout=new Promise(function(_,reject){setTimeout(function(){reject(new Error('Le chargement des membres dépasse 10 secondes.'));},10000);});
+    var r=await Promise.race([rpcPromise,timeout]);
+    if(!r.error && Array.isArray(r.data)){
+      chatState.profiles=r.data.map(function(p){return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});});
+      return true;
+    }
+    if(r.error) console.warn('FAXTRIX RPC profils messagerie:',r.error);
+  }catch(e){console.warn('FAXTRIX RPC profils messagerie:',e);}
+  // Fallback uniquement si la RPC n'est pas encore présente.
+  var direct=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path,company_id').eq('company_id',state.profile.company_id).order('full_name',{ascending:true});
+  if(!direct.error && Array.isArray(direct.data)){
+    chatState.profiles=(direct.data||[]).map(function(p){return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});});
+    return true;
+  }
+  chatState.profiles=[];
+  toast('Impossible de charger les membres de votre entreprise.','crit');
+  return false;
 }
 async function loadChatConversations(){
   var r=await sb.from('chat_conversations').select('*').eq('company_id',state.profile.company_id).order('updated_at',{ascending:false});
@@ -1815,6 +1871,8 @@ $('#callCameraBtn')&&$('#callCameraBtn').addEventListener('click',function(){if(
 $$('[data-record-close]').forEach(function(x){x.addEventListener('click',closeRecordDetail);});
 $$('[data-call-close]').forEach(function(x){x.addEventListener('click',function(){endCall(true);});});
 document.addEventListener('click',function(e){
+  var cp=e.target.closest&&e.target.closest('[data-client-portal]');
+  if(cp){e.preventDefault();e.stopPropagation();openClientPortal(cp.getAttribute('data-client-portal'));return;}
   var t=e.target,id;
   if((id=t.getAttribute&&t.getAttribute('data-chat-open'))){openChatConversation(id);return;}
   if((id=t.getAttribute&&t.getAttribute('data-record-open'))){var a=id.split(':');openRecordDetail(a[0],a.slice(1).join(':'));return;}
