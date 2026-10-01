@@ -101,10 +101,10 @@ $('#seedDemoUsers')?.addEventListener('click',async()=>{
     const box=$('#demoCredentials');
     if(box){
       box.hidden=false;
-      box.innerHTML='<b>Comptes de test créés</b><small>Ces mots de passe sont temporaires : chaque utilisateur peut ensuite le modifier dans Sécurité.</small><div class="credential-grid">'+(out.users||[]).map(x=>'<div><b>'+esc(x.full_name)+'</b><span>'+esc(x.email)+'</span><code>'+esc(x.password)+'</code></div>').join('')+'</div>';
+      box.innerHTML='<b>Comptes de test créés</b><small>Ces accès sont en attente d’inscription : chaque utilisateur choisira lui-même son mot de passe.</small><div class="credential-grid">'+(out.users||[]).map(x=>'<div><b>'+esc(x.full_name)+'</b><span>'+esc(x.email)+'</span><code>'+esc(x.password)+'</code></div>').join('')+'</div>';
     }
     await boot();
-  }catch(err){} finally{btn.disabled=false;btn.textContent='Créer 10 utilisateurs de test';}
+  }catch(err){} finally{btn.disabled=false;btn.textContent='Préparer 10 accès de test';}
 });
 
 function renderCompanyStats(s){const box=$('#companyStats'),act=$('#companyActivity');if(!box||!act)return;if(!s){box.innerHTML='<div class="empty">Sélectionnez une entreprise.</div>';act.innerHTML='';return}box.innerHTML='<div><b>'+Number(s.clients_total||0)+'</b><span>CLIENTS</span></div><div><b>'+Number(s.tickets_total||0)+'</b><span>TICKETS</span></div><div><b>'+Number(s.missions_total||0)+'</b><span>MISSIONS</span></div><div><b>'+Number(s.activity_total||0)+'</b><span>ACTIONS</span></div>';const rows=s.recent_activity||[];act.innerHTML=rows.length?rows.map(x=>'<div class="item"><div><b>'+esc(x.action||'Action')+' · '+esc(x.entity_type||'donnée')+'</b><small>'+new Date(x.created_at).toLocaleString('fr-FR')+'</small></div><span class="chip">lecture seule</span></div>').join(''):'<div class="empty">Aucune activité enregistrée.</div>'}
