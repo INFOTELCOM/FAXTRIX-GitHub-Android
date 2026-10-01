@@ -26,7 +26,9 @@ grant execute on function public.is_chat_member(uuid, uuid) to authenticated;
 
 -- Permet à un utilisateur authentifié de rechercher les membres de sa propre entreprise
 -- sans exposer les profils des autres organisations.
-create or replace function public.my_company_chat_profiles()
+drop function if exists public.my_company_chat_profiles();
+
+create function public.my_company_chat_profiles()
 returns table(id uuid, full_name text, role text, avatar_url text, avatar_path text)
 language sql
 stable
