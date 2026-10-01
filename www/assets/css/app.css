@@ -344,8 +344,22 @@ body.app-body[data-theme="dark"] .chip.ok{ color:#5EE3AE } body.app-body[data-th
 .sheet-panel{ border-radius:24px 24px 0 0 !important; }
 
 @media (max-width:900px){
-  .app-side{ display:none !important; }
   .app-shell{ grid-template-columns:1fr; }
+  .app-side{
+    display:flex !important;
+    position:fixed;
+    left:0; top:0; bottom:0;
+    width:min(86vw,300px);
+    max-width:300px;
+    height:100dvh;
+    padding:18px 12px;
+    transform:translateX(-105%);
+    transition:transform .25s var(--ease-out);
+    z-index:1000;
+    overflow-y:auto;
+    box-shadow:18px 0 60px rgba(0,0,0,.38);
+  }
+  .app-side.open{ transform:translateX(0); }
   .app-body-area{ padding-bottom:96px; }               /* laisse la place à la tabbar */
   .mobile-tabbar{
     display:flex; position:fixed; left:0; right:0; bottom:0; z-index:150;
@@ -670,6 +684,43 @@ body.app-body[data-theme="dark"] .chip.ok{ color:#5EE3AE } body.app-body[data-th
   .faxtrix-chat-talk{font-size:11px}
   .chat-compose input[type=text]{font-size:14px}
   .chat-bubble{max-width:88%}
+}
+
+/* Correctifs Android / petits écrans : aucun panneau ne doit dépasser la largeur de l'écran. */
+@media(max-width:900px){
+  html,body{max-width:100%;overflow-x:hidden;}
+  .app-top{min-width:0;}
+  .app-top>div:first-child{min-width:0;}
+  .app-top-actions{min-width:0;}
+  .app-top .sub{max-width:42vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .app-card-head{gap:10px;flex-wrap:wrap;}
+  .app-card-head>div{min-width:0;flex:1 1 220px;}
+  .chat-layout{width:100%;max-width:100%;height:calc(100dvh - 235px);min-height:430px;}
+  .chat-sidebar{min-width:0;max-height:180px;}
+  .chat-main{min-width:0;min-height:0;}
+  .chat-compose{flex-wrap:nowrap;}
+  .chat-compose input[type=text]{min-width:0;width:100%;}
+  .faxtrix-chat-overlay{overflow:hidden;}
+  .faxtrix-chat-dialog{width:100%;max-width:100%;min-width:0;}
+  .faxtrix-chat-person-row{min-width:0;}
+}
+@media(max-width:520px){
+  .app-body-area{padding:12px 10px 92px;}
+  .app-top{padding:10px 12px;}
+  .app-top h2{font-size:17px;}
+  .app-top .sub{max-width:36vw;font-size:10px;}
+  .app-icon-btn{width:34px;height:34px;}
+  .app-top-actions{gap:6px;}
+  .app-user{max-width:42px;}
+  .chat-layout{height:calc(100dvh - 205px);min-height:420px;}
+  .chat-compose{gap:4px;}
+  .chat-compose .row-btn{flex:0 0 34px;}
+  .chat-compose .btn{flex:0 0 auto;padding:9px 10px;}
+  .chat-bubble{max-width:90%;word-break:break-word;}
+  .faxtrix-chat-dialog-head{gap:8px;}
+  .faxtrix-chat-person-row{align-items:center;}
+  .faxtrix-chat-person-info{flex:1;min-width:0;}
+  .faxtrix-chat-talk{flex:0 0 auto;}
 }
 
 /* Menu mobile FAXTRIX */
