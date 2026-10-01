@@ -80,7 +80,12 @@ export default {
             {role:"user",content:prompt}
           ],
           temperature:0.2,max_tokens:1800,
-          plugins:model==="openrouter/auto"||model==="openrouter/auto-beta"?[{id:"auto-router",cost_tier:costTier}]:undefined
+          tools:[
+            {type:"openrouter:web_search",parameters:{engine:"auto"}},
+            {type:"openrouter:web_fetch",parameters:{engine:"openrouter",max_content_tokens:12000}}
+          ],
+          max_tool_calls:3
+
         })
       });
       const aiData=await aiRes.json();
