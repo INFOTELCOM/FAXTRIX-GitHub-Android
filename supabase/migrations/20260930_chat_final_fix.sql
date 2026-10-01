@@ -22,6 +22,7 @@ as $$
 $$;
 
 revoke all on function public.is_chat_member(uuid, uuid) from public;
+revoke execute on function public.is_chat_member(uuid, uuid) from anon;
 grant execute on function public.is_chat_member(uuid, uuid) to authenticated;
 
 -- Recherche sécurisée des utilisateurs FAXTRIX de la même entreprise.
@@ -43,6 +44,7 @@ as $$
 $$;
 
 revoke all on function public.my_company_chat_profiles() from public;
+revoke execute on function public.my_company_chat_profiles() from anon;
 grant execute on function public.my_company_chat_profiles() to authenticated;
 
 alter table public.chat_conversations enable row level security;
@@ -224,4 +226,5 @@ end;
 $$;
 
 revoke all on function public.start_chat_conversation(uuid) from public;
+revoke execute on function public.start_chat_conversation(uuid) from anon;
 grant execute on function public.start_chat_conversation(uuid) to authenticated;
