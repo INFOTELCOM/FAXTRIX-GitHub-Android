@@ -55,7 +55,7 @@ $('#createUserForm')?.addEventListener('submit',async e=>{
     e.target.reset();
     fillCreateUserCompanies();
     await boot();
-  }catch(err){}
+  }catch(err){ if($('#createUserMsg')) $('#createUserMsg').textContent=err.message||'Invitation impossible.'; }
 });
 $('#seedDemoUsers')?.addEventListener('click',async()=>{
   const companyId=$('#createUserCompany').value||$('#companySelect').value;
