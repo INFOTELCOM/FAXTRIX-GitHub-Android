@@ -1,7 +1,8 @@
-const CACHE_NAME = 'faxtrix-shell-v12';
+const CACHE_NAME = 'faxtrix-shell-v13';
 const SHELL_FILES = [
   'index.html',
   'site.html',
+  'client.html',
   'manifest.json',
   'assets/css/style.css',
   'assets/css/app.css',
