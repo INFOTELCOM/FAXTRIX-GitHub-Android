@@ -25,7 +25,7 @@ jobs:
           test -n "$SUPABASE_ACCESS_TOKEN" || { echo "SUPABASE_ACCESS_TOKEN manquant dans GitHub > Settings > Secrets and variables > Actions"; exit 1; }
       - name: Déployer les fonctions IA et TURN
         run: |
-          supabase functions deploy google-search --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
-          supabase functions deploy ai-research --project-ref "$SUPABASE_PROJECT_REF"
-          supabase functions deploy ai-assistant --project-ref "$SUPABASE_PROJECT_REF"
-          supabase functions deploy turn-ice-servers --project-ref "$SUPABASE_PROJECT_REF"
+          supabase functions deploy google-search --project-ref "$SUPABASE_PROJECT_REF" --use-api --no-verify-jwt
+          supabase functions deploy ai-research --project-ref "$SUPABASE_PROJECT_REF" --use-api
+          supabase functions deploy ai-assistant --project-ref "$SUPABASE_PROJECT_REF" --use-api
+          supabase functions deploy turn-ice-servers --project-ref "$SUPABASE_PROJECT_REF" --use-api
