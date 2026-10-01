@@ -943,6 +943,23 @@
 </div>
 
 <!-- ============ MENU NOTIFICATIONS / PROFIL ============ -->
+<div class="mission-alert-overlay" id="missionAlert" hidden>
+  <div class="mission-alert-backdrop" data-mission-alert-close></div>
+  <div class="mission-alert-card">
+    <div class="mission-alert-icon">📍</div>
+    <div class="mission-alert-content">
+      <span class="eyebrow">ALERTE TERRAIN</span>
+      <h3 id="missionAlertTitle">Mission à vérifier</h3>
+      <p id="missionAlertText">Une mission terrain nécessite votre attention.</p>
+      <div id="missionAlertList" class="mission-alert-list"></div>
+      <div class="mission-alert-actions">
+        <button type="button" class="btn btn-ghost" id="missionAlertOk">OK</button>
+        <button type="button" class="btn btn-primary" id="missionAlertGo">Voir les missions →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="app-drawer" id="notifDrawer">
   <div class="app-drawer-bg" data-drawer-close-notif></div>
   <div class="app-drawer-panel" style="width:min(360px,92vw)">
