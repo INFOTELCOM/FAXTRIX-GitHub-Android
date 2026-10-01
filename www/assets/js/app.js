@@ -1372,10 +1372,12 @@ async function aiWebSearch(q) {
   }
 }
 function aiRenderAnswer(text) {
-  return escapeHtml(text).replace(
-    /https:\/\/infotelcom-congo-brazzaville\.netlify\.app\//g,
-    '<a href="https://infotelcom-congo-brazzaville.netlify.app/" target="_blank" rel="noopener noreferrer" class="ai-link">Visiter le site INFOTELCOM ↗</a>'
-  );
+  return escapeHtml(text)
+    .replace(/&lt;strong&gt;/g, '<strong>')
+    .replace(/&lt;\/strong&gt;/g, '</strong>')
+    .replace(/&lt;br\s*\/&gt;/g, '<br>')
+    .replace(/https:\/\/infotelcom-congo-brazzaville\.netlify\.app\//g,
+      '<a href="https://infotelcom-congo-brazzaville.netlify.app/" target="_blank" rel="noopener noreferrer" class="ai-link">Visiter le site INFOTELCOM ↗</a>');
 }
 async function aiAsk(q) {
   if (!q.trim()) return;
@@ -1383,7 +1385,12 @@ async function aiAsk(q) {
   var t = document.createElement('div'); t.className = 'ai-msg bot'; t.innerHTML = '<span class="ai-typing"><i></i><i></i><i></i></span>';
   $('#aiLog').appendChild(t);
   var local=aiAnswer(q);
-  var known=/\b(crm|api|sql|rls|rpc|uuid|jwt|url|ui|ux|db|bdd|http|https|html|css|js|javascript|json|cdn|rest|crud|auth|rbac|realtime|webrtc|turn|stun|nat|tcp|udp|tls|smtp|git|github|supabase|postgresql|storage|pwa|apk|android|frontend|backend|web|email|csv|kpi|soc|rgpd|qa)\b/i.test(q)
+  /* Les réponses locales connues doivent rester locales : ne pas les envoyer
+     inutilement vers l'Edge Function et ne jamais laisser une réponse web
+     écraser un glossaire ou une définition connue. */
+  var directLocal=aiGlossaryAnswer(q)||aiGeneralKnowledgeAnswer(q)||aiProgramTermsAnswer(q);
+  if(directLocal){t.innerHTML=aiRenderAnswer(directLocal);$('#aiLog').scrollTop=9999;return;}
+  var known=/\b(crm|api|sql|rls|rpc|uuid|jwt|url|ui|ux|db|bdd|http|https|html|css|js|javascript|json|cdn|rest|crud|auth|rbac|realtime|webrtc|turn|stun|nat|tcp|udp|tls|smtp|git|github|supabase|postgresql|storage|pwa|apk|android|frontend|backend|web|email|csv|kpi|soc|rgpd|qa|python|java|php|cpp|csharp|typescript|react|nextjs|nodejs)\b/i.test(q)
     || /(ticket|client|crm|technicien|équipe|equipe|mission|terrain|faxtrix|infotelcom|devise|monnaie|statistique|rapport|messagerie)/i.test(q);
   if(known){t.innerHTML=aiRenderAnswer(local);$('#aiLog').scrollTop=9999;return;}
   var data=await aiWebSearch(q);
@@ -1547,7 +1554,16 @@ async function loadChatProfiles(){
     toast('Profil entreprise introuvable pour la messagerie.','crit');
     return false;
   }
-  var r=await sb.rpc('my_company_chat_profiles');
+  var rpcPromise=sb.rpc('my_company_chat_profiles');
+  var timeout=new Promise(function(_,reject){setTimeout(function(){reject(new Error('Le chargement des membres dépasse 10 secondes.'));},10000);});
+  var r;
+  try{ r=await Promise.race([rpcPromise,timeout]); }
+  catch(e){
+    console.error('FAXTRIX profils messagerie RPC timeout:',e);
+    chatState.profiles=[];
+    toast('Impossible de charger les membres : '+(e.message||'RPC indisponible'),'crit');
+    return false;
+  }
   if(r.error){
     console.error('FAXTRIX profils messagerie RPC:',r.error);
     chatState.profiles=[];
