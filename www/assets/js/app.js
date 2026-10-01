@@ -1334,25 +1334,15 @@ function aiSay(text, who) {
 }
 async function aiWebSearch(q) {
   try {
-    var sessionRes=await sb.auth.getSession();
-    var session=sessionRes.data&&sessionRes.data.session;
-    var headers={'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY};
-    if(session&&session.access_token) headers.Authorization='Bearer '+session.access_token;
-    var controller=new AbortController();
-    var timer=setTimeout(function(){controller.abort();},20000);
-    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-research',{
-      method:'POST', headers:headers, body:JSON.stringify({query:q}), signal:controller.signal
-    });
-    clearTimeout(timer);
-    var raw=await res.text(), data=null;
-    try{data=raw?JSON.parse(raw):null;}catch(e){}
-    if(!res.ok){
-      return {error:(data&&(data.error||data.warning))||('HTTP '+res.status+' — '+raw.slice(0,240))};
+    var timerPromise=new Promise(function(_,reject){setTimeout(function(){reject(new Error('Le moteur IA a dépassé le délai de 25 secondes.'));},25000);});
+    var invokePromise=sb.functions.invoke('ai-research',{body:{query:q}});
+    var result=await Promise.race([invokePromise,timerPromise]);
+    if(result.error){
+      return {error:result.error.message||'Edge Function ai-research inaccessible.'};
     }
-    return data||{error:'Réponse vide du moteur IA.'};
+    return result.data||{error:'Réponse vide du moteur IA.'};
   } catch(e) {
-    if(e&&e.name==='AbortError') return {error:'Le moteur IA a dépassé le délai de 20 secondes.'};
-    return {error:e&&e.message?e.message:'Edge Function ai-research inaccessible. Déployez la fonction ai-research dans Supabase.'};
+    return {error:e&&e.message?e.message:'Edge Function ai-research inaccessible. Vérifiez son déploiement dans Supabase.'};
   }
 }
 function aiRenderAnswer(text) {
@@ -1627,14 +1617,14 @@ window.FAXTRIX.openNewConversation = async function(){
   overlay.innerHTML='<div class="faxtrix-chat-dialog">'+
     '<div class="faxtrix-chat-dialog-head"><div><div class="eyebrow">MESSAGERIE INTERNE</div><h3>Démarrer une conversation</h3><p>Personnes enregistrées dans votre entreprise uniquement.</p></div><button type="button" id="faxtrixChatClose" class="row-btn" aria-label="Fermer">×</button></div>'+
     '<div class="faxtrix-chat-person-search"><div class="app-search"><input id="faxtrixChatPersonSearch" type="search" placeholder="Rechercher une personne…" autocomplete="off"></div><button type="button" id="faxtrixChatPersonSearchBtn" class="btn btn-primary">Rechercher</button></div>'+
-    '<div id="faxtrixChatStatus" class="faxtrix-chat-status">Chargement des membres…</div><div id="faxtrixChatPeople" class="faxtrix-chat-people"></div></div>';
+    '<div class="faxtrix-chat-toolbar"><div id="faxtrixChatStatus" class="faxtrix-chat-status">Chargement des membres…</div><button type="button" id="faxtrixChatRefresh" class="btn btn-ghost">Actualiser</button></div><div id="faxtrixChatPeople" class="faxtrix-chat-people"></div></div>';
   document.body.appendChild(overlay);
   var close=function(){overlay.remove();};
   $('#faxtrixChatClose').onclick=close;
   overlay.addEventListener('click',function(e){if(e.target===overlay)close();});
-  var status=$('#faxtrixChatStatus'), list=$('#faxtrixChatPeople'), search=$('#faxtrixChatPersonSearch'), searchBtn=$('#faxtrixChatPersonSearchBtn');
+  var status=$('#faxtrixChatStatus'), list=$('#faxtrixChatPeople'), search=$('#faxtrixChatPersonSearch'), searchBtn=$('#faxtrixChatPersonSearchBtn'), refreshBtn=$('#faxtrixChatRefresh');
   var ok=await loadChatProfiles();
-  if(!ok){status.textContent='Impossible de charger les personnes. Vérifiez la migration de messagerie Supabase.';return;}
+  if(!ok){status.textContent='Impossible de charger les membres. Vérifiez la base Supabase et réessayez.';list.innerHTML='<div class="app-empty">Aucun membre chargé.</div>';return;}
   var renderPeople=function(){
     var q=(search.value||'').trim().toLowerCase();
     var people=chatState.profiles.filter(function(p){
@@ -1648,6 +1638,11 @@ window.FAXTRIX.openNewConversation = async function(){
   };
   search.oninput=renderPeople;
   searchBtn.onclick=renderPeople;
+  refreshBtn.onclick=async function(){
+    refreshBtn.disabled=true; status.textContent='Actualisation…';
+    var good=await loadChatProfiles(); refreshBtn.disabled=false;
+    if(good) renderPeople(); else {status.textContent='Échec du chargement. Vérifiez Supabase.';list.innerHTML='<div class="app-empty">Impossible de charger les membres.</div>';}
+  };
   renderPeople();
 };
 async function startChatWithPerson(userId,close){
@@ -1774,6 +1769,14 @@ document.addEventListener('click',function(e){
     e.stopPropagation();
     window.FAXTRIX.openNewConversation();
   }
+});
+var mobileMenuBtn=$('#faxtrixMobileMenuBtn');
+if(mobileMenuBtn) mobileMenuBtn.addEventListener('click',function(){
+  $('#appSide').classList.toggle('open');
+});
+document.addEventListener('click',function(e){
+  var side=$('#appSide'), b=$('#faxtrixMobileMenuBtn');
+  if(side&&side.classList.contains('open')&&b&&!b.contains(e.target)&&!side.contains(e.target)) side.classList.remove('open');
 });
 $('#chatSearch')&&$('#chatSearch').addEventListener('input',renderChatConversationList);
 $('#chatForm')&&$('#chatForm').addEventListener('submit',sendChatMessage);
