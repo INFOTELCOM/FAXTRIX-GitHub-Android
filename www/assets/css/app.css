@@ -671,3 +671,7 @@ body.app-body[data-theme="dark"] .chip.ok{ color:#5EE3AE } body.app-body[data-th
   .chat-compose input[type=text]{font-size:14px}
   .chat-bubble{max-width:88%}
 }
+
+/* Menu mobile FAXTRIX */
+.mobile-menu-btn{display:none !important;font-size:18px !important}
+@media(max-width:900px){.mobile-menu-btn{display:grid !important}.app-side{box-shadow:18px 0 60px rgba(0,0,0,.35)}.app-top{z-index:140}.app-side{z-index:150}}
