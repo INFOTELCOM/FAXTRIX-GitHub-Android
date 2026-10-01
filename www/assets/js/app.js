@@ -1322,15 +1322,12 @@ function aiSay(text, who) {
 }
 async function aiWebSearch(q) {
   try {
-    var session=(await sb.auth.getSession()).data.session;
-    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-research',{
-      method:'POST',
-      headers:{'Authorization':'Bearer '+(session?session.access_token:SUPABASE_ANON_KEY),'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({query:q})
-    });
-    var data=await res.json();
-    if(!res.ok) return data;
-    return data;
+    var res=await sb.functions.invoke('ai-research',{body:{query:q}});
+    if(res.error){
+      console.warn('FAXTRIX assistant IA:',res.error);
+      return {error:res.error.message||'Assistant IA indisponible'};
+    }
+    return res.data||{error:'Réponse vide de l’assistant IA.'};
   } catch(e) {
     console.warn('FAXTRIX assistant IA:',e);
     return {error:e.message||'Assistant IA indisponible'};
@@ -1500,21 +1497,29 @@ function chatAvatarHtml(profile,size){
   return escapeHtml(chatInitial(profile&&profile.full_name));
 }
 async function loadChatProfiles(){
-  if(!state.profile||!state.profile.company_id){toast('Profil entreprise introuvable pour la messagerie.','crit');return false;}
+  if(!state.profile||!state.profile.company_id){
+    toast('Profil entreprise introuvable pour la messagerie.','crit');
+    return false;
+  }
   var r=await sb.rpc('my_company_chat_profiles');
   if(r.error){
-    console.error('FAXTRIX profils messagerie:',r.error);
-    var fallback=await sb.from('profiles').select('id,full_name,role,avatar_url,avatar_path').eq('company_id',state.profile.company_id).order('full_name');
+    console.error('FAXTRIX profils messagerie RPC:',r.error);
+    var fallback=await sb.from('profiles')
+      .select('id,company_id,full_name,role,avatar_url,avatar_path')
+      .eq('company_id',state.profile.company_id)
+      .order('full_name');
     if(fallback.error){
       console.error('FAXTRIX profils fallback:',fallback.error);
       chatState.profiles=[];
-      toast('Impossible de charger les membres de votre entreprise : '+(r.error.message||fallback.error.message),'crit');
+      toast('Impossible de charger les membres : '+(r.error.message||fallback.error.message),'crit');
       return false;
     }
     chatState.profiles=fallback.data||[];
-    return true;
+  }else{
+    chatState.profiles=(r.data||[]).map(function(p){
+      return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});
+    });
   }
-  chatState.profiles=r.data||[];
   return true;
 }
 async function loadChatConversations(){
@@ -1635,6 +1640,10 @@ async function startChatWithPerson(userId,close){
     return;
   }
   var conversationId=cr.data;
+  if(!conversationId){
+    toast('Le serveur n’a pas renvoyé la conversation.','crit');
+    return;
+  }
   await loadChatConversations();
   close();
   await openChatConversation(conversationId);
