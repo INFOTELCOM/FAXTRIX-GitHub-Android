@@ -122,6 +122,14 @@ initCurrencySelector();
     gateEl.classList.add('app-hidden');
     shell.classList.remove('app-hidden');
     boot();
+    var sessionRes=await sb.auth.getSession();
+    var meta=sessionRes.data&&sessionRes.data.session&&sessionRes.data.session.user&&sessionRes.data.session.user.user_metadata;
+    if(meta&&meta.must_change_password){
+      setTimeout(function(){
+        showPanel('securite');
+        toast('Compte créé par INFOTELCOM : choisissez maintenant votre mot de passe personnel.','ok');
+      },250);
+    }
   }
 
   loginForm.addEventListener('submit', async function (e) {
@@ -1406,7 +1414,15 @@ $('#pwdForm').addEventListener('submit', async function (e) {
   var st = $('[data-status]', e.target), res = await sb.auth.updateUser({ password: $('#pwdNew').value });
   st.setAttribute('data-state', res.error ? 'err' : 'ok');
   st.textContent = res.error ? authErrorFr(res.error.message) : 'Mot de passe mis à jour.';
-  if (!res.error) e.target.reset();
+  if (!res.error) {
+    e.target.reset();
+    var me=await sb.auth.getUser();
+    if(me.data&&me.data.user&&me.data.user.user_metadata&&me.data.user.user_metadata.must_change_password){
+      var nextMeta=Object.assign({},me.data.user.user_metadata,{must_change_password:false});
+      await sb.auth.updateUser({data:nextMeta});
+      toast('Votre mot de passe personnel est maintenant configuré.','ok');
+    }
+  }
 });
 $('#logoutAllBtn').addEventListener('click', async function () { await sb.auth.signOut({ scope: 'global' }); location.reload(); });
 
