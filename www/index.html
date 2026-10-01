@@ -853,6 +853,8 @@
     <form class="contact-form" id="crmForm" data-kind="crm">
       <input type="hidden" id="crmId">
       <label>Nom du client<input type="text" id="crmNom" required placeholder="ABC Réseaux"></label>
+      <label>E-mail du client<input type="email" id="crmEmail" placeholder="client@entreprise.com"></label>
+      <label>Téléphone<input type="tel" id="crmTelephone" placeholder="+33 6 00 00 00 00"></label>
       <label>Statut
         <select id="crmStatut"><option>Prospect</option><option>Négociation</option><option>Actif</option><option>Attente</option></select>
       </label>
@@ -978,7 +980,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/app.js?v=20261001-password-users-1" defer></script>
+<script src="assets/js/app.js?v=20261001-client-portal-1" defer></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
 </body>
 </html>
