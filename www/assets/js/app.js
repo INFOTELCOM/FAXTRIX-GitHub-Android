@@ -1279,15 +1279,31 @@ const FAXTRIX_GLOSSARY = {
 };
 function aiGlossaryAnswer(q) {
   var s=String(q||'').toLowerCase().trim();
-  var m=s.match(/(?:c[’']est quoi|c'est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(?:le|la|les|un|une|l[’'])?\s*([a-z0-9._-]+)/i);
+  var m=s.match(/(?:c[’']est quoi|c'est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(?:le|la|les|un|une|l[’'])?\s*([a-z0-9][a-z0-9._-]*)/i);
   if(!m) return null;
   var key=m[1].toLowerCase().replace(/[’']/g,'');
   if(FAXTRIX_GLOSSARY[key]) return '<strong>'+key.toUpperCase()+'</strong> — '+FAXTRIX_GLOSSARY[key];
-  var normalized=s.replace(/[’']/g,'');
-  for(var k in FAXTRIX_GLOSSARY){
-    if(normalized.indexOf(k)>=0) return '<strong>'+k.toUpperCase()+'</strong> — '+FAXTRIX_GLOSSARY[k];
-  }
   return null;
+}
+var FAXTRIX_GENERAL_KNOWLEDGE = {
+  google: "Google est une entreprise technologique connue notamment pour son moteur de recherche, Android, Chrome, Google Cloud et de nombreux services numériques.",
+  microsoft: "Microsoft est une entreprise technologique qui développe notamment Windows, Microsoft 365, Azure, GitHub et de nombreux logiciels et services cloud.",
+  linux: "Linux est une famille de systèmes d’exploitation libres basée sur le noyau Linux, très utilisée sur les serveurs, le cloud, les appareils et en cybersécurité.",
+  android: "Android est un système d’exploitation mobile basé sur le noyau Linux, principalement utilisé sur les smartphones et tablettes.",
+  windows: "Windows est une famille de systèmes d’exploitation développée par Microsoft pour les ordinateurs et autres appareils.",
+  docker: "Docker est une technologie de conteneurisation qui permet d’empaqueter une application avec ses dépendances pour l’exécuter de manière reproductible.",
+  kubernetes: "Kubernetes est une plateforme open source qui orchestre des conteneurs, notamment leur déploiement, leur mise à l’échelle et leur disponibilité.",
+  internet: "Internet est un réseau mondial de réseaux interconnectés qui permet notamment l’échange de données et l’accès aux services web.",
+  cybersécurité: "La cybersécurité regroupe les méthodes, outils et pratiques destinés à protéger les systèmes, réseaux, applications et données contre les menaces.",
+  programmation: "La programmation consiste à écrire des instructions qu'un ordinateur peut exécuter pour réaliser une tâche ou construire un logiciel."
+};
+function aiGeneralKnowledgeAnswer(q) {
+  var s=String(q||'').toLowerCase().trim();
+  var m=s.match(/(?:c[’']est quoi|c'est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(?:le|la|les|un|une|l[’'])?\s*([a-z0-9À-ÿ._-]+)/i);
+  if(!m) return null;
+  var key=m[1].toLowerCase();
+  if(!FAXTRIX_GENERAL_KNOWLEDGE[key]) return null;
+  return '<strong>'+key.toUpperCase()+'</strong> — '+FAXTRIX_GENERAL_KNOWLEDGE[key];
 }
 function aiProgramTermsAnswer(q) {
   var s=String(q||'').toLowerCase();
@@ -1298,6 +1314,8 @@ function aiAnswer(q) {
   q = q.toLowerCase();
   var glossary = aiGlossaryAnswer(q);
   if (glossary) return glossary;
+  var general = aiGeneralKnowledgeAnswer(q);
+  if (general) return general;
   var programTerms = aiProgramTermsAnswer(q);
   if (programTerms) return programTerms;
   var open = state.tickets.filter(function (t) { return t.statut !== 'Résolu' && t.statut !== 'Fermé'; });
@@ -1516,22 +1534,13 @@ async function loadChatProfiles(){
   var r=await sb.rpc('my_company_chat_profiles');
   if(r.error){
     console.error('FAXTRIX profils messagerie RPC:',r.error);
-    var fallback=await sb.from('profiles')
-      .select('id,company_id,full_name,role,avatar_url,avatar_path')
-      .eq('company_id',state.profile.company_id)
-      .order('full_name');
-    if(fallback.error){
-      console.error('FAXTRIX profils fallback:',fallback.error);
-      chatState.profiles=[];
-      toast('Impossible de charger les membres : '+(r.error.message||fallback.error.message),'crit');
-      return false;
-    }
-    chatState.profiles=fallback.data||[];
-  }else{
-    chatState.profiles=(r.data||[]).map(function(p){
-      return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});
-    });
+    chatState.profiles=[];
+    toast('Impossible de charger les membres : '+(r.error.message||'RPC indisponible'),'crit');
+    return false;
   }
+  chatState.profiles=(r.data||[]).map(function(p){
+    return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});
+  });
   return true;
 }
 async function loadChatConversations(){
@@ -1572,7 +1581,7 @@ async function openChatConversation(id){
   $('#chatMembersLabel').textContent=con.is_group?((people.length+1)+' membres'):(first.full_name||'Conversation privée');
   $('#chatAvatar').innerHTML=chatAvatarHtml(first,38);
   var r=await sb.from('chat_messages').select('*').eq('conversation_id',id).is('deleted_at',null).order('created_at',{ascending:true});
-  if(r.error){toast('Impossible de charger la conversation.','crit');return;}
+  if(r.error){console.error('FAXTRIX chat_messages select:',r.error);toast('Impossible de charger la conversation : '+r.error.message,'crit');return;}
   chatState.messages=r.data||[]; renderChatMessages();
   if(chatState.channel)await sb.removeChannel(chatState.channel);
   chatState.channel=sb.channel('faxtrix-chat-'+id).on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages',filter:'conversation_id=eq.'+id},function(payload){
@@ -1606,7 +1615,6 @@ async function renderChatMessages(){
     }catch(e){}
   }
 }
-window.FAXTRIX = window.FAXTRIX || {};
 window.FAXTRIX = window.FAXTRIX || {};
 window.FAXTRIX.openNewConversation = async function(){
   var existing=document.getElementById('faxtrixNewChatOverlay');
@@ -1689,7 +1697,7 @@ async function sendChatMessage(e){
   data.id=messageId;
   data.created_at=new Date().toISOString();
   var r=await sb.from('chat_messages').insert(data);
-  if(r.error){toast('Message impossible à envoyer : '+r.error.message,'crit');return;}
+  if(r.error){console.error('FAXTRIX chat_messages insert:',r.error,data);toast('Message impossible à envoyer : '+r.error.message,'crit');return;}
   var sent=Object.assign({},data);
   input.value=''; chatState.attachment=null; $('#chatAttachment').hidden=true; $('#chatFile').value='';
   await sb.from('chat_conversations').update({updated_at:sent.created_at}).eq('id',chatState.current);
