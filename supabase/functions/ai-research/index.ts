@@ -31,7 +31,7 @@ export default {
         const googleRes=await fetch(url); const googleData=await googleRes.json();
         if(googleRes.ok) results=(googleData.items||[]).slice(0,8).map((x:any)=>({title:x.title,link:x.link,snippet:x.snippet}));
         else searchWarning=googleData?.error?.message||"Recherche Google indisponible.";
-      } else searchWarning="Recherche Google non configurée.";
+      } else searchWarning="Google non configuré : utilisation de la recherche web OpenRouter.";
 
       let companyContext="";
       const auth=req.headers.get("Authorization");
@@ -64,7 +64,7 @@ export default {
 
       if(!routerKey) return json({query:q,results,answer:null,warning:searchWarning||"OPENROUTER_API_KEY non configurée."});
 
-      const webContext=results.length?results.map((x:any,i:number)=>"["+ (i+1)+"] "+(x.title||"Source")+"\n"+(x.snippet||"")+"\n"+(x.link||"")).join("\n\n"):"Aucune source Google fournie. Utilise openrouter:web_search si la question nécessite des informations actuelles.";
+      const webContext=results.length?results.map((x:any,i:number)=>"["+ (i+1)+"] "+(x.title||"Source")+"\n"+(x.snippet||"")+"\n"+(x.link||"")).join("\n\n"):"Aucune source Google fournie. Utilise impérativement openrouter:web_search si la question nécessite des informations actuelles.";
       const prompt="Question utilisateur: "+q+
         "\n\nDONNÉES PRIVÉES FAXTRIX DE L'ENTREPRISE (à utiliser seulement pour répondre à cet utilisateur):\n"+(companyContext||"Aucune donnée privée disponible.")+
         "\n\nSOURCES WEB GOOGLE:\n"+webContext+
@@ -81,10 +81,12 @@ export default {
           ],
           temperature:0.2,max_tokens:1800,
           tools:[
-            {type:"openrouter:web_search"},
-            {type:"openrouter:web_fetch",parameters:{engine:"openrouter",max_content_tokens:12000}}
+            {type:"openrouter:web_search",parameters:{max_results:5}}
           ],
-          max_tool_calls:3
+          plugins:[
+            {id:"auto-router",cost_quality_tradeoff:3}
+          ],
+          max_tool_calls:5
 
         })
       });
