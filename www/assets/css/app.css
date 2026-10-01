@@ -825,3 +825,38 @@ body.app-body[data-theme="dark"] .chip.ok{ color:#5EE3AE } body.app-body[data-th
   #teamCard .btn{width:100%}
   .invite-link{font-size:10.5px}
 }
+
+
+/* FAXTRIX — tableau de bord réel */
+.home-data-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.home-data-card{min-width:0;padding:14px;border:1px solid var(--line-soft);border-radius:16px;background:rgba(255,255,255,.025)}
+.home-data-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.home-data-head>div{display:grid;gap:3px;min-width:0}
+.home-data-head b{font-size:13px}
+.home-data-head span{font-size:10px;color:var(--text-2)}
+.home-data-head strong{font-size:22px}
+.home-bars{height:116px;display:flex;align-items:flex-end;gap:7px;padding:12px 4px 2px}
+.home-bar-wrap{height:100%;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px}
+.home-bar-wrap small{font-size:9px;color:var(--text-2);white-space:nowrap}
+.home-bar-value{font-size:9px;color:var(--text-2);min-height:11px}
+.home-bar{display:block;width:min(22px,72%);min-height:4px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,var(--ion),rgba(0,196,255,.16));box-shadow:0 0 14px rgba(0,196,255,.13)}
+.home-legend{display:flex;justify-content:space-between;gap:8px;padding-top:9px;border-top:1px solid var(--line-soft);font-size:10px;color:var(--text-2)}
+.home-legend span:first-child{display:flex;align-items:center;gap:5px}
+.home-legend i{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--ion)}
+.home-legend b{color:var(--text-1)}
+.mission-alert-overlay{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:18px;background:rgba(2,8,17,.76);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.mission-alert-overlay[hidden]{display:none!important}
+.mission-alert-backdrop{position:absolute;inset:0}
+.mission-alert-card{position:relative;width:min(620px,100%);display:flex;gap:18px;padding:24px;border:1px solid rgba(255,138,24,.32);border-radius:24px;background:linear-gradient(145deg,rgba(27,39,55,.98),rgba(11,24,40,.98));box-shadow:0 28px 100px rgba(0,0,0,.5)}
+.mission-alert-icon{width:54px;height:54px;min-width:54px;border-radius:17px;display:grid;place-items:center;background:rgba(255,138,24,.13);font-size:25px}
+.mission-alert-content{min-width:0;flex:1}
+.mission-alert-content .eyebrow{font-size:10px;color:var(--orange,#ff8a18);font-weight:800;letter-spacing:.13em}
+.mission-alert-content h3{margin:5px 0 7px;font-size:21px}
+.mission-alert-content>p{margin:0;color:var(--text-2);font-size:12.5px;line-height:1.5}
+.mission-alert-list{display:grid;gap:7px;margin-top:14px;max-height:230px;overflow:auto}
+.mission-alert-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(255,255,255,.035)}
+.mission-alert-item b{font-size:12px;line-height:1.4}
+.mission-alert-item span{font-size:10px;color:var(--text-2);white-space:nowrap}
+.mission-alert-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:1100px){.home-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.home-data-grid{grid-template-columns:1fr}.mission-alert-card{padding:18px;gap:12px}.mission-alert-icon{width:44px;height:44px;min-width:44px}.mission-alert-actions{flex-direction:column}.mission-alert-actions .btn{width:100%}.mission-alert-item{display:grid;gap:4px}}
