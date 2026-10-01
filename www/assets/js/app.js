@@ -42,6 +42,7 @@ function escapeHtml(s) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
+function roleLabel(role) { return ({owner:'Administrateur entreprise',manager:'Manager',commercial:'Commercial',technicien:'Technicien',lecture_seule:'Lecture seule',infotelcom_admin:'Administrateur INFOTELCOM'})[role] || role || 'Membre'; }
 function timeAgo(iso) {
   if (!iso) return '';
   var diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -1134,7 +1135,7 @@ function renderAll() {
 async function initPermissionsUI() {
   var roleEl = $('#permissionRole'), list = $('#permissionRequestsList'), form = $('#permissionRequestForm');
   if (!roleEl || !list || !form) return;
-  roleEl.textContent = state.profile.role || '—';
+  roleEl.textContent = roleLabel(state.profile.role);
   try {
     var p = await sb.rpc('my_permissions');
     var rights = (p.data || []).map(function(x){ return x.permission; });
