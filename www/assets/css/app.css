@@ -786,3 +786,17 @@ body.app-body[data-theme="dark"] .chip.ok{ color:#5EE3AE } body.app-body[data-th
   .faxtrix-chat-person-row{padding:9px !important;}
   .faxtrix-chat-person-info b{max-width:42vw;}
 }
+
+/* FAXTRIX — messagerie et administration mobile finale */
+.faxtrix-chat-overlay{z-index:3000;}
+.faxtrix-chat-dialog{box-sizing:border-box;overflow:hidden;}
+.faxtrix-chat-people{max-height:min(48vh,420px);overflow:auto;}
+.faxtrix-chat-person-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.faxtrix-chat-person-info{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
+.faxtrix-chat-person-info span:last-child{min-width:0;}
+.faxtrix-chat-person-info b,.faxtrix-chat-person-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.credential-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;}
+.credential-grid>div{min-width:0;padding:10px;border:1px solid var(--line-soft);border-radius:12px;}
+.credential-grid b,.credential-grid span,.credential-grid code{display:block;overflow-wrap:anywhere;}
+@media(max-width:900px){.credential-grid{grid-template-columns:1fr;}.faxtrix-chat-dialog{max-height:90dvh;overflow:auto;}.faxtrix-chat-people{max-height:48dvh;}}
+@media(max-width:520px){.faxtrix-chat-dialog{padding:12px!important;}.faxtrix-chat-person-search{grid-template-columns:1fr!important;}.faxtrix-chat-person-search .btn{width:100%!important;}.faxtrix-chat-person-row{align-items:flex-start;}.faxtrix-chat-talk{width:100%;margin-left:48px;}}
