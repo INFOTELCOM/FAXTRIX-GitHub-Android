@@ -43,25 +43,33 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-regenerate-invite]'); if(!b)return;
   b.disabled=true;b.textContent='Génération…';
   try{
-    const out=await adminUserAction({action:'regenerate_link',email:b.dataset.regenerateInvite,company_id:b.dataset.regenerateCompany,redirect_to:location.origin+location.pathname.replace('admin.html','index.html')});
-    if(out.action_link){window.open(out.action_link,'_blank','noopener');}
-    alert('Lien généré. La personne peut l’ouvrir pour choisir son mot de passe.');
+    const out=await adminUserAction({action:'set_password',email:b.dataset.regenerateInvite,company_id:b.dataset.regenerateCompany});
+    if(out.temporary_password){navigator.clipboard?.writeText(out.temporary_password).catch(()=>{}); alert('Mot de passe initial pour '+(out.full_name||b.dataset.regenerateInvite)+' :\n\n'+out.temporary_password+'\n\nLe mot de passe a aussi été copié si le navigateur l’autorise.');}
   }catch(err){alert(err.message||'Impossible de générer le lien.');}
   finally{b.disabled=false;b.textContent='Générer le lien';}
+});
+document.addEventListener('click',function(e){
+  const b=e.target.closest('[data-copy-password]');
+  if(!b)return;
+  const pwd=b.getAttribute('data-copy-password')||'';
+  navigator.clipboard?.writeText(pwd).then(function(){b.textContent='Copié ✓';setTimeout(function(){b.textContent='Copier';},1500);}).catch(function(){alert('Mot de passe : '+pwd);});
 });
 document.addEventListener('change',async e=>{const id=e.target.dataset.role;if(!id)return;const r=await sb.rpc('infotelcom_set_user_role',{p_user_id:id,p_role:e.target.value});if(r.error)alert(r.error.message);else await boot()});
 $('#createUserForm')?.addEventListener('submit',async e=>{
   e.preventDefault();
   try{
     const out=await adminUserAction({
-      action:'invite',
+      action:'create_user',
       company_id:$('#createUserCompany').value,
       full_name:$('#createUserName').value.trim(),
       email:$('#createUserEmail').value.trim(),
       role:$('#createUserRole').value,
       redirect_to:location.origin+location.pathname.replace(/admin\.html$/,'index.html')
     });
-    $('#createUserMsg').textContent=out.message||'Invitation envoyée.';
+    $('#createUserMsg').textContent=out.message||'Compte créé.';
+    if(out.temporary_password){
+      var box=$('#demoCredentials');
+      if(box){box.hidden=false;box.innerHTML='<b>Accès créé</b><small>Transmettez ce mot de passe initial à l’utilisateur. Il pourra ensuite le remplacer dans Sécurité.</small><div class="credential-grid"><div><b>'+esc(out.full_name)+'</b><span>'+esc(out.email)+' · '+esc(out.role||'membre')+'</span><code style="display:block;margin-top:8px;font-size:16px;letter-spacing:.04em;">'+esc(out.temporary_password)+'</code><button type="button" class="btn btn-ghost" data-copy-password="'+escapeAttribute(out.temporary_password)+'" style="margin-top:8px">Copier le mot de passe</button></div></div>';} }
     e.target.reset();
     fillCreateUserCompanies();
     await boot();
@@ -76,11 +84,11 @@ $('#seedDemoUsers')?.addEventListener('click',async()=>{
     const box=$('#demoCredentials');
     if(box){
       box.hidden=false;
-      box.innerHTML='<b>10 comptes de démonstration</b><small>Les comptes existent maintenant dans Supabase Auth. Chaque personne choisit son mot de passe via son lien d’invitation.</small><div class="credential-grid">'+(out.users||[]).map(x=>'<div><b>'+esc(x.full_name)+'</b><span>'+esc(x.email)+' · '+esc(x.role||'membre')+'</span>'+(x.action_link?'<a class="btn btn-ghost" style="display:inline-block;margin-top:8px" href="'+escapeAttribute(x.action_link)+'" target="_blank" rel="noopener">Ouvrir le lien d’invitation ↗</a>':'<code>Invitation e-mail</code>')+(x.error?'<small style="color:#ff8d8d">'+esc(x.error)+'</small>':'')+'</div>').join('')+'</div>';
+      box.innerHTML='<b>10 comptes de démonstration</b><small>Les comptes sont maintenant actifs dans Supabase Auth. Chaque personne reçoit un mot de passe initial à transmettre de façon sécurisée, puis peut le remplacer dans Sécurité.</small><div class="credential-grid">'+(out.users||[]).map(x=>'<div><b>'+esc(x.full_name)+'</b><span>'+esc(x.email)+' · '+esc(x.role||'membre')+'</span>'+(x.temporary_password?'<code style="display:block;margin-top:8px;font-size:15px;letter-spacing:.04em">'+esc(x.temporary_password)+'</code><button type="button" class="btn btn-ghost" data-copy-password="'+escapeAttribute(x.temporary_password)+'" style="margin-top:8px">Copier</button>':'<code>Non créé</code>')+(x.error?'<small style="color:#ff8d8d">'+esc(x.error)+'</small>':'')+'</div>').join('')+'</div>';
     }
     await boot();
   }catch(err){alert(err.message||'Création impossible.');}
-  finally{btn.disabled=false;btn.textContent='Créer 10 utilisateurs de test';}
+  finally{btn.disabled=false;btn.textContent='Créer / réinitialiser 10 utilisateurs de test';}
 });
 function renderCompanyStats(s){const box=$('#companyStats'),act=$('#companyActivity');if(!box||!act)return;if(!s){box.innerHTML='<div class="empty">Sélectionnez une entreprise.</div>';act.innerHTML='';return}box.innerHTML='<div><b>'+Number(s.clients_total||0)+'</b><span>CLIENTS</span></div><div><b>'+Number(s.tickets_total||0)+'</b><span>TICKETS</span></div><div><b>'+Number(s.missions_total||0)+'</b><span>MISSIONS</span></div><div><b>'+Number(s.activity_total||0)+'</b><span>ACTIONS</span></div>';const rows=s.recent_activity||[];act.innerHTML=rows.length?rows.map(x=>'<div class="item"><div><b>'+esc(x.action||'Action')+' · '+esc(x.entity_type||'donnée')+'</b><small>'+new Date(x.created_at).toLocaleString('fr-FR')+'</small></div><span class="chip">lecture seule</span></div>').join(''):'<div class="empty">Aucune activité enregistrée.</div>'}
 $('#companySelect').onchange=async()=>{fillCreateUserCompanies(); const id=$('#companySelect').value;if(!id){$('#companyInfo').textContent='';renderCompanyStats(null);return}const c=data.companies.find(x=>x.id===id);$('#companyInfo').innerHTML='<b>'+esc(c?.name||'')+'</b><div class="muted">'+(c?.users_count||0)+' utilisateur(s)</div>';const r=await sb.rpc('infotelcom_company_statistics',{p_company_id:id});if(r.error){renderCompanyStats(null);alert(r.error.message);return}renderCompanyStats(r.data||null)};
