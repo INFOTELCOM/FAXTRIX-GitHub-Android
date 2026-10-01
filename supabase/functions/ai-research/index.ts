@@ -19,7 +19,7 @@ export default {
 
     try {
       const body=await req.json();
-      const q=String(body?.q||"").trim().slice(0,700);
+      const q=String(body?.query||body?.q||"").trim().slice(0,700);
       if(!q) return json({error:"Requête vide"},400);
 
       let results:any[]=[];
@@ -64,7 +64,7 @@ export default {
 
       if(!routerKey) return json({query:q,results,answer:null,warning:searchWarning||"OPENROUTER_API_KEY non configurée."});
 
-      const webContext=results.length?results.map((x:any,i:number)=>"["+ (i+1)+"] "+(x.title||"Source")+"\n"+(x.snippet||"")+"\n"+(x.link||"")).join("\n\n"):"Aucune source Google disponible.";
+      const webContext=results.length?results.map((x:any,i:number)=>"["+ (i+1)+"] "+(x.title||"Source")+"\n"+(x.snippet||"")+"\n"+(x.link||"")).join("\n\n"):"Aucune source Google fournie. Utilise openrouter:web_search si la question nécessite des informations actuelles.";
       const prompt="Question utilisateur: "+q+
         "\n\nDONNÉES PRIVÉES FAXTRIX DE L'ENTREPRISE (à utiliser seulement pour répondre à cet utilisateur):\n"+(companyContext||"Aucune donnée privée disponible.")+
         "\n\nSOURCES WEB GOOGLE:\n"+webContext+
@@ -81,7 +81,7 @@ export default {
           ],
           temperature:0.2,max_tokens:1800,
           tools:[
-            {type:"openrouter:web_search",parameters:{engine:"auto"}},
+            {type:"openrouter:web_search"},
             {type:"openrouter:web_fetch",parameters:{engine:"openrouter",max_content_tokens:12000}}
           ],
           max_tool_calls:3
