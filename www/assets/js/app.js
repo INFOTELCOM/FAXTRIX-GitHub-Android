@@ -1263,7 +1263,19 @@ const FAXTRIX_GLOSSARY = {
   "kpi":"KPI signifie Key Performance Indicator : indicateur clé utilisé pour suivre une activité ou une performance.",
   "soc":"SOC signifie Security Operations Center : centre chargé de surveiller et traiter les événements de cybersécurité.",
   "rgpd":"RGPD signifie Règlement Général sur la Protection des Données.",
-  "qa":"QA signifie Quality Assurance : ensemble des pratiques de vérification de la qualité d'un logiciel."
+  "qa":"QA signifie Quality Assurance : ensemble des pratiques de vérification de la qualité d'un logiciel.",
+  "python":"Python est un langage de programmation polyvalent, très utilisé pour l'automatisation, la data, l'IA, le web et la cybersécurité.",
+  "java":"Java est un langage de programmation orienté objet utilisé notamment pour les applications d'entreprise, Android et les services backend.",
+  "php":"PHP est un langage principalement utilisé côté serveur pour créer des sites et applications web dynamiques.",
+  "c":"C est un langage de programmation compilé proche du système, utilisé notamment pour les systèmes, logiciels embarqués et performances bas niveau.",
+  "cpp":"C++ est une évolution de C avec notamment la programmation orientée objet et la gestion de systèmes logiciels performants.",
+  "csharp":"C# est un langage de programmation de Microsoft, très utilisé avec .NET pour les applications web, desktop, services et jeux.",
+  "javascript":"JavaScript est un langage qui permet de rendre les pages web interactives et de développer aussi des applications côté serveur.",
+  "typescript":"TypeScript est un sur-ensemble de JavaScript qui ajoute notamment le typage statique.",
+  "react":"React est une bibliothèque JavaScript utilisée pour construire des interfaces utilisateur composées de composants.",
+  "nextjs":"Next.js est un framework basé sur React pour créer des applications web avec rendu serveur, génération statique et fonctionnalités backend.",
+  "nodejs":"Node.js permet d'exécuter JavaScript côté serveur grâce au moteur V8.",
+  "postgresql":"PostgreSQL est un système de gestion de base de données relationnelle open source."
 };
 function aiGlossaryAnswer(q) {
   var s=String(q||'').toLowerCase().trim();
@@ -1322,15 +1334,25 @@ function aiSay(text, who) {
 }
 async function aiWebSearch(q) {
   try {
-    var res=await sb.functions.invoke('ai-research',{body:{query:q}});
-    if(res.error){
-      console.warn('FAXTRIX assistant IA:',res.error);
-      return {error:res.error.message||'Assistant IA indisponible'};
+    var sessionRes=await sb.auth.getSession();
+    var session=sessionRes.data&&sessionRes.data.session;
+    var headers={'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY};
+    if(session&&session.access_token) headers.Authorization='Bearer '+session.access_token;
+    var controller=new AbortController();
+    var timer=setTimeout(function(){controller.abort();},20000);
+    var res=await fetch(SUPABASE_URL+'/functions/v1/ai-research',{
+      method:'POST', headers:headers, body:JSON.stringify({query:q}), signal:controller.signal
+    });
+    clearTimeout(timer);
+    var raw=await res.text(), data=null;
+    try{data=raw?JSON.parse(raw):null;}catch(e){}
+    if(!res.ok){
+      return {error:(data&&(data.error||data.warning))||('HTTP '+res.status+' — '+raw.slice(0,240))};
     }
-    return res.data||{error:'Réponse vide de l’assistant IA.'};
+    return data||{error:'Réponse vide du moteur IA.'};
   } catch(e) {
-    console.warn('FAXTRIX assistant IA:',e);
-    return {error:e.message||'Assistant IA indisponible'};
+    if(e&&e.name==='AbortError') return {error:'Le moteur IA a dépassé le délai de 20 secondes.'};
+    return {error:e&&e.message?e.message:'Edge Function ai-research inaccessible. Déployez la fonction ai-research dans Supabase.'};
   }
 }
 function aiRenderAnswer(text) {
@@ -1601,26 +1623,31 @@ window.FAXTRIX.openNewConversation = async function(){
   if(existing) existing.remove();
   var overlay=document.createElement('div');
   overlay.id='faxtrixNewChatOverlay';
-  overlay.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(3,10,20,.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
-  overlay.innerHTML='<div style="width:min(520px,100%);max-height:80vh;overflow:auto;background:var(--panel,#0b1b2d);border:1px solid var(--line-soft,#234);border-radius:18px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.45);"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;"><div><div style="font-size:11px;color:var(--ion);letter-spacing:.12em;font-weight:700;">MESSAGERIE INTERNE</div><h3 style="margin:5px 0;">Démarrer une conversation</h3><p style="margin:0;color:var(--text-2);font-size:12px;">Recherchez uniquement les personnes de votre entreprise.</p></div><button type="button" id="faxtrixChatClose" class="row-btn">×</button></div><input id="faxtrixChatPersonSearch" type="search" placeholder="Rechercher une personne…" autocomplete="off" style="width:100%;margin:18px 0 10px;padding:12px 14px;border-radius:10px;border:1px solid var(--line-soft);background:rgba(255,255,255,.04);color:var(--text);"><div id="faxtrixChatPeople" style="display:grid;gap:8px;"></div><div id="faxtrixChatStatus" style="font-size:12px;color:var(--text-2);margin-top:12px;"></div></div>';
+  overlay.className='faxtrix-chat-overlay';
+  overlay.innerHTML='<div class="faxtrix-chat-dialog">'+
+    '<div class="faxtrix-chat-dialog-head"><div><div class="eyebrow">MESSAGERIE INTERNE</div><h3>Démarrer une conversation</h3><p>Personnes enregistrées dans votre entreprise uniquement.</p></div><button type="button" id="faxtrixChatClose" class="row-btn" aria-label="Fermer">×</button></div>'+
+    '<div class="faxtrix-chat-person-search"><div class="app-search"><input id="faxtrixChatPersonSearch" type="search" placeholder="Rechercher une personne…" autocomplete="off"></div><button type="button" id="faxtrixChatPersonSearchBtn" class="btn btn-primary">Rechercher</button></div>'+
+    '<div id="faxtrixChatStatus" class="faxtrix-chat-status">Chargement des membres…</div><div id="faxtrixChatPeople" class="faxtrix-chat-people"></div></div>';
   document.body.appendChild(overlay);
   var close=function(){overlay.remove();};
   $('#faxtrixChatClose').onclick=close;
   overlay.addEventListener('click',function(e){if(e.target===overlay)close();});
-  var status=$('#faxtrixChatStatus'), list=$('#faxtrixChatPeople'), search=$('#faxtrixChatPersonSearch');
-  status.textContent='Chargement des membres de votre entreprise…';
+  var status=$('#faxtrixChatStatus'), list=$('#faxtrixChatPeople'), search=$('#faxtrixChatPersonSearch'), searchBtn=$('#faxtrixChatPersonSearchBtn');
   var ok=await loadChatProfiles();
-  if(!ok){status.textContent='Impossible de charger les membres. Vérifiez la configuration de la messagerie.';return;}
+  if(!ok){status.textContent='Impossible de charger les personnes. Vérifiez la migration de messagerie Supabase.';return;}
   var renderPeople=function(){
     var q=(search.value||'').trim().toLowerCase();
-    var people=chatState.profiles.filter(function(p){return p.id!==state.profile.id && (!q || (p.full_name||'').toLowerCase().indexOf(q)!==-1 || (p.role||'').toLowerCase().indexOf(q)!==-1);});
+    var people=chatState.profiles.filter(function(p){
+      return p.id!==state.profile.id && (!q || (p.full_name||'').toLowerCase().indexOf(q)!==-1 || (p.role||'').toLowerCase().indexOf(q)!==-1);
+    });
     list.innerHTML=people.length?people.map(function(p){
-      return '<button type="button" data-chat-person="'+p.id+'" style="display:flex;align-items:center;gap:12px;text-align:left;padding:11px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(255,255,255,.025);color:var(--text);cursor:pointer;"><span class="chat-avatar" style="width:38px;height:38px;min-width:38px;">'+chatAvatarHtml(p,38)+'</span><span style="display:grid;gap:3px;"><b>'+escapeHtml(p.full_name||'Utilisateur')+'</b><small style="color:var(--text-2);">'+escapeHtml(p.role||'Membre de l’entreprise')+'</small></span></button>';
-    }).join(''):'<div style="padding:18px;text-align:center;color:var(--text-2);">Aucune personne de votre entreprise ne correspond.</div>';
+      return '<div class="faxtrix-chat-person-row"><div class="faxtrix-chat-person-info"><span class="chat-avatar">'+chatAvatarHtml(p,38)+'</span><span><b>'+escapeHtml(p.full_name||'Utilisateur')+'</b><small>'+escapeHtml(p.role||'Membre de l’entreprise')+'</small></span></div><button type="button" class="btn btn-primary faxtrix-chat-talk" data-chat-person="'+p.id+'">Conversation</button></div>';
+    }).join(''):'<div class="app-empty">Aucune personne de votre entreprise ne correspond.</div>';
     status.textContent=people.length+' personne(s) trouvée(s).';
     $$('#faxtrixChatPeople [data-chat-person]').forEach(function(btn){btn.onclick=function(){startChatWithPerson(btn.getAttribute('data-chat-person'),close);};});
   };
   search.oninput=renderPeople;
+  searchBtn.onclick=renderPeople;
   renderPeople();
 };
 async function startChatWithPerson(userId,close){
