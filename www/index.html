@@ -711,12 +711,20 @@
           <div class="profile-row"><span>Session</span><button class="btn btn-ghost" id="logoutBtn"><span>Se déconnecter</span></button></div>
         </div>
 
-        <div class="app-card" style="max-width:480px; margin-top:20px;" id="teamCard" hidden>
-          <h3>Équipe</h3>
-          <p style="font-size:12.5px; color:var(--slate-2); margin-bottom:14px;">Invitez un collègue par e-mail : à son inscription avec cette adresse, il rejoint automatiquement votre entreprise.</p>
+        <div class="app-card" style="max-width:560px; margin-top:20px;" id="teamCard" hidden>
+          <div class="app-card-head"><div><h3>Utilisateurs de l'entreprise</h3><p style="font-size:12.5px; color:var(--slate-2); margin-top:5px;">Le propriétaire ou un manager peut créer un accès. La personne reçoit un lien et choisit elle-même son mot de passe.</p></div><span class="chip ok">ACCÈS</span></div>
           <form class="contact-form" id="inviteForm">
-            <label>E-mail à inviter<input type="email" id="inviteEmail" required placeholder="collegue@entreprise.com"></label>
-            <button type="submit" class="btn btn-ghost"><span>Envoyer l'invitation</span></button>
+            <label>Nom complet<input type="text" id="inviteName" required placeholder="Nom et prénom"></label>
+            <label>E-mail professionnel<input type="email" id="inviteEmail" required placeholder="collegue@entreprise.com"></label>
+            <label>Fonction
+              <select id="inviteRole" required>
+                <option value="manager">Manager</option>
+                <option value="commercial">Commercial</option>
+                <option value="technicien">Technicien</option>
+                <option value="lecture_seule">Lecture seule</option>
+              </select>
+            </label>
+            <button type="submit" class="btn btn-primary"><span>Créer l'accès utilisateur</span></button>
             <p class="modal-status" data-status></p>
           </form>
           <div id="inviteList" style="margin-top:14px;"></div>
