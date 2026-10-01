@@ -800,3 +800,28 @@ body.app-body[data-theme="dark"] .chip.ok{ color:#5EE3AE } body.app-body[data-th
 .credential-grid b,.credential-grid span,.credential-grid code{display:block;overflow-wrap:anywhere;}
 @media(max-width:900px){.credential-grid{grid-template-columns:1fr;}.faxtrix-chat-dialog{max-height:90dvh;overflow:auto;}.faxtrix-chat-people{max-height:48dvh;}}
 @media(max-width:520px){.faxtrix-chat-dialog{padding:12px!important;}.faxtrix-chat-person-search{grid-template-columns:1fr!important;}.faxtrix-chat-person-search .btn{width:100%!important;}.faxtrix-chat-person-row{align-items:flex-start;}.faxtrix-chat-talk{width:100%;margin-left:48px;}}
+
+
+/* FAXTRIX — gestion utilisateurs + menu mobile final */
+.invite-link{display:inline-block;margin-top:7px;color:var(--ion,#59c7ff);font-size:11px;text-decoration:none;overflow-wrap:anywhere}
+.invite-link:hover{text-decoration:underline}
+#teamCard .contact-form{gap:10px}
+#teamCard .contact-form label{display:grid;gap:6px}
+#teamCard .contact-form input,#teamCard .contact-form select{width:100%}
+@media(max-width:900px){
+  body:has(.app-side.open)::after{
+    content:"";position:fixed;inset:0;z-index:999;background:rgba(2,9,18,.68);
+    backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  }
+  html.faxtrix-native body .app-side.open{z-index:1001}
+  html.faxtrix-native body .app-top{z-index:900}
+  html.faxtrix-native body .app-main{min-width:0;width:100%}
+  html.faxtrix-native body .app-body-area{overflow-x:hidden}
+  #teamCard{width:100%;max-width:none!important}
+  #teamCard .app-card-head{flex-wrap:wrap}
+}
+@media(max-width:520px){
+  #teamCard .app-card-head>div{flex-basis:100%}
+  #teamCard .btn{width:100%}
+  .invite-link{font-size:10.5px}
+}
