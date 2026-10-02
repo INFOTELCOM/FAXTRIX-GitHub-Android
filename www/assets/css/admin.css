@@ -18,3 +18,5 @@
  .credential-grid{grid-template-columns:1fr}
  .create-head{align-items:stretch;flex-direction:column}
 }
+
+.reset-link{display:block;width:100%;margin-top:10px;background:transparent!important;color:var(--orange);padding:7px;text-align:center;font-size:12px}.reset-link:hover{text-decoration:underline}
