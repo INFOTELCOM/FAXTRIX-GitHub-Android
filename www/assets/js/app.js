@@ -1383,6 +1383,7 @@ function buildReportRows(){
   state.automations.forEach(function(x){rows.push(['Automatisation',x.id,x.trigger_text,x.live?'Active':'Inactive',fmtDateTime(x.created_at),fmtDateTime(x.updated_at),'',x.action_text||'']);});
   (state.analytics&&state.analytics.people||[]).forEach(function(x){rows.push(['Personne',x.id,x.full_name,x.role,'','',''+((Number(x.connection_seconds_30d||0)/3600).toFixed(1))+' h',Number(x.sessions_30d||0)+' connexion(s) sur 30 jours']);});
   (state.analytics&&state.analytics.sessions||[]).forEach(function(x){rows.push(['Connexion',x.id,x.full_name,x.role,fmtDateTime(x.login_at),fmtDateTime(x.logout_at),' '+((Number(x.duration_seconds||0)/3600).toFixed(2))+' h','Session enregistrée']);});
+  (state.statistics&&state.statistics.recent_activity||[]).forEach(function(x){rows.push(['Mise à jour',x.id||'',(x.entity_type||'Donnée'),x.action||'',fmtDateTime(x.created_at),'','','Activité enregistrée automatiquement']);});
   Object.keys(state.ticketAttachments).forEach(function(tid){(state.ticketAttachments[tid]||[]).forEach(function(x){rows.push(['Fichier ticket',x.id,x.file_name,'Attaché',fmtDateTime(x.created_at),'',formatFileSize(x.file_size),tid]);});});
   return rows;
 }
