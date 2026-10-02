@@ -965,6 +965,13 @@ function renderIntelligence(){
   sessions.forEach(function(s){var k=new Date(s.login_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});sessionByDay[k]=(sessionByDay[k]||0)+Number(s.duration_seconds||0)/3600;});
   var sessKeys=Object.keys(sessionByDay).slice(-14);
   svgTrend('#intelSessionsChart',sessKeys.map(function(k){return Number(sessionByDay[k].toFixed(2));}),sessKeys);
+  var opVals=[Number(totals.missions||0),Number(totals.team||0),Number(totals.automations||0)];
+  var opLabels=['Terrain','Équipe','Autom.'];
+  $('#intelOperationsTotal').textContent=opVals.reduce(function(a,b){return a+b;},0);
+  svgTrend('#intelOperationsChart',opVals,opLabels);
+  var commVals=[Number(totals.conversations||0),Number(totals.messages||0),Number(totals.attachments||0)];
+  $('#intelCommunicationTotal').textContent=commVals.reduce(function(a,b){return a+b;},0);
+  svgTrend('#intelCommunicationChart',commVals,['Conv.','Messages','Fichiers']);
   $('#intelPeopleList').innerHTML=people.length?people.map(function(p){
     var h=(Number(p.connection_seconds_30d||0)/3600).toFixed(1);
     return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(p.full_name||'Utilisateur')+'</b><span>'+escapeHtml(p.role||'Membre')+' · '+Number(p.sessions_30d||0)+' connexion(s) · '+h+' h enregistrées</span></div><span class="chip">'+h+' h</span></div>';
