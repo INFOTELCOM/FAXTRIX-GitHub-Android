@@ -7,6 +7,16 @@ function msg(t){$('#loginMsg').textContent=t||''}
 function roleLabel(role){return ({owner:'Administrateur entreprise',manager:'Manager',commercial:'Commercial',technicien:'Technicien',lecture_seule:'Lecture seule',infotelcom_admin:'Administrateur INFOTELCOM'})[role]||role||'Membre'}
 async function boot(){const r=await sb.rpc('infotelcom_admin_bootstrap');if(r.error){document.body.classList.remove('admin-authenticated');$('#login').hidden=false;$('#login').style.setProperty('display','grid','important');$('#app').hidden=true;$('#app').style.setProperty('display','none','important');msg('Accès refusé ou administration non initialisée.');return false} data=r.data||{};const inv=await sb.from('invitations').select('email,full_name,role,company_id,created_at').eq('accepted',false).order('created_at',{ascending:false});data.invitations=inv.error?[]:(inv.data||[]);await loadAdminDirectory();document.body.classList.add('admin-authenticated');$('#login').hidden=true;$('#login').style.setProperty('display','none','important');$('#app').hidden=false;$('#app').style.removeProperty('display');$('#adminName').textContent=data.profile?.full_name||'INFOTELCOM';render();fillCreateUserCompanies();loadPlatformStats();return true}
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();msg('Connexion…');const r=await sb.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#pass').value});if(r.error){msg('Connexion impossible.');return}await boot()});
+$('#changeAdminPassword').onclick=async()=>{
+  const p1=prompt('Nouveau mot de passe (8 caractères minimum) :')||'';
+  if(!p1)return;
+  if(p1.length<8){alert('Le mot de passe doit contenir au moins 8 caractères.');return;}
+  const p2=prompt('Confirmez le nouveau mot de passe :')||'';
+  if(p1!==p2){alert('Les deux mots de passe sont différents.');return;}
+  const r=await sb.auth.updateUser({password:p1});
+  if(r.error){alert(r.error.message||'Impossible de changer le mot de passe.');return;}
+  alert('Mot de passe administrateur mis à jour.');
+};
 $('#logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
 $('#refresh').onclick=boot;
 $('#refreshPlatform').onclick=loadPlatformStats;
