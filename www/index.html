@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Martian+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css?v=20261001-1">
-<link rel="stylesheet" href="assets/css/app.css?v=20261002-dashboard-admin-1">
+<link rel="stylesheet" href="assets/css/app.css?v=20261002-control-center-2">
 <script>
   (function(){
     try {
@@ -270,6 +270,12 @@
             <button type="button" data-go="terrain"><i>📍</i>Terrain</button>
             <button type="button" data-go="rapports"><i>📊</i>Rapports</button>
             <button type="button" data-go="automatisation"><i>⚡</i>Autom.</button>
+            <button type="button" data-go="messagerie"><i>💬</i>Messagerie</button>
+            <button type="button" data-go="intelligence"><i>📈</i>Intelligence</button>
+            <button type="button" data-go="simulation"><i>🎛️</i>Simulation</button>
+            <button type="button" data-go="suivi"><i>📊</i>Suivi</button>
+            <button type="button" data-go="assistant"><i>✦</i>Assistant IA</button>
+            <button type="button" data-go="securite"><i>🛡️</i>Sécurité</button>
             <button type="button" data-go="parametres"><i>⚙️</i>Réglages</button>
             <button type="button" data-plus-open><i>👤</i>Mon espace</button>
           </div>
@@ -429,6 +435,7 @@
           <button type="button" class="btn btn-ghost" id="crmSearchBtn">🔎 Rechercher</button>
           <button class="btn btn-primary" id="crmAddBtn"><span>+ Nouveau client</span></button>
         </div>
+        <div class="crm-account-note app-card"><b>Clients CRM ≠ utilisateurs FAXTRIX</b><span>Créer un client l’enregistre dans le CRM. Cela ne crée pas automatiquement un compte de connexion. Le bouton 💬 sur un client ouvre son Portail Client pour lui créer, si nécessaire, un accès séparé.</span></div>
         <div class="app-list" id="crmList"></div>
       </section>
 
@@ -451,6 +458,7 @@
           <div class="app-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="tkSearch" placeholder="Rechercher un ticket…"></div>
           <button class="btn btn-primary" id="tkAddBtn"><span>+ Nouveau ticket</span></button>
         </div>
+        <div class="ticket-export-note"><span>Chaque ticket peut être téléchargé et recevoir des pièces jointes.</span></div>
         <div id="tkMySummary" style="margin:12px 0;padding:14px;border:1px solid var(--line-soft);border-radius:14px;background:rgba(255,255,255,.03);display:none;">
           <b>Mon activité</b>
           <span id="tkMySummaryText" style="display:block;color:var(--slate-2);margin-top:5px;">Vos tickets, vos saisies et vos horaires de travail.</span>
@@ -491,69 +499,51 @@
         <div id="autoList"></div>
       </section>
 
-      <!-- ---------- INTELLIGENCE (Business Brain) ---------- -->
+      <!-- ---------- INTELLIGENCE ---------- -->
       <section class="app-panel" data-panel="intelligence">
-        <div class="app-card" style="margin-bottom:22px;">
-          <div class="app-card-head"><h3>Business Brain</h3><span class="chip mid">Calculé en direct</span></div>
-          <p style="font-size:13px; color:var(--slate); margin-bottom:16px;">Ces indicateurs sont recalculés à partir de vos données réelles de démonstration (CRM, tickets, terrain, équipes) — pas d'aléatoire, pas de modèle d'IA distant.</p>
-          <div class="app-list" id="brainList"></div>
+        <div class="app-card intelligence-hero">
+          <div class="app-card-head"><div><span class="eyebrow">CENTRE ANALYTIQUE</span><h3>Intelligence opérationnelle</h3><p>Des graphiques vivants, inspirés des marchés : activité, tickets, CRM, équipe, missions et connexions de l’entreprise.</p></div><span class="chip ok">DONNÉES RÉELLES</span></div>
         </div>
+        <div class="analytics-grid" id="intelligenceGraphs">
+          <div class="analytics-card"><div class="analytics-head"><div><b>Activité globale</b><span>30 derniers jours</span></div><strong id="intelActivityTotal">0</strong></div><svg id="intelActivityChart" viewBox="0 0 800 230"></svg></div>
+          <div class="analytics-card"><div class="analytics-head"><div><b>Tickets</b><span>Volume quotidien</span></div><strong id="intelTicketsTotal">0</strong></div><svg id="intelTicketsChart" viewBox="0 0 800 230"></svg></div>
+          <div class="analytics-card"><div class="analytics-head"><div><b>CRM / pipeline</b><span>État actuel</span></div><strong id="intelClientsTotal">0</strong></div><svg id="intelCrmChart" viewBox="0 0 800 230"></svg></div>
+          <div class="analytics-card"><div class="analytics-head"><div><b>Connexions</b><span>Heures enregistrées</span></div><strong id="intelConnectionTotal">0h</strong></div><svg id="intelSessionsChart" viewBox="0 0 800 230"></svg></div>
+        </div>
+        <div class="app-card" style="margin-top:18px;"><div class="app-card-head"><h3>Activité des personnes</h3><span class="chip">30 jours</span></div><div id="intelPeopleList" class="app-list"></div></div>
       </section>
 
-      <!-- ---------- SIMULATION (Decision Simulator) ---------- -->
+      <!-- ---------- SIMULATION ---------- -->
       <section class="app-panel" data-panel="simulation">
         <div class="app-card">
-          <div class="app-card-head"><h3>Decision Simulator</h3><span class="chip mid">Formule simplifiée</span></div>
-          <p style="font-size:13px; color:var(--slate); margin-bottom:24px;">Déplacez les curseurs pour estimer l'effet de deux décisions courantes. Calcul linéaire simple à but illustratif — pas un modèle prédictif réel.</p>
-          <div class="sim-slider">
-            <div class="sl-head"><span>Techniciens supplémentaires</span><b id="simTechVal">0</b></div>
-            <input type="range" id="simTech" min="0" max="6" value="0">
+          <div class="app-card-head"><div><span class="eyebrow">PLANIFICATION</span><h3>Scénarios & capacité opérationnelle</h3><p style="font-size:12.5px;color:var(--text-2);margin-top:4px;">Testez une hypothèse de charge avant de la mettre en production. Les résultats sont des simulations, pas des prédictions.</p></div><span class="chip mid">SIMULATION</span></div>
+          <div class="simulation-grid">
+            <div class="sim-slider"><div class="sl-head"><span>Techniciens disponibles</span><b id="simTechVal">0</b></div><input type="range" id="simTech" min="0" max="20" value="0"></div>
+            <div class="sim-slider"><div class="sl-head"><span>Réduction du délai</span><b id="simDelayVal">0%</b></div><input type="range" id="simDelay" min="0" max="80" value="0"></div>
+            <div class="sim-slider"><div class="sl-head"><span>Hausse de la demande</span><b id="simDemandVal">0%</b></div><input type="range" id="simDemand" min="0" max="100" value="0"></div>
+            <div class="sim-result"><div><b id="simProd">+0%</b><span>CAPACITÉ</span></div><div><b id="simCost">+0%</b><span>PRESSION COÛT</span></div><div><b id="simRisk">0%</b><span>RISQUE OPÉRATIONNEL</span></div></div>
           </div>
-          <div class="sim-slider">
-            <div class="sl-head"><span>Réduction du délai d'intervention</span><b id="simDelayVal">0%</b></div>
-            <input type="range" id="simDelay" min="0" max="50" value="0">
-          </div>
-          <div class="sim-result">
-            <div><b id="simProd">+0%</b><span>PRODUCTIVITÉ</span></div>
-            <div><b id="simCost">+0%</b><span>COÛTS</span></div>
-            <div><b id="simRisk">0%</b><span>RISQUE</span></div>
-          </div>
+          <div id="simAdvice" class="simulation-advice">Ajustez les curseurs pour comparer les scénarios.</div>
         </div>
       </section>
 
       <!-- ---------- MESSAGERIE ---------- -->
       <section class="app-panel" data-panel="messagerie" id="chatPanel">
-        <div class="app-card">
-          <div class="app-card-head">
-            <div><h3>Messagerie FAXTRIX</h3><p style="font-size:12.5px;color:var(--text-2);margin-top:5px;">Échangez avec les membres de votre entreprise. Les conversations restent isolées par organisation.</p></div>
-            <button type="button" class="btn btn-primary" id="chatNewBtn" onclick="window.FAXTRIX&&window.FAXTRIX.openNewConversation&&window.FAXTRIX.openNewConversation()"><span>👥 Personnes &amp; conversations</span></button>
-          </div>
-        </div>
-        <div class="chat-layout">
-          <aside class="chat-sidebar">
-            <div class="app-search"><input type="search" id="chatSearch" placeholder="Rechercher une conversation…"></div>
-            <div id="chatConversationList" class="chat-conversations"></div>
-          </aside>
-          <div class="chat-main">
-            <div id="chatEmpty" class="chat-empty">Sélectionnez une conversation pour commencer.</div>
-            <div id="chatConversation" hidden>
-              <header class="chat-head">
-                <div class="chat-person"><div id="chatAvatar" class="chat-avatar" title="Changer la photo de profil">👤</div><input type="file" id="chatAvatarFile" accept="image/*" hidden><div><b id="chatTitle">Conversation</b><span id="chatMembersLabel">—</span></div></div>
-                <div class="chat-head-actions">
-                  <button class="row-btn" id="chatAudioBtn" title="Appel audio">☎</button>
-                  <button class="row-btn" id="chatVideoBtn" title="Appel vidéo">▣</button>
-                </div>
-              </header>
-              <div id="chatMessages" class="chat-messages"></div>
-              <div class="chat-attachment" id="chatAttachment" hidden><span id="chatAttachmentName"></span><button type="button" class="row-btn" id="chatAttachmentRemove">×</button></div>
-              <form id="chatForm" class="chat-compose">
-                <input type="file" id="chatFile" hidden>
-                <button type="button" class="row-btn" id="chatFileBtn" title="Joindre un fichier">📎</button>
-                <input type="text" id="chatInput" autocomplete="off" placeholder="Écrire un message…">
-                <button type="submit" class="btn btn-primary">Envoyer</button>
-              </form>
+        <div class="app-card messaging-fallback-card">
+          <div class="app-card-head"><div><span class="eyebrow">MESSAGERIE</span><h3>Nouvelle conversation</h3><p>La messagerie interne temps réel est en préparation. En attendant, utilisez ce formulaire pour préparer un message destiné à une personne ou à un client.</p></div><span class="chip mid">MODE E-MAIL</span></div>
+          <form id="messagingFallbackForm" class="contact-form">
+            <label>Sujet de la conversation<input id="messageSubject" type="text" maxlength="160" required placeholder="Ex. Suivi du ticket #TK-2026-001"></label>
+            <label>E-mail de la personne<input id="messageEmail" type="email" maxlength="180" required placeholder="personne@entreprise.com"></label>
+            <label>Message<textarea id="messageBody" rows="9" maxlength="6000" required placeholder="Écrivez votre message…"></textarea></label>
+            <div class="app-card" style="padding:14px;margin-top:2px;background:rgba(255,255,255,.025);">
+              <b>À savoir</b><p style="margin:5px 0 0;font-size:12px;color:var(--text-2);line-height:1.6;">Le message n’est pas encore enregistré dans la messagerie interne FAXTRIX. Le bouton ci-dessous ouvre votre messagerie e-mail avec le sujet et le contenu déjà préparés.</p>
             </div>
-          </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:14px;">
+              <button type="reset" class="btn btn-ghost"><span>Effacer</span></button>
+              <button type="submit" class="btn btn-primary"><span>✉️ Préparer l’e-mail</span></button>
+            </div>
+            <p id="messagingFallbackStatus" class="modal-status" data-state="ok"></p>
+          </form>
         </div>
       </section>
 
@@ -592,13 +582,19 @@
 
       <!-- ---------- RAPPORTS ---------- -->
       <section class="app-panel" data-panel="rapports">
-        <div class="app-toolbar">
+        <div class="app-toolbar reports-export-toolbar">
           <div class="app-tabs" id="rapportsRange">
             <button class="active" data-range="7">7 jours</button>
             <button data-range="30">30 jours</button>
             <button data-range="90">90 jours</button>
           </div>
-          <button class="btn btn-ghost" id="exportReportBtn" type="button">⬇ Exporter CSV</button>
+          <div class="report-export-actions">
+            <button class="btn btn-ghost" id="exportReportBtn" type="button">⬇ CSV</button>
+            <button class="btn btn-ghost" id="exportReportPdfBtn" type="button">▣ PDF</button>
+            <button class="btn btn-ghost" id="exportReportWordBtn" type="button">W Word</button>
+            <button class="btn btn-ghost" id="exportReportPptBtn" type="button">▣ PowerPoint</button>
+            <button class="btn btn-ghost" id="exportReportJsonBtn" type="button">{ } JSON</button>
+          </div>
         </div>
         <div class="app-stats">
           <div class="app-stat"><b id="repTickets">0</b><span>TICKETS TRAITÉS</span></div>
@@ -892,7 +888,12 @@
       <label>Tâches à faire<textarea id="tkTasks" rows="4" placeholder="1. Vérifier le switch&#10;2. Tester la connexion&#10;3. Corriger la configuration…"></textarea></label>
       <label>Recommandations<textarea id="tkRecommendations" rows="4" placeholder="Conseils à suivre pour éviter que le problème se reproduise."></textarea></label>
       <label>Résolution / comment le problème a été réglé<textarea id="tkResolution" rows="4" placeholder="Décrivez les actions réalisées et la solution appliquée."></textarea></label>
-      <label>Description complémentaire<textarea id="tkDescription" rows="3" placeholder="Informations supplémentaires."></textarea></label>
+      <label>Description complémentaire<textarea id="tkDescription" rows="3" placeholder="Informations supplémentaires."></textarea>
+      <div class="ticket-files-box">
+        <div class="ticket-files-head"><b>Fichiers du ticket</b><span>Ajoutez uniquement les fichiers utiles au ticket.</span></div>
+        <input type="file" id="tkFiles" multiple>
+        <div id="tkFilesList" class="ticket-files-list"></div>
+      </div></label>
       <div id="tkAutosaveStatus" style="font-size:11px;color:var(--slate-2);min-height:18px;">Les modifications sont sauvegardées automatiquement.</div>
       <div id="tkHistory" style="margin:10px 0;padding:12px;border:1px solid var(--line-soft);border-radius:12px;background:rgba(255,255,255,.025);display:none;">
         <b>Historique de mes enregistrements</b>
