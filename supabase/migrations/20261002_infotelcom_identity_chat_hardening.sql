@@ -5,7 +5,7 @@ update public.companies set name='INFOTELCOM' where lower(name)='mon entreprise'
 update public.companies set name='DEMO FAXTRIX' where lower(name)='stostep';
 
 update public.profiles set full_name='ALBERT MAYELE'
-where id='cfc2d567-2562-4a95-ae44-af2ef5f6f6'; -- kept as a no-op if the historical id differs
+where id='cfc2d567-2562-4a95-ae44-af34a0b90ea4';
 
 create table if not exists public.infotelcom_admin_directory(
   id uuid primary key default gen_random_uuid(),
