@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
-const roles=new Set(["manager","commercial","technicien","lecture_seule","owner"]);
+const roles=new Set(["manager","commercial","technicien","lecture_seule","owner","infotelcom_admin"]);
 const demoUsers=[["Amina Dupont","demo01@faxtrix.test","manager"],["Marc Okoro","demo02@faxtrix.test","commercial"],["Sophie Martin","demo03@faxtrix.test","technicien"],["David Nkosi","demo04@faxtrix.test","technicien"],["Nadia Kiala","demo05@faxtrix.test","commercial"],["Kevin Mouzita","demo06@faxtrix.test","manager"],["Sarah Mavoungou","demo07@faxtrix.test","lecture_seule"],["Junior Ngoma","demo08@faxtrix.test","technicien"],["Claire Bemba","demo09@faxtrix.test","commercial"],["Patrick Samba","demo10@faxtrix.test","lecture_seule"]];
 
 function json(data:unknown,status=200){return new Response(JSON.stringify(data),{status,headers:{...cors,"Content-Type":"application/json"}});}
@@ -116,6 +116,30 @@ Deno.serve(async(req)=>{
     }
     if(action==="regenerate_link"){
       return json({error:"Les liens d'invitation ne sont plus nécessaires. Utilisez le mot de passe initial."},410);
+    }
+    if(action==="seed_infotelcom_admins"){
+      if(!isInfotelcomAdmin) throw new Error("Action réservée à INFOTELCOM.");
+      const companyId=String(body.company_id||"");
+      if(!companyId) throw new Error("Entreprise INFOTELCOM obligatoire.");
+      const admins=[
+        ["ALBERT MAYELE","contact.infotelcom@gmail.com"],
+        ["CHRIST MAWANA","contact.infotelcom+christ@gmail.com"],
+        ["JUVEL NGALIKO","contact.infotelcom+juvel@gmail.com"]
+      ];
+      const users:any[]=[];
+      for(const [full_name,email] of admins){
+        try{
+          users.push(await createManagedUser(adminSb,{company_id:companyId,full_name,email,role:"infotelcom_admin"}));
+        }catch(e){
+          users.push({full_name,email,role:"infotelcom_admin",error:e instanceof Error?e.message:String(e)});
+        }
+      }
+      await adminSb.from("admin_audit_logs").insert({
+        admin_id:caller.id,company_id:companyId,action:"seed_infotelcom_admins",
+        target_type:"company",target_id:companyId,
+        metadata:{count:users.filter(x=>!x.error).length}
+      });
+      return json({ok:true,message:"Les trois administrateurs INFOTELCOM sont préparés.",users});
     }
     if(action==="seed_demo"){
       if(!isInfotelcomAdmin) throw new Error("Action réservée à INFOTELCOM.");
