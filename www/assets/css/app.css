@@ -860,3 +860,23 @@ body.app-body[data-theme="dark"] .chip.ok{ color:#5EE3AE } body.app-body[data-th
 .mission-alert-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 @media(max-width:1100px){.home-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.home-data-grid{grid-template-columns:1fr}.mission-alert-card{padding:18px;gap:12px}.mission-alert-icon{width:44px;height:44px;min-width:44px}.mission-alert-actions{flex-direction:column}.mission-alert-actions .btn{width:100%}.mission-alert-item{display:grid;gap:4px}}
+
+/* ================= FAXTRIX — centre de contrôle 2026-10-02 ================= */
+.crm-account-note,.ticket-export-note{display:flex;gap:10px;align-items:flex-start;margin:12px 0;padding:13px 15px;border:1px solid var(--line-soft);border-radius:14px;background:rgba(255,255,255,.025)}
+.crm-account-note b{display:block;color:var(--text-1)}.crm-account-note span,.ticket-export-note span{font-size:11.5px;color:var(--text-2);line-height:1.55}
+.analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+.analytics-card{min-width:0;padding:18px;border:1px solid var(--line-soft);border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));overflow:hidden}
+.analytics-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.analytics-head>div{display:grid;gap:4px}.analytics-head b{font-size:14px}.analytics-head span{font-size:10px;color:var(--text-2)}.analytics-head strong{font-size:22px;color:var(--ion)}
+.analytics-card svg{width:100%;height:230px;overflow:visible;color:var(--text-2)}.analytics-card svg text{font-size:10px;fill:currentColor}.analytics-card svg path,.analytics-card svg circle{filter:drop-shadow(0 0 5px rgba(255,138,24,.18))}
+.intelligence-hero{background:radial-gradient(circle at 85% 20%,rgba(255,138,24,.12),transparent 35%),linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.02))}
+.simulation-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}.simulation-grid .sim-result{grid-column:1/-1}.simulation-advice{margin-top:16px;padding:14px;border:1px solid var(--line-soft);border-radius:13px;color:var(--text-2);font-size:12px;background:rgba(255,255,255,.025)}
+.messaging-fallback-card{max-width:900px;margin:0 auto}.messaging-fallback-card .contact-form{gap:14px}
+.reports-export-toolbar{align-items:center}.report-export-actions{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}.report-export-actions .btn{white-space:nowrap}
+.ticket-files-box{margin:14px 0;padding:13px;border:1px solid var(--line-soft);border-radius:14px;background:rgba(255,255,255,.025)}.ticket-files-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:9px}.ticket-files-head span{font-size:10.5px;color:var(--text-2)}.ticket-files-list{display:grid;gap:7px;margin-top:10px}.ticket-file-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:10px;background:rgba(255,255,255,.025)}.ticket-file-row>span{min-width:0;display:grid;gap:2px}.ticket-file-row b{font-size:11.5px;overflow-wrap:anywhere}.ticket-file-row small{font-size:9.5px;color:var(--text-2)}.ticket-file-row .row-btn{flex:none}
+@media(max-width:900px){.analytics-grid{grid-template-columns:1fr}.simulation-grid{grid-template-columns:1fr}.simulation-grid .sim-result{grid-column:auto}.report-export-actions{margin-left:0;width:100%}.report-export-actions .btn{flex:1}.ticket-files-head{display:grid}.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.report-export-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.report-export-actions .btn{width:100%}.analytics-card{padding:14px}.analytics-card svg{height:190px}.ticket-file-row{align-items:flex-start}}
+@media print{
+  .app-side,.app-top,.report-export-actions,.app-toolbar,.demo-banner,.toast-wrap{display:none!important}
+  .app-body-area{padding:0!important}.app-main{width:100%!important}.app-panel{display:none!important}.app-panel.active{display:block!important}
+  .app-card,.analytics-card{box-shadow:none!important;border:1px solid #ddd!important;background:#fff!important;color:#111!important}
+}
