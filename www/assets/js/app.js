@@ -1113,13 +1113,13 @@ async function regenerateInviteLink(email){
   }catch(e){toast('Lien impossible : '+(e.message||'erreur serveur'),'crit');}
 }
 function renderInvites(){
-  var card=$('#teamCard');if(!card)return;var canManage=['owner','manager','infotelcom_admin'].indexOf(state.profile.role)!==-1;card.hidden=!canManage;
+  var card=$('#teamCard');if(!card)return;var canManage=['owner','infotelcom_admin'].indexOf(state.profile.role)!==-1;card.hidden=!canManage;
   var wrap=$('#inviteList');if(!wrap)return;var pending=state.invitations.filter(function(i){return !i.accepted;});
   wrap.innerHTML=pending.length?pending.map(function(i){var link=state.inviteLinks[i.email]||'';return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(i.full_name||i.email)+'</b><span>'+escapeHtml(i.email)+' · '+escapeHtml(i.role||'lecture_seule')+' · Ancien accès en attente</span>'+(link?'<a class="invite-link" href="'+escapeAttribute(link)+'" target="_blank" rel="noopener">Ouvrir le lien d’invitation ↗</a>':'')+'</div><div class="app-row-actions"><button class="row-btn" data-invite-link="'+escapeHtml(i.email)+'" title="Définir un nouveau mot de passe">🔑</button><button class="row-btn" data-invite-del="'+i.id+'">🗑</button></div></div>';}).join(''):'<div class="app-empty">Aucune invitation en attente.</div>';
 }
 function renderTopUser() {
   var admin = state.profile.role === 'infotelcom_admin';
-  var name = admin ? 'INFOTELCOM' : (state.profile.full_name || 'Vous');
+  var name = admin ? (state.profile.full_name || 'INFOTELCOM') : (state.profile.full_name || 'Vous');
   var company = admin ? 'INFOTELCOM' : (state.profile.company_name || 'Votre entreprise');
   $('#userName').textContent = name;
   $('#userAv').textContent = admin ? 'I' : name.charAt(0).toUpperCase();
@@ -1531,10 +1531,12 @@ function aiDefinitionKey(q, dictionary) {
   var s=String(q||'').toLowerCase().trim().replace(/[?!.,;:]+$/,'');
   var m=s.match(/(?:c[’']est quoi|que signifie|signifie|définis|définition de|explique|expliquer)\s+(.+)$/i);
   if(!m) return null;
-  var words=m[1].trim().split(/\s+/);
+  var phrase=m[1].trim().replace(/^[«"'“”]+|[»"'“”]+$/g,'').toLowerCase();
+  if(dictionary[phrase]) return phrase;
+  var words=phrase.split(/\s+/);
   for(var i=0;i<words.length;i++){
-    var key=words[i].toLowerCase().replace(/^[«"'“”]+|[»"'“”]+$/g,'').replace(/[^a-z0-9à-ÿ._-]/gi,'');
-    if(key && dictionary[key]) return key;
+    var key=words[i].replace(/^[«"'“”]+|[»"'“”]+$/g,'').replace(/[^a-z0-9à-ÿ._-]/gi,'');
+    if(key && key.length>1 && dictionary[key]) return key;
   }
   return null;
 }
@@ -1592,7 +1594,7 @@ function aiAnswer(q) {
   }
   if (/(crée|creer|créer|nouveau).*ticket/.test(q)) { showPanel('tickets'); $('#tkAddBtn').click(); return "J'ouvre le formulaire de nouveau ticket."; }
   if (/(faxtrix|infotelcom|entreprise|éditeur|createur|créateur|contact|téléphone|telephone|email|gmail)/.test(q)) {
-    return "INFOTELCOM est l'entreprise à l'origine de FAXTRIX. Elle accompagne les entreprises dans leurs projets numériques, informatiques et de transformation digitale. Site officiel : https://infotelcom-congo-brazzaville.netlify.app/. FAXTRIX propose notamment CRM, tickets, interventions terrain, équipes, automatisation, statistiques, messagerie interne et assistance. Support : contact.infotelcom@gmail.com · +242 06 849 8792 · +242 06 866 0821 · WhatsApp +33 6 52 86 11 59.";
+    return "INFOTELCOM est l'entreprise à l'origine de FAXTRIX. Elle accompagne les entreprises dans leurs projets numériques, informatiques et de transformation digitale. Site officiel : https://infotelcom-congo-brazzaville.netlify.app/. FAXTRIX propose notamment CRM, tickets, interventions terrain, équipes, automatisation, statistiques, messagerie interne et assistance.";
   }
   if (/(devise|prix|monnaie|euro|dollar|fcfa|xaf|usd|eur)/.test(q)) {
     return "Les montants FAXTRIX sont affichés dans la devise choisie dans Paramètres. La sélection accepte les codes de devises internationaux pris en charge par votre navigateur.";
@@ -1806,6 +1808,7 @@ async function loadChatProfiles(){
       chatState.profiles=r.data.map(function(p){return Object.assign({},p,{company_id:p.company_id||state.profile.company_id});});
       return true;
     }
+    if(r && r.error){ toast('Messagerie : '+(r.error.message||'erreur de lecture des membres'),'crit'); }
     if(r.error) console.warn('FAXTRIX RPC profils messagerie:',r.error);
   }catch(e){console.warn('FAXTRIX RPC profils messagerie:',e);}
   // Fallback uniquement si la RPC n'est pas encore présente.
