@@ -74,7 +74,7 @@ var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: {
 
 var state = {
   profile: { id: null, company_id: null, full_name: '', company_name: '', role: 'owner' },
-  crm: [], tickets: [], terrain: [], equipes: [], automations: [], notifications: [], invitations: [], inviteLinks: {}, statistics: null
+  crm: [], tickets: [], terrain: [], equipes: [], automations: [], notifications: [], invitations: [], inviteLinks: {}, statistics: null, analytics: null, ticketAttachments: {}, sessionEventId: null
 };
 
 initCurrencySelector();
@@ -120,6 +120,7 @@ initCurrencySelector();
   async function enter() {
     var ok = await loadAll();
     if (!ok) return;
+    await recordCompanyLogin();
     gateEl.classList.add('app-hidden');
     shell.classList.remove('app-hidden');
     boot();
@@ -286,7 +287,31 @@ async function loadAll() {
   state.invitations = results[6].data || [];
   var statsRes = await sb.rpc('my_company_statistics');
   state.statistics = statsRes.error ? null : (statsRes.data || null);
+  var analyticsRes = await sb.rpc('my_company_analytics');
+  state.analytics = analyticsRes.error ? null : (analyticsRes.data || null);
+  if(analyticsRes.error) console.warn('FAXTRIX analytics:', analyticsRes.error);
+  var attRes = await sb.from('ticket_attachments').select('id,ticket_id,file_path,file_name,mime_type,file_size,created_at,uploaded_by').eq('company_id',companyId).order('created_at',{ascending:false});
+  state.ticketAttachments = {};
+  (attRes.data||[]).forEach(function(a){(state.ticketAttachments[a.ticket_id]||(state.ticketAttachments[a.ticket_id]=[])).push(a);});
+  if(attRes.error) console.warn('FAXTRIX ticket attachments:', attRes.error);
   return true;
+}
+
+async function recordCompanyLogin(){
+  try{
+    var sessionRes=await sb.auth.getSession(), session=sessionRes.data&&sessionRes.data.session;
+    if(!session)return;
+    var key='faxtrix-session-event-'+session.user.id+'-'+(session.id||'current');
+    var existing=localStorage.getItem(key);
+    if(existing){state.sessionEventId=existing;return;}
+    var r=await sb.rpc('record_company_login',{p_auth_session_id:session.id||null,p_user_agent:navigator.userAgent||null});
+    if(!r.error&&r.data){state.sessionEventId=r.data;localStorage.setItem(key,r.data);}
+  }catch(e){console.warn('FAXTRIX session analytics:',e);}
+}
+async function recordCompanyLogout(){
+  try{
+    if(state.sessionEventId) await sb.rpc('record_company_logout',{p_session_id:state.sessionEventId});
+  }catch(e){console.warn('FAXTRIX logout analytics:',e);}
 }
 
 function withCompany(obj) {
@@ -534,6 +559,8 @@ function fillTicketForm(t) {
   $('#tkRecommendations').value = t.recommendations || '';
   $('#tkResolution').value = t.resolution || '';
   $('#tkDescription').value = t.description || '';
+  if($('#tkFiles')) $('#tkFiles').value='';
+  loadTicketAttachments(t.id);
   updateTicketSessionUI(t);
 }
 function updateTicketSessionUI(t) {
@@ -563,6 +590,55 @@ async function loadTicketHistory(id) {
     var who=h.editor_id===state.profile.id?'Vous':'Utilisateur';
     return '<div style="padding:7px 0;border-bottom:1px solid var(--line-soft);"><b>'+escapeHtml(who)+'</b> · '+escapeHtml(h.action)+'<br><span>'+escapeHtml(fmtDateTime(h.changed_at))+'</span> · '+escapeHtml(after.titre||'Ticket')+'</div>';
   }).join('');
+}
+async function loadTicketAttachments(ticketId){
+  var list=$('#tkFilesList'); if(!list)return;
+  if(!ticketId){list.innerHTML='<span class="muted">Enregistrez le ticket avant d’ajouter des fichiers.</span>';return;}
+  var rows=state.ticketAttachments[ticketId];
+  if(!rows){
+    var r=await sb.from('ticket_attachments').select('id,ticket_id,file_path,file_name,mime_type,file_size,created_at,uploaded_by').eq('ticket_id',ticketId).order('created_at',{ascending:false});
+    if(r.error){list.innerHTML='<span class="muted">Fichiers indisponibles : '+escapeHtml(r.error.message)+'</span>';return;}
+    rows=r.data||[];state.ticketAttachments[ticketId]=rows;
+  }
+  list.innerHTML=rows.length?rows.map(function(a){
+    return '<div class="ticket-file-row"><span>📎 <b>'+escapeHtml(a.file_name)+'</b><small>'+escapeHtml(formatFileSize(a.file_size))+' · '+escapeHtml(fmtDateTime(a.created_at))+'</small></span><button type="button" class="row-btn" data-ticket-file="'+escapeAttribute(a.id)+'">↓</button></div>';
+  }).join(''):'<span class="muted">Aucun fichier attaché à ce ticket.</span>';
+}
+function formatFileSize(n){
+  n=Number(n||0);if(!n)return 'Taille inconnue';
+  var u=['o','Ko','Mo','Go'],i=0;while(n>=1024&&i<u.length-1){n/=1024;i++;}
+  return (i? n.toFixed(n>=10?0:1):Math.round(n))+' '+u[i];
+}
+async function uploadTicketFiles(ticketId, fileList){
+  if(!ticketId||!fileList||!fileList.length)return;
+  var files=Array.from(fileList);
+  for(var i=0;i<files.length;i++){
+    var file=files[i],safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var path=state.profile.company_id+'/'+ticketId+'/'+state.profile.id+'-'+Date.now()+'-'+i+'-'+safe;
+    var up=await sb.storage.from('faxtrix-tickets').upload(path,file,{upsert:false,contentType:file.type||'application/octet-stream'});
+    if(up.error){toast('Fichier non envoyé : '+up.error.message,'crit');continue;}
+    var ins=await sb.from('ticket_attachments').insert({company_id:state.profile.company_id,ticket_id:ticketId,uploaded_by:state.profile.id,file_path:path,file_name:file.name,file_size:file.size,mime_type:file.type||'application/octet-stream'});
+    if(ins.error){await sb.storage.from('faxtrix-tickets').remove([path]);toast('Fichier enregistré sans métadonnées : '+ins.error.message,'crit');continue;}
+  }
+  state.ticketAttachments[ticketId]=null;
+  await loadTicketAttachments(ticketId);
+}
+async function downloadTicketAttachment(id){
+  var all=Object.keys(state.ticketAttachments).flatMap(function(k){return state.ticketAttachments[k]||[];});
+  var a=all.find(function(x){return x.id===id;});if(!a)return;
+  var r=await sb.storage.from('faxtrix-tickets').createSignedUrl(a.file_path,3600,{download:a.file_name});
+  if(r.error||!r.data||!r.data.signedUrl){toast('Téléchargement impossible : '+(r.error?r.error.message:'URL indisponible'),'crit');return;}
+  window.open(r.data.signedUrl,'_blank','noopener');
+}
+function ticketExportHtml(t){
+  var files=(state.ticketAttachments[t.id]||[]).map(function(a){return '<li>'+escapeHtml(a.file_name)+' — '+escapeHtml(formatFileSize(a.file_size))+'</li>';}).join('')||'<li>Aucun fichier</li>';
+  return '<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml(t.numero||t.titre||'Ticket')+'</title><style>body{font-family:Arial,sans-serif;margin:40px;color:#172235}h1{color:#0b3152}table{width:100%;border-collapse:collapse}td{border:1px solid #ddd;padding:9px;vertical-align:top}td:first-child{width:180px;font-weight:700}</style></head><body><h1>FAXTRIX — '+escapeHtml(t.numero||'Ticket')+'</h1><h2>'+escapeHtml(t.titre||'')+'</h2><table>'+
+  [['Client',t.client],['Statut',t.statut],['Priorité',t.priorite],['Catégorie',t.categorie],['Assigné à',t.assigned_to],['Ouvert le',fmtDateTime(t.opened_at||t.created_at)],['Dernière modification',fmtDateTime(t.updated_at)],['Problème',t.problem],['Tâches',t.tasks],['Recommandations',t.recommendations],['Résolution',t.resolution],['Description',t.description]].map(function(x){return '<tr><td>'+escapeHtml(x[0])+'</td><td>'+escapeHtml(x[1]||'—').replace(/\n/g,'<br>')+'</td></tr>';}).join('')+'</table><h3>Fichiers</h3><ul>'+files+'</ul></body></html>';
+}
+function downloadTicketReport(id){
+  var t=state.tickets.find(function(x){return x.id===id;});if(!t)return;
+  var blob=new Blob([ticketExportHtml(t)],{type:'text/html;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FAXTRIX-ticket-'+(t.numero||t.id)+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},500);
 }
 function ticketFormData() {
   return {
@@ -595,6 +671,7 @@ $('#tkAddBtn').addEventListener('click', function () {
   $('#tkOpenedAt').textContent=fmtDateTime(new Date().toISOString());
   $('#tkWorkStartedAt').textContent='—'; $('#tkWorkClosedAt').textContent='—'; $('#tkLastModifiedAt').textContent='—';
   $('#tkHistory').style.display='none'; $('#tkAutosaveStatus').textContent='Les modifications seront sauvegardées après création du ticket.';
+  if($('#tkFiles')) $('#tkFiles').value=''; if($('#tkFilesList')) $('#tkFilesList').innerHTML='<span class="muted">Enregistrez le ticket avant d’ajouter des fichiers.</span>';
   updateTicketSessionUI(null);
   openDrawer('tk','Nouveau ticket');
 });
@@ -610,9 +687,10 @@ $('#tkForm').addEventListener('submit', async function(e){
   e.preventDefault();
   var id=$('#tkId').value, data=ticketFormData();
   $('#tkAutosaveStatus').textContent='Enregistrement…';
+  var selectedFiles=$('#tkFiles')&&$('#tkFiles').files?$('#tkFiles').files:null;
   if(id){
     var saved=await saveTicket(id,data,true);
-    if(saved){ $('#tkAutosaveStatus').textContent='Enregistré à '+fmtDateTime(saved.last_autosaved_at||saved.last_modified_at||new Date().toISOString()); loadTicketHistory(id); }
+    if(saved){ await uploadTicketFiles(id,selectedFiles); $('#tkAutosaveStatus').textContent='Enregistré à '+fmtDateTime(saved.last_autosaved_at||saved.last_modified_at||new Date().toISOString()); loadTicketHistory(id); }
   } else {
     var payload=withCompany(data);
     payload.opened_at=new Date().toISOString();
@@ -620,6 +698,7 @@ $('#tkForm').addEventListener('submit', async function(e){
     var res=await sb.from('tickets').insert(payload).select().single();
     if(res.error){ $('#tkAutosaveStatus').textContent='Erreur : '+res.error.message; toast('Création du ticket impossible.','crit'); return; }
     state.tickets.unshift(res.data);
+    await uploadTicketFiles(res.data.id,selectedFiles);
     localStorage.removeItem('faxtrix-ticket-draft-'+state.profile.id);
     notify('Nouveau ticket : '+data.titre,'ok');
     closeDrawer(); renderAll(); return;
@@ -690,7 +769,7 @@ function renderTickets(){
     var work=t.work_started_at?'Travail '+fmtDateTime(t.work_started_at)+(t.work_closed_at?' → '+fmtDateTime(t.work_closed_at):' → en cours'):'Session non démarrée';
     return '<div class="app-row" data-record-view="ticket:'+t.id+'"><div class="r-main"><b>'+escapeHtml(t.numero||'Ticket')+' · '+escapeHtml(t.titre)+'</b><span>'+escapeHtml(t.client||'—')+' · Ouvert : '+escapeHtml(opened)+' · Fermé : '+escapeHtml(closed)+'<br>'+escapeHtml(work)+'</span></div>'+
       '<span class="chip '+pClass+'">'+escapeHtml(t.priorite)+'</span><span class="chip">'+escapeHtml(t.statut)+'</span>'+
-      '<div class="app-row-actions"><button class="row-btn" data-record-open="ticket:'+t.id+'">◉</button><button class="row-btn" data-tk-edit="'+t.id+'">✎</button><button class="row-btn" data-tk-del="'+t.id+'">🗑</button></div></div>';
+      '<div class="app-row-actions"><button class="row-btn" data-ticket-download="'+t.id+'" title="Télécharger le ticket">↓</button><button class="row-btn" data-record-open="ticket:'+t.id+'">◉</button><button class="row-btn" data-tk-edit="'+t.id+'">✎</button><button class="row-btn" data-tk-del="'+t.id+'">🗑</button></div></div>';
   }).join(''):'<div class="app-empty">Aucun ticket pour ce filtre.</div>';
   $('#tkTotal').textContent=state.tickets.length;
   $('#tkOuverts').textContent=state.tickets.filter(function(t){return t.statut!=='Résolu'&&t.statut!=='Fermé';}).length;
@@ -856,48 +935,53 @@ function renderAuto() {
   }).join('') : '<div class="app-empty">Aucune règle définie.</div>';
 }
 
-/* ---------------- 11. Business Brain (calculs en direct) ---------------- */
-function renderBrain() {
-  var wrap = $('#brainList');
-  var ticketsHaute = state.tickets.filter(function (t) { return t.priorite === 'Haute' && t.statut !== 'Résolu' && t.statut !== 'Fermé'; });
-  var valeurNego = state.crm.filter(function (c) { return c.statut === 'Négociation'; }).reduce(function (s, c) { return s + Number(c.valeur || 0); }, 0);
-  var nbNego = state.crm.filter(function (c) { return c.statut === 'Négociation'; }).length;
-  var surcharge = state.equipes.filter(function (m) { return Number(m.charge) >= 80; });
-  var missionsCours = state.terrain.filter(function (t) { return t.statut === 'En cours'; });
-  var items = [];
-  items.push(ticketsHaute.length
-    ? { t: ticketsHaute.length + ' ticket' + (ticketsHaute.length > 1 ? 's' : '') + ' en priorité haute encore ouvert' + (ticketsHaute.length > 1 ? 's' : '') + '.', c: 'crit' }
-    : { t: 'Aucun ticket critique ouvert en ce moment.', c: 'ok' });
-  items.push(nbNego
-    ? { t: nbNego + ' client' + (nbNego > 1 ? 's' : '') + ' en négociation, représentant ' + euros(valeurNego) + ' de pipeline.', c: 'mid' }
-    : { t: 'Aucune négociation en cours.', c: '' });
-  items.push(surcharge.length
-    ? { t: surcharge.length + ' membre' + (surcharge.length > 1 ? 's' : '') + " d'équipe à plus de 80% de charge : " + surcharge.map(function (m) { return m.nom; }).join(', ') + '.', c: 'crit' }
-    : { t: "Aucune surcharge d'équipe détectée.", c: 'ok' });
-  items.push(missionsCours.length
-    ? { t: missionsCours.length + ' mission' + (missionsCours.length > 1 ? 's' : '') + ' terrain en cours actuellement.', c: 'mid' }
-    : { t: 'Aucune mission terrain en cours.', c: '' });
-
-  wrap.innerHTML = items.map(function (it) {
-    return '<div class="app-row"><div class="r-main"><span>' + it.t + '</span></div>' + (it.c ? '<span class="chip ' + it.c + '">' + (it.c === 'crit' ? 'Attention' : it.c === 'ok' ? 'Sain' : 'À suivre') + '</span>' : '') + '</div>';
-  }).join('');
+/* ---------------- 11. Intelligence opérationnelle ---------------- */
+function svgTrend(id, values, labels){
+  var svg=$(id);if(!svg)return;
+  values=(values||[]).map(function(v){return Number(v||0);});
+  if(!values.length){svg.innerHTML='<text x="400" y="120" text-anchor="middle" fill="currentColor">Aucune donnée enregistrée</text>';return;}
+  var max=Math.max.apply(null,values.concat([1])),min=Math.min.apply(null,values.concat([0])),w=800,h=230,pad=24,step=(w-pad*2)/Math.max(values.length-1,1);
+  var pts=values.map(function(v,i){var y=h-pad-((v-min)/(max-min||1))*(h-pad*2);return [pad+i*step,y];});
+  var d=pts.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
+  var area=d+' L '+pts[pts.length-1][0].toFixed(1)+','+(h-pad)+' L '+pts[0][0].toFixed(1)+','+(h-pad)+' Z';
+  var xlabels=(labels||[]).map(function(l,i){return '<text x="'+pts[i][0]+'" y="220" text-anchor="middle">'+escapeHtml(String(l||''))+'</text>';}).join('');
+  svg.innerHTML='<defs><linearGradient id="'+id.replace('#','')+'grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A18" stop-opacity=".28"/><stop offset="1" stop-color="#FF8A18" stop-opacity="0"/></linearGradient></defs><path d="'+area+'" fill="url(#'+id.replace('#','')+'grad)"/><path d="'+d+'" fill="none" stroke="#FF8A18" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'+pts.map(function(p,i){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#FF8A18"/><text x="'+p[0]+'" y="'+(p[1]-9)+'" text-anchor="middle">'+values[i]+'</text>';}).join('')+xlabels;
 }
-
-/* ---------------- 12. Decision Simulator ---------------- */
-function renderSim() {
-  var tech = Number($('#simTech').value);
-  var delay = Number($('#simDelay').value);
-  $('#simTechVal').textContent = tech;
-  $('#simDelayVal').textContent = delay + '%';
-  var prod = tech * 6 + delay * 0.4;
-  var cost = tech * 4 - delay * 0.2;
-  var risk = -(tech * 2 + delay * 0.3);
-  $('#simProd').textContent = (prod >= 0 ? '+' : '') + prod.toFixed(1) + '%';
-  $('#simCost').textContent = (cost >= 0 ? '+' : '') + cost.toFixed(1) + '%';
-  $('#simRisk').textContent = risk.toFixed(1) + '%';
+function renderIntelligence(){
+  var a=state.analytics||{}, totals=a.totals||{}, daily=a.daily_activity||[], sessions=a.sessions||[], people=a.people||[];
+  var activityVals=daily.map(function(x){return Number(x.count||0);}), activityLabels=daily.map(function(x){return x.label;});
+  $('#intelActivityTotal').textContent=Number(totals.activities||0);
+  $('#intelTicketsTotal').textContent=Number(totals.tickets||0);
+  $('#intelClientsTotal').textContent=Number(totals.clients||0);
+  var totalSeconds=sessions.reduce(function(s,x){return s+Number(x.duration_seconds||0);},0);
+  $('#intelConnectionTotal').textContent=(totalSeconds/3600).toFixed(1)+'h';
+  svgTrend('#intelActivityChart',activityVals.slice(-14),activityLabels.slice(-14));
+  var ticketDays=[],ticketLabels=[];
+  for(var i=13;i>=0;i--){var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);ticketLabels.push((d.getDate())+'/'+(d.getMonth()+1));ticketDays.push(state.tickets.filter(function(t){var ts=new Date(t.created_at).getTime();return ts>=d.getTime()&&ts<d.getTime()+86400000;}).length);}
+  svgTrend('#intelTicketsChart',ticketDays,ticketLabels);
+  var crmStatuses=['Prospect','Négociation','Actif','Attente'],crmVals=crmStatuses.map(function(s){return state.crm.filter(function(x){return x.statut===s;}).length;});
+  svgTrend('#intelCrmChart',crmVals,crmStatuses.map(function(x){return x.slice(0,5);}));
+  var sessionByDay={};
+  sessions.forEach(function(s){var k=new Date(s.login_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});sessionByDay[k]=(sessionByDay[k]||0)+Number(s.duration_seconds||0)/3600;});
+  var sessKeys=Object.keys(sessionByDay).slice(-14);
+  svgTrend('#intelSessionsChart',sessKeys.map(function(k){return Number(sessionByDay[k].toFixed(2));}),sessKeys);
+  $('#intelPeopleList').innerHTML=people.length?people.map(function(p){
+    var h=(Number(p.connection_seconds_30d||0)/3600).toFixed(1);
+    return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(p.full_name||'Utilisateur')+'</b><span>'+escapeHtml(p.role||'Membre')+' · '+Number(p.sessions_30d||0)+' connexion(s) · '+h+' h enregistrées</span></div><span class="chip">'+h+' h</span></div>';
+  }).join(''):'<div class="app-empty">Aucune donnée de connexion enregistrée pour le moment.</div>';
 }
-$('#simTech').addEventListener('input', renderSim);
-$('#simDelay').addEventListener('input', renderSim);
+function renderSim(){
+  var tech=Number($('#simTech').value||0),delay=Number($('#simDelay').value||0),demand=Number($('#simDemand').value||0);
+  $('#simTechVal').textContent=tech;$('#simDelayVal').textContent=delay+'%';$('#simDemandVal').textContent=demand+'%';
+  var base=Math.max(1,state.tickets.length+state.terrain.length),capacity=tech*5+delay*.55-demand*.45,cost=tech*4+demand*.35-delay*.12,risk=Math.max(0,demand*.65-tech*2-delay*.25);
+  $('#simProd').textContent=(capacity>=0?'+':'')+capacity.toFixed(1)+'%';
+  $('#simCost').textContent='+'+Math.max(0,cost).toFixed(1)+'%';
+  $('#simRisk').textContent=risk.toFixed(1)+'%';
+  var advice=$('#simAdvice');if(advice)advice.textContent='Base actuelle : '+base+' activité(s). '+(risk>35?'Le scénario crée une forte pression opérationnelle.':risk>15?'Le scénario mérite un suivi rapproché.':'La pression reste contenue dans cette simulation.');
+}
+$('#simTech').addEventListener('input',renderSim);
+$('#simDelay').addEventListener('input',renderSim);
+$('#simDemand').addEventListener('input',renderSim);
 
 /* ---------------- 13. Accueil ---------------- */
 function renderPerfChart() {
@@ -1027,15 +1111,18 @@ function renderInvites(){
   wrap.innerHTML=pending.length?pending.map(function(i){var link=state.inviteLinks[i.email]||'';return '<div class="app-row"><div class="r-main"><b>'+escapeHtml(i.full_name||i.email)+'</b><span>'+escapeHtml(i.email)+' · '+escapeHtml(i.role||'lecture_seule')+' · Ancien accès en attente</span>'+(link?'<a class="invite-link" href="'+escapeAttribute(link)+'" target="_blank" rel="noopener">Ouvrir le lien d’invitation ↗</a>':'')+'</div><div class="app-row-actions"><button class="row-btn" data-invite-link="'+escapeHtml(i.email)+'" title="Définir un nouveau mot de passe">🔑</button><button class="row-btn" data-invite-del="'+i.id+'">🗑</button></div></div>';}).join(''):'<div class="app-empty">Aucune invitation en attente.</div>';
 }
 function renderTopUser() {
-  var name = state.profile.full_name || 'Vous';
+  var admin = state.profile.role === 'infotelcom_admin';
+  var name = admin ? 'INFOTELCOM' : (state.profile.full_name || 'Vous');
+  var company = admin ? 'INFOTELCOM' : (state.profile.company_name || 'Votre entreprise');
   $('#userName').textContent = name;
-  $('#userAv').textContent = name.charAt(0).toUpperCase();
-  $('#profName').value = name;
-  var companyEl = $('#profCompanyName'); if (companyEl) companyEl.textContent = state.profile.company_name || '—';
-  var bannerEl = $('#companyBannerName'); if (bannerEl) bannerEl.textContent = state.profile.company_name || 'Votre entreprise';
+  $('#userAv').textContent = admin ? 'I' : name.charAt(0).toUpperCase();
+  $('#profName').value = state.profile.full_name || name;
+  var companyEl = $('#profCompanyName'); if (companyEl) companyEl.textContent = company;
+  var bannerEl = $('#companyBannerName'); if (bannerEl) bannerEl.textContent = admin ? 'INFOTELCOM · ADMINISTRATION FAXTRIX' : company;
 }
 async function doLogout() {
-  await sb.auth.signOut();
+  await recordCompanyLogout();
+  await sb.auth.signOut({scope:'local'});
   location.reload();
 }
 $('#logoutBtn').addEventListener('click', doLogout);
@@ -1120,7 +1207,7 @@ function renderAll() {
   renderTerrain();
   renderEquipes();
   renderAuto();
-  renderBrain();
+  renderIntelligence();
   renderSim();
   renderNotifBadge();
   renderNotifList();
@@ -1280,21 +1367,46 @@ $$('#rapportsRange button').forEach(function (b) {
     b.classList.add('active'); repRange = Number(b.getAttribute('data-range')); renderReports();
   });
 });
-function exportReportsCsv() {
-  var rows = [['Type','ID','Nom / titre','Statut','Date création','Date modification','Valeur / durée','Détails']];
-  state.crm.forEach(function(x){ rows.push(['Client',x.id,x.nom,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.valeur||0,'']); });
-  state.tickets.forEach(function(x){ rows.push(['Ticket',x.id,x.titre||x.numero,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.work_duration_seconds ? fmtElapsed(Number(x.work_duration_seconds)*1000) : '',x.problem||'']); });
-  state.terrain.forEach(function(x){ rows.push(['Terrain',x.id,x.client,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.elapsed_ms ? fmtElapsed(Number(x.elapsed_ms)) : '',x.adresse||'']); });
-  state.equipes.forEach(function(x){ rows.push(['Équipe',x.id,x.nom,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.charge||0,x.role||'']); });
-  state.automations.forEach(function(x){ rows.push(['Automatisation',x.id,x.trigger_text,x.live?'Active':'Inactive',fmtDateTime(x.created_at),fmtDateTime(x.updated_at),'',x.action_text||'']); });
-  function csvCell(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
-  var csv='\ufeff'+rows.map(function(r){return r.map(csvCell).join(';');}).join('\r\n');
-  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='FAXTRIX-rapport-'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+function buildReportRows(){
+  var rows=[['Type','ID','Nom / titre','Statut','Date création','Date modification','Valeur / durée','Détails']];
+  state.crm.forEach(function(x){rows.push(['Client',x.id,x.nom,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.valeur||0,'E-mail: '+(x.email||'')+' · Téléphone: '+(x.telephone||'')]);});
+  state.tickets.forEach(function(x){rows.push(['Ticket',x.id,x.titre||x.numero,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.work_duration_seconds?fmtElapsed(Number(x.work_duration_seconds)*1000):'',(x.problem||'')+' · Fichiers: '+((state.ticketAttachments[x.id]||[]).length)]);});
+  state.terrain.forEach(function(x){rows.push(['Terrain',x.id,x.client,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.elapsed_ms?fmtElapsed(Number(x.elapsed_ms)):'',x.adresse||'']);});
+  state.equipes.forEach(function(x){rows.push(['Équipe',x.id,x.nom,x.statut,fmtDateTime(x.created_at),fmtDateTime(x.updated_at),x.charge||0,x.role||'']);});
+  state.automations.forEach(function(x){rows.push(['Automatisation',x.id,x.trigger_text,x.live?'Active':'Inactive',fmtDateTime(x.created_at),fmtDateTime(x.updated_at),'',x.action_text||'']);});
+  (state.analytics&&state.analytics.people||[]).forEach(function(x){rows.push(['Personne',x.id,x.full_name,x.role,'','',''+((Number(x.connection_seconds_30d||0)/3600).toFixed(1))+' h',Number(x.sessions_30d||0)+' connexion(s) sur 30 jours']);});
+  (state.analytics&&state.analytics.sessions||[]).forEach(function(x){rows.push(['Connexion',x.id,x.full_name,x.role,fmtDateTime(x.login_at),fmtDateTime(x.logout_at),' '+((Number(x.duration_seconds||0)/3600).toFixed(2))+' h','Session enregistrée']);});
+  Object.keys(state.ticketAttachments).forEach(function(tid){(state.ticketAttachments[tid]||[]).forEach(function(x){rows.push(['Fichier ticket',x.id,x.file_name,'Attaché',fmtDateTime(x.created_at),'',formatFileSize(x.file_size),tid]);});});
+  return rows;
+}
+function downloadReportBlob(name,content,type){
+  var blob=new Blob([content],{type:type});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},600);
+}
+function reportHtml(){
+  var rows=buildReportRows();
+  return '<!doctype html><html><head><meta charset="utf-8"><title>Rapport FAXTRIX</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;color:#182335}h1{color:#0a3153}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #d8dee7;padding:6px;text-align:left;vertical-align:top}th{background:#eef3f8}</style></head><body><h1>FAXTRIX — Rapport général</h1><p>Entreprise : '+escapeHtml(state.profile.role==='infotelcom_admin'?'INFOTELCOM':state.profile.company_name)+'</p><p>Généré le '+escapeHtml(new Date().toLocaleString('fr-FR'))+'</p><table><thead><tr>'+rows[0].map(function(x){return '<th>'+escapeHtml(x)+'</th>';}).join('')+'</tr></thead><tbody>'+rows.slice(1).map(function(r){return '<tr>'+r.map(function(x){return '<td>'+escapeHtml(x==null?'':x).replace(/\n/g,'<br>')+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></body></html>';
+}
+function exportReportsCsv(){
+  var rows=buildReportRows(),csv='\\ufeff'+rows.map(function(r){return r.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(';');}).join('\\r\\n');
+  downloadReportBlob('FAXTRIX-rapport-'+new Date().toISOString().slice(0,10)+'.csv',csv,'text/csv;charset=utf-8;');
+}
+function exportReportsJson(){
+  downloadReportBlob('FAXTRIX-rapport-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({company:state.profile.company_name,generated_at:new Date().toISOString(),rows:buildReportRows()},null,2),'application/json;charset=utf-8;');
+}
+function exportReportsWord(){downloadReportBlob('FAXTRIX-rapport-'+new Date().toISOString().slice(0,10)+'.doc',reportHtml(),'application/msword');}
+function exportReportsPowerPoint(){
+  var html=reportHtml().replace('</body>','<div style="page-break-before:always"><h1>FAXTRIX — Synthèse</h1><p>Présentation compatible PowerPoint / import HTML.</p></div></body>');
+  downloadReportBlob('FAXTRIX-rapport-'+new Date().toISOString().slice(0,10)+'.ppt',html,'application/vnd.ms-powerpoint');
+}
+function exportReportsPdf(){
+  var w=window.open('','_blank');if(!w){toast('Autorisez les fenêtres contextuelles pour générer le PDF.','crit');return;}
+  w.document.open();w.document.write(reportHtml().replace('</body>','<script>window.onload=function(){window.print();};</script></body>'));w.document.close();
 }
 $('#exportReportBtn')&&$('#exportReportBtn').addEventListener('click',exportReportsCsv);
+$('#exportReportPdfBtn')&&$('#exportReportPdfBtn').addEventListener('click',exportReportsPdf);
+$('#exportReportWordBtn')&&$('#exportReportWordBtn').addEventListener('click',exportReportsWord);
+$('#exportReportPptBtn')&&$('#exportReportPptBtn').addEventListener('click',exportReportsPowerPoint);
+$('#exportReportJsonBtn')&&$('#exportReportJsonBtn').addEventListener('click',exportReportsJson);
 
 function renderReports() {
   var svg = $('#repChart'); if (!svg) return;
@@ -1932,6 +2044,27 @@ document.addEventListener('click',function(e){
   var side=$('#appSide'), b=$('#faxtrixMobileMenuBtn');
   if(side&&side.classList.contains('open')&&b&&!b.contains(e.target)&&!side.contains(e.target)) side.classList.remove('open');
 });
+document.addEventListener('click',function(e){
+  var td=e.target.closest&&e.target.closest('[data-ticket-download]');
+  if(td){e.preventDefault();e.stopPropagation();downloadTicketReport(td.getAttribute('data-ticket-download'));return;}
+  var tf=e.target.closest&&e.target.closest('[data-ticket-file]');
+  if(tf){e.preventDefault();e.stopPropagation();downloadTicketAttachment(tf.getAttribute('data-ticket-file'));return;}
+});
+$('#tkFiles')&&$('#tkFiles').addEventListener('change',function(e){
+  var id=$('#tkId').value;
+  if(!id){$('#tkFilesList').innerHTML='<span class="muted">Enregistrez d’abord le ticket, puis ajoutez les fichiers.</span>';return;}
+  var names=Array.from(e.target.files||[]).map(function(f){return '<span>+ '+escapeHtml(f.name)+' · '+escapeHtml(formatFileSize(f.size))+'</span>';}).join('');
+  var existing=state.ticketAttachments[id]||[];
+  $('#tkFilesList').innerHTML=(existing.map(function(a){return '<div class="ticket-file-row"><span>📎 <b>'+escapeHtml(a.file_name)+'</b><small>'+escapeHtml(formatFileSize(a.file_size))+'</small></span></div>';}).join(''))+(names||'<span class="muted">Aucun nouveau fichier.</span>');
+});
+$('#messagingFallbackForm')&&$('#messagingFallbackForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var subject=$('#messageSubject').value.trim(),email=$('#messageEmail').value.trim(),body=$('#messageBody').value.trim();
+  if(!subject||!email||!body)return;
+  var href='mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  var status=$('#messagingFallbackStatus');if(status){status.setAttribute('data-state','ok');status.textContent='Votre message est prêt. Votre logiciel e-mail va s’ouvrir.';}
+  window.location.href=href;
+});
 $('#chatSearch')&&$('#chatSearch').addEventListener('input',renderChatConversationList);
 $('#chatForm')&&$('#chatForm').addEventListener('submit',sendChatMessage);
 $('#chatFileBtn')&&$('#chatFileBtn').addEventListener('click',function(){$('#chatFile').click();});
@@ -1956,46 +2089,7 @@ document.addEventListener('click',function(e){
   var row=t.closest&&t.closest('[data-record-view]');
   if(row&&!t.closest('button')){var a2=row.getAttribute('data-record-view').split(':');openRecordDetail(a2[0],a2.slice(1).join(':'));return;}
 });
-(function initChat(){
-  var panel=$('[data-panel="messagerie"]'); if(!panel)return;
-  var loaded=false, pollTimer=null, listTimer=null;
-  async function refreshCurrentChat(){
-    if(!chatState.current)return;
-    var r=await sb.from('chat_messages').select('*').eq('conversation_id',chatState.current).is('deleted_at',null).order('created_at',{ascending:true});
-    if(r.error){console.error('FAXTRIX messages:',r.error);return;}
-    var incoming=r.data||[];
-    var changed=incoming.length!==chatState.messages.length || incoming.some(function(m,i){return !chatState.messages[i]||chatState.messages[i].id!==m.id;});
-    if(changed){chatState.messages=incoming;await renderChatMessages();}
-  }
-  async function refreshChat(){
-    try{
-      await loadChatProfiles();
-      await loadChatConversations();
-      await refreshCurrentChat();
-    }catch(e){
-      console.error('FAXTRIX messagerie:',e);
-      toast('Messagerie indisponible : '+(e.message||e),'crit');
-    }
-  }
-  function startPolling(){
-    if(pollTimer)return;
-    pollTimer=setInterval(function(){if(!document.hidden&&panel.classList.contains('active'))refreshCurrentChat();},3000);
-    listTimer=setInterval(function(){if(!document.hidden&&panel.classList.contains('active'))loadChatConversations();},5000);
-  }
-  function ensureLoaded(){
-    if(!panel.classList.contains('active'))return;
-    if(!loaded){loaded=true;refreshChat();}
-    startPolling();
-  }
-  var observer=new MutationObserver(ensureLoaded);
-  observer.observe(panel,{attributes:true,attributeFilter:['class']});
-  if(panel.classList.contains('active'))ensureLoaded();
-})();
-
-/* faxtrix-chat-loader */
-document.addEventListener('click',function(e){
-  var b=e.target.closest&&e.target.closest('[data-panel="messagerie"]');
-  if(b){
-    setTimeout(function(){loadChatProfiles().then(loadChatConversations).catch(function(err){toast('Messagerie indisponible : '+(err.message||err),'crit');});},80);
+/* Messagerie temps réel mise en attente : écran e-mail de transition actif. */
+},80);
   }
 });
