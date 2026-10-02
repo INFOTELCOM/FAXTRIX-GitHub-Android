@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FAXTRIX ADMIN — INFOTELCOM</title>
+<title>FAXTRIX — Administration INFOTELCOM</title>
 <link rel="icon" href="assets/img/faxtrix-mark.webp">
 <link rel="stylesheet" href="assets/css/admin.css?v=20260930-2">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -32,7 +32,7 @@
   <div class="admin-user-create">
     <div class="create-head">
       <b>Créer un accès utilisateur</b>
-      <button id="seedDemoUsers" type="button">Créer / réinitialiser 10 utilisateurs de test</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button id="seedDemoUsers" type="button">Créer / réinitialiser 10 utilisateurs de test</button><button id="seedInfotelcomAdmins" type="button">Préparer les 3 admins INFOTELCOM</button></div>
     </div>
     <form id="createUserForm" class="create-user-form">
       <label>Entreprise<select id="createUserCompany" required><option value="">Sélectionner</option></select></label>
@@ -42,10 +42,10 @@
       <div class="create-actions"><button class="primary" type="submit">Créer l'utilisateur</button><span id="createUserMsg" class="muted"></span></div>
     </form>
   </div>
-  <div id="demoCredentials" class="demo-credentials" hidden></div>
+  <div id="adminDirectory" class="demo-credentials"></div><div id="demoCredentials" class="demo-credentials" hidden></div>
   <div id="users" class="table-wrap"></div>
   <div style="margin-top:18px;">
-    <div class="head"><div><h3 style="margin:0;">Accès en attente</h3><div class="muted">Les comptes sont actifs immédiatement avec un mot de passe initial. L’administrateur de l’entreprise pourra ensuite gérer les autres accès.</div></div></div>
+    <div class="head"><div><h3 style="margin:0;">Accès en attente</h3><div class="muted">Les comptes sont actifs avec un mot de passe initial. L’administrateur de l’entreprise peut ensuite créer et gérer les autres accès depuis son espace FAXTRIX.</div></div></div>
     <div id="pendingInvites" class="list"></div>
   </div>
 </article>
