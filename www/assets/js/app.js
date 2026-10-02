@@ -2090,6 +2090,3 @@ document.addEventListener('click',function(e){
   if(row&&!t.closest('button')){var a2=row.getAttribute('data-record-view').split(':');openRecordDetail(a2[0],a2.slice(1).join(':'));return;}
 });
 /* Messagerie temps réel mise en attente : écran e-mail de transition actif. */
-},80);
-  }
-});
