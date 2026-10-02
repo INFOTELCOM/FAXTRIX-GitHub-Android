@@ -118,7 +118,7 @@ with check (
   and company_id = (select p.company_id from public.profiles p where p.id = auth.uid())
   and exists (
     select 1 from public.tickets t
-    where t.id = ticket_id and t.company_id = company_id
+    where t.id = ticket_id and t.company_id = public.ticket_attachments.company_id
   )
 );
 
